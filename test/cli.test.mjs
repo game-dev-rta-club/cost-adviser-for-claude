@@ -122,3 +122,17 @@ test('advice: notes are checked, embedded in the report, and can be cleared', as
   await cca(['advise', '--clear', '--transcripts', root], env);
   assert.match(await fs.readFile(path.join(home, 'report.html'), 'utf8'), /"advice":null/);
 });
+
+test('declined options are kept, shown in the summary, and can be allowed again', async () => {
+  const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
+  await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);
+  assert.match((await cca(['decline', 'add', 'autoCompactWindow 200k', '--reason', 'quality drops'], env)).stdout, /Declined: autoCompactWindow 200k/);
+  await cca(['decline', 'add', 'autoCompactWindow 200k', '--reason', 'quality drops at 200k'], env);
+  const list = JSON.parse((await cca(['decline', 'list', '--json'], env)).stdout);
+  assert.deepEqual(list.map(d => [d.option, d.reason]), [['autoCompactWindow 200k', 'quality drops at 200k']]);
+  const text = (await cca(['summary', '--transcripts', root], env)).stdout;
+  assert.match(text, /Declined options[\s\S]*autoCompactWindow 200k — quality drops at 200k/);
+  assert.match((await cca(['decline', 'remove', 'autoCompactWindow 200k'], env)).stdout, /Allowed again/);
+  await assert.rejects(cca(['decline', 'remove', 'nope'], env), e => e.code === 2 && /no declined option/.test(e.stderr));
+  assert.doesNotMatch((await cca(['summary', '--transcripts', root], env)).stdout, /Declined options/);
+});

@@ -22,6 +22,7 @@ changed since the last run are read again.
 |---|---|
 | `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time (including compacting per active hour), the cost profile, tools and sessions. |
 | `cca summary [--days 7] [--project NAME] [--tool NAME] [--json]` | The report as text, for a person or an agent: this period against the one before, each day, cost by model, tool use as a tree, top sessions, and each recorded change before vs after. `--tool` adds one tool or group (e.g. `"bash chill"`) by day with its costliest examples. |
+| `cca decline add "<option>" --reason "<why>"` / `remove` / `list` | Record an option the user decided against. The summary lists them, and the skill never proposes them again. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
 | `cca advise notes.json` / `cca advise --clear` | Show an agent's notes on the report. A note can list `options` (title and detail each), shown as separate choices A, B, C. They appear only when the page is opened with `#note=N`: a numbered list at the top, and a card next to the item each note is about. |

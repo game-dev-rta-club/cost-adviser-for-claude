@@ -14,7 +14,8 @@ notes (`cca advise`) and, when the user agrees, `cca mark add`.
    period, each day, cost by model, tool use as a tree, sessions and recorded
    changes. To follow one tool or group over the days, add
    `--tool "bash chill"`. Use `--json` when you need exact numbers. If `cca`
-   is missing, say so and stop.
+   is missing, say so and stop. The summary ends with the options the user
+   declined and the notes already shown; both limit what you write.
 2. **Read.** Follow [reading.md](references/reading.md): find at most three
    signals, each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in
@@ -71,6 +72,15 @@ fine, and a blank line starts a new paragraph.
    (or why it cannot be compared), and up to three next steps with the number
    to watch and when. Offer to record a step's start with
    `cca mark add YYYY-MM-DD "short name"`.
+
+**Respect what the user decided.** Never propose a declined option or a close
+variant of it; work within the reason given. When the user turns an option
+down, record it: `cca decline add "<option>" --reason "<why>"`.
+
+**Only write what is new.** Leave a note out when it repeats one already shown
+without new numbers or a new option, or when every good option for it was
+declined. If nothing is new, do not run `cca advise`; say there is nothing new
+and keep the reply to a line.
 
 ## Do not
 

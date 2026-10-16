@@ -3,10 +3,11 @@
 import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
 import {parseArgs} from 'node:util';
-import {checkAdvice, clearAdvice, saveAdvice} from '../lib/advice.mjs';
+import {checkAdvice, clearAdvice, readAdvice, saveAdvice} from '../lib/advice.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {dataDir, transcriptRoot} from '../lib/paths.mjs';
 import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
+import {addDeclined, readDeclined, removeDeclined} from '../lib/declined.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
 import {createViewer, DEFAULT_PORT, LINK_KEYS, reportLink, viewerRunning} from '../lib/viewer.mjs';
 
@@ -37,11 +38,16 @@ Commands:
   mark remove <date> <label>  Remove a recorded change.
                               Both rebuild the HTML when it exists.
   mark list                   List recorded changes.
+  decline add <option> --reason <why>  Record an option the user decided
+                              against, so advice does not propose it again.
+  decline remove <option>     Allow it again.
+  decline list                List declined options.
 
 Options:
   --days <n>            Days to read. build/collect: 30. summary: 7 (and the 7 before).
   --project <name>      summary: one project only.
-  --json                summary/mark list: print JSON.
+  --json                summary/mark list/decline list: print JSON.
+  --reason <text>       decline add: why the option was declined.
   --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
   --open                build/link: open it in the default browser.
   --port <n>            serve/link: port (default 7319).
@@ -56,7 +62,7 @@ const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usa
 function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
-      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'},
+      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string'}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
     }});
@@ -126,7 +132,8 @@ else if (command === 'build') {
   const days = count(values.days, 7, 'days'), changes = await readChanges(home);
   // Enough history for the previous window and for every recorded change.
   const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
-  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool || null});
+  const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
+  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool || null, declined, advice});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'mark') {
   const [action, date, ...words] = positionals, label = words.join(' ');
@@ -144,5 +151,19 @@ else if (command === 'build') {
       console.log(`Removed: ${date} ${label.trim()}`);
       await rebuildIfBuilt();
     } else fail(`unknown mark action "${action}".`);
+  } catch (error) { fail(error.message); }
+} else if (command === 'decline') {
+  const [action, ...words] = positionals, option = words.join(' ');
+  try {
+    if (action === 'list' || !action) {
+      const list = await readDeclined(home);
+      console.log(values.json ? JSON.stringify(list, null, 2) : list.map(d => `${d.date}  ${d.option}${d.reason ? ` — ${d.reason}` : ''}`).join('\n') || 'No options declined.');
+    } else if (action === 'add') {
+      await addDeclined(home, option, values.reason || '');
+      console.log(`Declined: ${option.trim()}`);
+    } else if (action === 'remove') {
+      if (!await removeDeclined(home, option)) fail(`no declined option "${option.trim()}".`);
+      console.log(`Allowed again: ${option.trim()}`);
+    } else fail(`unknown decline action "${action}".`);
   } catch (error) { fail(error.message); }
 } else fail(`unknown command "${command}".`);
