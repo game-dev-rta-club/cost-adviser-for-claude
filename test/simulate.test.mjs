@@ -60,7 +60,7 @@ test('cli: simulate prints both costs and checks its options', async () => {
   const json = JSON.parse((await sim(['--tool-results', '0.5', '--json'])).stdout);
   assert.equal(json.calls, 30);
   assert.ok(json.cut > 0 && json.changed < json.base);
-  assert.match((await sim(['--compact-at', '50000'])).stdout, /Cost: \$[\d.,]+ → \$[\d.,]+, [\d.]+% (less|more)\nCompactions: 0 → [1-9]/);
+  assert.match((await sim(['--compact-at', '50000'])).stdout, /Replayed cost: \$[\d.,]+ → \$[\d.,]+, [\d.]+% (less|more)\nReplayed compactions: 0 → [1-9]/);
   await assert.rejects(sim([]), e => e.code === 2 && /give a change/.test(e.stderr));
   await assert.rejects(sim(['--tool-results', '2']), e => e.code === 2 && /share from 0 to 1/.test(e.stderr));
   await assert.rejects(sim(['--compact-at', '10']), e => e.code === 2 && /--compact-at/.test(e.stderr));

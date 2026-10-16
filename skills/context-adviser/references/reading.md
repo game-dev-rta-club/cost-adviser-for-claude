@@ -21,9 +21,10 @@ much work there was.
 
 Add `--project NAME` when the signal belongs to one project. The report shows
 Profile, Tool Use and Sessions for one period at a time (the latest day unless
-told otherwise), so add `--period week --date DAY` to match the summary's
-week, `--period 3d` for the last three days (counted back from the build
-day), or `--date DAY` for a single day. A link opens the report on that item
+told otherwise), so add `--period 7d --date DAY` to match the summary's 7
+days (counted back from the build day), `--period 3d` for the last three days,
+or `--date DAY` for a single day. `--period week` is a calendar week from
+Monday, which is not the summary's window. A link opens the report on that item
 and highlights it. Tool Use is a tree: commands that share leading words add
 up (bash › chill › connection › reply), so compare groups as well as leaves.
 

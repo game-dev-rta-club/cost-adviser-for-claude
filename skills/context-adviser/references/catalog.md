@@ -43,8 +43,8 @@ for the reason in "Making the context smaller saves little". **Overall: 2.5.**
 
 **Propose it when** calls that read more than half of the context window take a
 clear share of the cost. The setting is `autoCompactWindow`; set it to half of
-the context window of the model in use. For a model with a one-million-token
-window, that is 500,000.
+the context window of the model in use, read from the model's documentation.
+For a model with a one-million-token window, that is 500,000.
 
 **Ratings:** upkeep 5 stars, though it should be checked again when the model
 changes; quality 4 stars; savings 5 stars in the example week, where

@@ -23,7 +23,7 @@ Commands:
   serve                 Show the built report at http://127.0.0.1:7319 so links to it
                         can be clicked. It only sends the file; run build to update it.
   link [options]        Print a link that opens the report on one item and highlights it:
-                        --project --period day|3d|week|month --date YYYY-MM-DD
+                        --project --period day|3d|7d|week|month --date YYYY-MM-DD
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
                         --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)
@@ -107,7 +107,7 @@ const [command, ...rest] = process.argv.slice(2);
 const {values, positionals} = options(rest);
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
-if (!command || command === 'help' || values.help) console.log(HELP);
+if (!command || command === 'help' || command === '--help' || command === '-h' || values.help) console.log(HELP);
 else if (command === 'build') {
   const report = await build(count(values.days, 30, 'days'), values.out);
   if (values.open) openFile(report.file);
@@ -155,17 +155,22 @@ else if (command === 'build') {
     change.toolResults = share;
   }
   if (!Object.keys(change).length) fail('give a change to replay: --compact-at <tokens> and/or --tool-results <share>.');
-  const days = count(values.days, 7, 'days');
-  const transcripts = (await readTranscriptsCached({root, dataDir: home, days})).filter(t => !values.project || projectOf(t.cwd) === values.project);
+  // The same days as the summary: today and the days before it, from midnight.
+  const days = count(values.days, 7, 'days'), to = localDay(Date.now()), start = new Date(`${to}T00:00`);
+  start.setDate(start.getDate() - (days - 1));
+  const from = localDay(start.getTime());
+  const transcripts = (await readTranscriptsCached({root, dataDir: home, days, since: start.getTime()})).filter(t => !values.project || projectOf(t.cwd) === values.project);
   const r = simulate(transcripts, change);
   const usd = v => `$${v.toLocaleString('en-US', {maximumFractionDigits: v < 100 ? 2 : 0})}`;
-  if (values.json) console.log(JSON.stringify({days, project: values.project || null, change, ...r}, null, 2));
+  if (values.json) console.log(JSON.stringify({window: {from, to, days}, project: values.project || null, change, ...r}, null, 2));
   else console.log([
-    `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations from the last ${days} days (${values.project || 'all projects'}).`,
+    `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations, ${from} to ${to} (${values.project || 'all projects'}).`,
+    r.compactedAt ? `The conversations compacted at about ${r.compactedAt.toLocaleString('en-US')} tokens on average (${r.compactions.recorded} compactions recorded).` : `No conversation compacted in these days.`,
     `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `tool results keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
-    `Cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
-    `Compactions: ${r.compactions.base} → ${r.compactions.changed}`,
-    `This is an estimate: the replay follows each conversation's context call by call (the recorded cost of the same calls is ${usd(r.recorded)}).`,
+    `Replayed cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
+    `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed}`,
+    `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}).`,
+    `It compares against the conversations as they ran. If the setting changed during these days, use --days to cover only the days since.`,
   ].join('\n'));
 } else if (command === 'mark') {
   const [action, date, ...words] = positionals, label = words.join(' ');

@@ -17,7 +17,14 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    changes. To follow one tool or group over the days, add
    `--tool "bash chill"`. Use `--json` when you need exact numbers. If `cca`
    is missing, say so and stop. The summary ends with the options the user
-   declined and the proposals now shown.
+   declined and the proposals now shown (id, stars and action; `--json` has
+   every field, which step 5 needs). `cca collect` gives the raw rows by day,
+   project, tool and session when the summary is not enough. Today is still
+   going, so its numbers are partial, and the conversation running this review
+   is in the data too.
+   Then read the settings in effect: `~/.claude/settings.json` and each
+   project's `.claude/settings.json`, including settings per model. A proposal
+   about a setting starts from its current value.
 2. **Read.** Follow [reading.md](references/reading.md): find the signals,
    each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in
@@ -49,13 +56,20 @@ proposal every run. Leave a proposal as it is when its numbers and advice still
 hold: it then keeps its dates, and the report marks only what changed as New or
 Updated. Update its detail when the numbers moved, put what is worth noticing
 in `news`, add a proposal for a new finding, and drop one that no longer
-applies or that the user carried out and you judged. `cca advise` prints what
+applies. When the user has carried a proposal out, keep it until its effect is
+judged: say in the action that it is done, put what it changed in `news`, judge
+it with measuring.md once there are enough days, and offer `cca mark add` if
+its start was not recorded. Drop it after the verdict. `cca advise` prints what
 was added, updated, kept and removed.
 
 **Each proposal is one concrete action that is enough on its own**: the
 setting, file, skill or subagent to change and what to put there (a key and
 value, a line to add). Before naming a setting or feature, open its current
-docs page and check the name and accepted values; put that page in `source`.
+docs page and check the name, the accepted values, which models it applies to
+and what overrides it (a choice made inside a session can override the
+settings file); put that page in `source`. Do not propose a setting that is
+already in place; when it is in place but the numbers show it is not taking
+effect, say that instead.
 Never invent a setting. A value is a starting point: say what to watch to tune
 it. Rate each proposal 1–5 stars on each axis with
 [ratings.md](references/ratings.md), starting from the closest sample in
@@ -68,9 +82,10 @@ one smaller. Proposals that trade quality for cost are still listed, so the
 user can weigh them.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
-session, focus, item); reading.md says which fits each signal. **The numbers in
-a proposal must be the ones the linked view shows**: the report shows one
-period at a time, so quote that period's numbers, not the summary's window.
+session, focus, item); reading.md says which fits each signal. **Numbers the
+linked view shows must match it**: the report shows one period at a time, so
+quote that period's numbers, not another window's. Numbers the view cannot
+show (before and after a change, one project's share) say where they come from.
 
 Write the proposals in the user's language.
 
@@ -80,7 +95,10 @@ Write the proposals in the user's language.
    `cca mark add YYYY-MM-DD "short name"`.
 
 **Respect what the user decided.** Never propose a declined option or a close
-variant of it; work within the reason given. When the user turns an option
+variant of it; work within the reason given, and when the reason sets a limit
+(for example "about 500k is fine"), stay within it. When the numbers show the
+user changed something on purpose (a setting, the model or the effort), do not
+propose undoing it without asking about it in the detail. When the user turns an option
 down, record it with `cca decline add "<option>" --reason "<why>"`, and drop it
 from the list.
 

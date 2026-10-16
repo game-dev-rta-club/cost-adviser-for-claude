@@ -61,9 +61,11 @@ cca simulate --tool-results 0.7       # tool results 30% shorter
 ```
 
 Add `--project NAME` for a proposal about one project, and `--days N` to change
-the window (7 days by default). The replay compares against the conversations
-as they ran, so for one step down from the current compaction length, give the
-length after the step. For other proposals, estimate the cut from the share of
+the window (7 days by default, the same days as the summary). The replay
+compares against the conversations as they ran, not against the current
+setting: it prints the length they really compacted at. If the setting changed
+during the window, use `--days` to cover only the days since; for one step down
+from the current compaction length, give the length after the step. For other proposals, estimate the cut from the share of
 cost the proposal touches and how much of it goes away: halving a command that
 takes 26% of the cost cuts about 13%.
 
