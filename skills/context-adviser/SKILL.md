@@ -9,8 +9,12 @@ Review Claude Code cost and leave the findings on the report itself, so the
 reader sees each note next to the data. The only writes are the report, the
 notes (`cca advise`) and, when the user agrees, `cca mark add`.
 
-1. **Refresh.** Run `cca build`, then `cca summary --json` (add
-   `--project NAME` when asked). If `cca` is missing, say so and stop.
+1. **Refresh.** Run `cca build`, then `cca summary` (add `--project NAME`
+   when asked). It has what the report shows: totals against the previous
+   period, each day, cost by model, tool use as a tree, sessions and recorded
+   changes. To follow one tool or group over the days, add
+   `--tool "bash chill"`. Use `--json` when you need exact numbers. If `cca`
+   is missing, say so and stop.
 2. **Read.** Follow [reading.md](references/reading.md): find at most three
    signals, each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in

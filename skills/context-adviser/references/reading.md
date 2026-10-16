@@ -32,6 +32,11 @@ cost is worked out from the conversation size before it (read from the cache)
 and the summary's length. The cache write right after it is measured. Say
 "about" when quoting it.
 
+The summary's "By day" table shows whether a change in a total is one day or a
+trend; read it before calling something a trend. `cca summary --tool NAME`
+gives one tool or group by day (cost, uses, share, per active hour) with its
+costliest examples, which is how to check a tool-level change.
+
 A ratio missing from the summary means the period had too little use (under 10
 minutes or 10 calls). Say so instead of reading it as zero.
 

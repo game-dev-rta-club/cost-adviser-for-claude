@@ -28,8 +28,10 @@ Commands:
                         points at (the report is rebuilt). --clear removes them.
                         {"title": "...", "notes": [{"title", "finding", "advice",
                          "source": "https://...", "link": {<link options>}}]}
-  summary               Print this period against the one before, top tools and
-                        sessions, and each recorded change before vs after.
+  summary               Print this period against the one before: each day, cost by
+                        model, tool use as a tree, top sessions, and each recorded
+                        change before vs after. --tool NAME adds that tool or group
+                        (e.g. "bash chill") by day, with the uses that cost most.
   collect               Write the collected data as JSON.
   mark add <date> <label>     Record the day a change went in (YYYY-MM-DD).
   mark remove <date> <label>  Remove a recorded change.
@@ -124,7 +126,7 @@ else if (command === 'build') {
   const days = count(values.days, 7, 'days'), changes = await readChanges(home);
   // Enough history for the previous window and for every recorded change.
   const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
-  const summary = summarize(data, {days, project: values.project || null, changes});
+  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool || null});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'mark') {
   const [action, date, ...words] = positionals, label = words.join(' ');

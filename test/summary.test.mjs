@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {formatSummary, summarize, totals} from '../lib/summary.mjs';
+import {toolTree, treeLines} from '../lib/tooltree.mjs';
 
 const row = (day, {calls = 100, cost = 10, activeMs = 3600000, subCalls = 0, cacheRead = 900, input = 100} = {}) => ({
   day, project: 'app', calls, cost, activeMs, ctx: calls * 1000, subCalls,
@@ -48,4 +49,33 @@ test('summary compares windows, and each change before and after', () => {
   assert.match(text, /Compacting \$0\.00 0%, 0× \(–, partly estimated\)/);
   const withCompact = totals([{...row('2026-10-16', {cost: 10}), output: 1, cacheRead: 7, compactions: 2, compactSummary: 1.5, compactRebuild: 0.5}]);
   assert.deepEqual(withCompact.split, {input: 7, output: 1, compacting: 2, compactions: 2});
+});
+
+test('the summary has the report views: each day, models, the tool tree and one tool by day', () => {
+  const data = {days: 30, daily: [
+    {...row('2026-10-15'), byModelEffort: {'opus-5-5 · high': {cost: 8, calls: 80}, 'haiku-5-5 · low': {cost: 2, calls: 20}}},
+    {...row('2026-10-16', {cost: 20}), byModelEffort: {'opus-5-5 · high': {cost: 20, calls: 100}}},
+  ], tools: [
+    {day: '2026-10-15', project: 'app', tool: 'bash chill goal show', count: 4, cost: 4},
+    {day: '2026-10-16', project: 'app', tool: 'bash chill connection reply', count: 2, cost: 2},
+    {day: '2026-10-16', project: 'app', tool: 'bash chill', count: 1, cost: 1},
+    {day: '2026-10-16', project: 'app', tool: 'bash chillout', count: 1, cost: 5},
+    {day: '2026-10-16', project: 'app', tool: 'mcp Browser.navigate', count: 3, cost: 3},
+  ], sessions: [], examples: {'2026-10-16|app|bash chill connection reply': [{at: '2026-10-16T09:00:00.000Z', session: 's', label: 'reply', result: 1, ctx: 1, cost: 1.5}]}};
+  const s = summarize(data, {days: 2, today: '2026-10-16', tool: 'bash chill'});
+  assert.deepEqual(s.byDay.map(d => [d.day, d.cost]), [['2026-10-15', 10], ['2026-10-16', 20]]);
+  assert.deepEqual(s.models.map(m => [m.name, m.cost]), [['opus-5-5 · high', 28], ['haiku-5-5 · low', 2]]);
+  const tree = Object.fromEntries(s.toolTree.map(t => [t.id, t]));
+  assert.equal(tree.bash.cost, 12);
+  assert.equal(tree['bash chill'].cost, 7);
+  assert.equal(tree['mcp Browser'].cost, 3);
+  assert.equal(tree['mcp Browser.navigate'].depth, 3);
+  // A group is matched by whole words: "bash chillout" is not in "bash chill".
+  assert.deepEqual(s.toolDetail.days.map(d => [d.day, d.cost, d.uses]), [['2026-10-15', 4, 4], ['2026-10-16', 3, 3]]);
+  assert.equal(s.toolDetail.examples[0].label, 'reply');
+  const text = formatSummary(s);
+  assert.match(text, /By day/);
+  assert.match(text, /Tool "bash chill" by day/);
+  assert.match(text, /\$7\.00 .* bash chill \[2\]/);
+  assert.equal(treeLines(toolTree([]), {}).length, 0);
 });
