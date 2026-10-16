@@ -7,6 +7,7 @@ import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {dataDir, transcriptRoot} from '../lib/paths.mjs';
 import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
+import {createViewer, DEFAULT_PORT, LINK_KEYS, reportLink, viewerRunning} from '../lib/viewer.mjs';
 
 const HELP = `Context Adviser For Claude
 
@@ -15,6 +16,13 @@ Usage: cca <command> [options]
 Commands:
   build                 Collect and write the Web view as one HTML file
                         (~/.context-adviser-for-claude/report.html). --open opens it.
+  serve                 Show the built report at http://127.0.0.1:7319 so links to it
+                        can be clicked. It only sends the file; run build to update it.
+  link [options]        Print a link that opens the report on one item and highlights it:
+                        --project --period day|week|month --date YYYY-MM-DD
+                        --metrics totals.cost,stats.ctx --tool NAME --session ID
+                        --focus totals|stats|profile|cost-type|cost-model|tools|sessions
+                        --item ROW (a row of cost-type or cost-model)
   summary               Print this period against the one before, top tools and
                         sessions, and each recorded change before vs after.
   collect               Write the collected data as JSON.
@@ -28,7 +36,8 @@ Options:
   --project <name>      summary: one project only.
   --json                summary/mark list: print JSON.
   --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
-  --open                build: open the HTML in the default browser.
+  --open                build/link: open it in the default browser.
+  --port <n>            serve/link: port (default 7319).
   --transcripts <dir>   Read transcripts here (default: $CLAUDE_CONFIG_DIR/projects or ~/.claude/projects).
 
 Recorded changes, the HTML and a cache of read transcripts are kept in
@@ -40,7 +49,8 @@ const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usa
 function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
-      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'},
+      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'},
+      period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string'}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
     }});
   } catch (error) { fail(error.message); }
@@ -78,6 +88,16 @@ if (!command || command === 'help' || values.help) console.log(HELP);
 else if (command === 'build') {
   const report = await build(count(values.days, 30, 'days'), values.out);
   if (values.open) openFile(report.file);
+} else if (command === 'serve') {
+  const port = count(values.port, DEFAULT_PORT, 'port', 0), server = createViewer(reportFile(home));
+  server.on('error', error => fail(error.code === 'EADDRINUSE' ? `port ${port} is in use (is cca serve already running?).` : error.message));
+  server.listen(port, '127.0.0.1', () => console.log(`Report: http://127.0.0.1:${server.address().port}/ (Ctrl+C to stop)`));
+} else if (command === 'link') {
+  const port = count(values.port, DEFAULT_PORT, 'port');
+  const url = reportLink(`http://127.0.0.1:${port}/`, Object.fromEntries(LINK_KEYS.map(k => [k, values[k]])));
+  console.log(url);
+  if (!await viewerRunning(port)) console.error(`cca: nothing is serving the report on port ${port}; start "cca serve" to make the link work.`);
+  if (values.open) openFile(url);
 } else if (command === 'collect') {
   const data = await collectCached({root, dataDir: home, days: count(values.days, 30, 'days')});
   const json = JSON.stringify(data) + '\n';

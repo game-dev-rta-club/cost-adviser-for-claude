@@ -6,6 +6,7 @@ import test from 'node:test';
 import {promisify} from 'node:util';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {assistant, tempDir, writeTranscript} from './helpers.mjs';
+import {createViewer, reportLink} from '../lib/viewer.mjs';
 
 const run = promisify(execFile), cli = new URL('../bin/cca.mjs', import.meta.url).pathname;
 const cca = (args, env) => run(process.execPath, [cli, ...args], {env: {...process.env, ...env}});
@@ -67,4 +68,24 @@ test('cli: build writes one HTML with the data, reusing unchanged transcripts', 
   // A broken cache only costs a full read.
   await fs.writeFile(path.join(home, 'cache.json'), '{broken');
   assert.match((await cca(['build', '--transcripts', root], env)).stdout, /read 1 changed files, reused 0/);
+});
+
+test('links describe one view, and the viewer only sends the built report', async () => {
+  assert.equal(reportLink('http://127.0.0.1:7319/', {}), 'http://127.0.0.1:7319/');
+  assert.equal(reportLink('http://h/', {project: 'my app', tool: '(text only)', focus: 'tools', other: 'x'}),
+    'http://h/#project=my%20app&tool=%28text%20only%29&focus=tools');
+  const home = await tempDir(), file = path.join(home, 'report.html');
+  const server = createViewer(file);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${server.address().port}/`;
+  try {
+    assert.equal((await fetch(url)).status, 404);
+    await fs.writeFile(file, '<title>Context Adviser For Claude</title>');
+    const page = await fetch(url);
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /Context Adviser/);
+    assert.equal((await fetch(url + 'report.html')).status, 404);
+    assert.equal((await fetch(url + '../cache.json')).status, 404);
+    assert.equal((await fetch(url, {method: 'POST'})).status, 405);
+  } finally { server.close(); }
 });

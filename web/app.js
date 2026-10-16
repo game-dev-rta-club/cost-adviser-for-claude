@@ -88,8 +88,8 @@ function renderChart(){const ps=periods();if(!ps.some(p=>p.key===state.key))stat
   document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}</button>`).join('');}}
 function breakdown(title,entries,{calls=true,sorted=true,rows=null}={}){const total=entries.reduce((s,e)=>s+e.cost,0);if(!total)return '';
  entries=entries.filter(e=>e.cost>0);if(sorted)entries.sort((a,b)=>b.cost-a.cost);
- return `<div class="breakdown"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div title="${esc(e.name)} ${usd(e.cost)}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"></div>`).join('')}</div>
-  <table><tbody>${(rows||entries).map((e,i)=>`<tr class="${e.kind||''}"><td>${e.kind==='group'?'':`<i style="background:${e.color||PALETTE[i%PALETTE.length]}"></i>`}${esc(e.name)}</td><td class="num">${usd(e.cost)}</td><td class="num">${Math.round(e.cost/total*100)}%</td><td class="num">${calls?`${num(e.calls)} calls`:`${tok(e.tokens)} tokens`}</td></tr>`).join('')}</tbody></table></div>`;}
+ return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div title="${esc(e.name)} ${usd(e.cost)}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"></div>`).join('')}</div>
+  <table><tbody>${(rows||entries).map((e,i)=>`<tr class="${e.kind||''}" data-name="${esc(e.name)}"><td>${e.kind==='group'?'':`<i style="background:${e.color||PALETTE[i%PALETTE.length]}"></i>`}${esc(e.name)}</td><td class="num">${usd(e.cost)}</td><td class="num">${Math.round(e.cost/total*100)}%</td><td class="num">${calls?`${num(e.calls)} calls`:`${tok(e.tokens)} tokens`}</td></tr>`).join('')}</tbody></table></div>`;}
 function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeriod(r)));
  $('#profile-title').innerHTML=`Profile <small>${state.key?periodLabel(state.key,state.period):''} · ${esc(state.project==='all'?'All projects':state.project)}</small>`;
  $('#cost').textContent=usd(a.cost);
@@ -116,7 +116,7 @@ function renderTools(){const rows=toolRows(),total=rows.reduce((s,t)=>s+t.cost,0
 function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>inProject(s)&&inPeriod(s))){const t=m.get(s.session)||{...s,calls:0,cost:0,activeMs:0};t.calls+=s.calls;t.cost+=s.cost;t.activeMs+=s.activeMs;t.first=Math.min(t.first,s.first);t.last=Math.max(t.last,s.last);m.set(s.session,t);}
  const rows=[...m.values()].sort((a,b)=>b[state.ssort]-a[state.ssort]),shown=rows.slice(0,state.sessionLimit);
  $('#sessions-note').textContent=`${rows.length} sessions`;
- $('#sessions').innerHTML=shown.map(s=>`<tr><td>${esc(s.title)}${s.sub?' <small>(subagent)</small>':''}<br><small style="color:var(--muted)">${esc(s.session.slice(0,8))}</small></td><td>${esc(s.project)}</td><td class="num">${num(s.calls)}</td><td class="num">${usd(s.cost)}</td><td class="num">${hrs(s.activeMs)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No data.</td></tr>';
+ $('#sessions').innerHTML=shown.map(s=>`<tr data-session="${esc(s.session)}"><td>${esc(s.title)}${s.sub?' <small>(subagent)</small>':''}<br><small style="color:var(--muted)">${esc(s.session.slice(0,8))}</small></td><td>${esc(s.project)}</td><td class="num">${num(s.calls)}</td><td class="num">${usd(s.cost)}</td><td class="num">${hrs(s.activeMs)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No data.</td></tr>';
  moreButtons('#sessions-more',shown.length,rows.length,5);}
 function render(){renderProjects();renderChart();renderProfile();renderTools();renderSessions();}
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
@@ -132,5 +132,33 @@ document.addEventListener('click',e=>{const t=e.target;
  const row=t.closest('tr.tool');if(row){state.tool=state.tool===row.dataset.tool?null:row.dataset.tool;renderTools();}
 });
 document.addEventListener('input',e=>{if(e.target.id!=='tool-filter')return;state.filter=e.target.value.trim();state.toolLimit=10;renderTools();});
+// A link can open the page on one item and highlight it, e.g.
+// #project=app&period=day&date=2026-10-14&metrics=stats.ctx&tool=bash%20cat&focus=tools
+// focus: totals, stats, profile, cost-type, cost-model, tools, sessions; item: a row in a cost breakdown.
+const FOCUS={totals:'#chart-totals',stats:'#chart-stats',profile:'#profile','cost-type':'[data-breakdown="Cost by type"]','cost-model':'[data-breakdown="Cost by model"]',tools:'#tools-section',sessions:'#sessions-section'};
+function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![...q.keys()].length)return;
+ document.querySelectorAll('.focus-glow').forEach(el=>el.classList.remove('focus-glow'));
+ // Each link describes the whole view, so anything it leaves out goes back to the default.
+ state.project=q.get('project')||'all';state.period=['day','week','month'].includes(q.get('period'))?q.get('period'):'day';
+ document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===state.period));
+ state.key=q.has('date')?periodKey(q.get('date'),state.period):null;resetLimits();state.filter='';$('#tool-filter').value='';
+ const metrics=(q.get('metrics')||'').split(',').map(m=>m.split('.')).filter(([c,m])=>CHARTS[c]?.[m]);
+ for(const [c,m] of metrics)state.shown[c].add(m);
+ if(q.has('tool')){state.filter='';$('#tool-filter').value='';state.tool=q.get('tool');const i=toolRows().findIndex(t=>t.tool===state.tool);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
+ render();
+ if(q.has('session')){const id=q.get('session');const all=[...document.querySelectorAll('#sessions tr')];if(!all.some(r=>r.dataset.session?.startsWith(id))){state.sessionLimit=1000;renderSessions();}}
+ const targets=[];
+ for(const [c,m] of metrics){targets.push($(`.metrics [data-chart="${c}"][data-metric="${m}"]`));showGrid(c,m);}
+ if(q.has('date'))targets.push(...document.querySelectorAll(`.group[data-key="${state.key}"] .band`));
+ if(q.has('tool'))targets.push(...[...document.querySelectorAll('#tools tr.tool')].filter(r=>r.dataset.tool===state.tool));
+ if(q.has('session'))targets.push([...document.querySelectorAll('#sessions tr')].find(r=>r.dataset.session?.startsWith(q.get('session'))));
+ const focus=FOCUS[q.get('focus')]&&$(FOCUS[q.get('focus')]);
+ if(focus&&q.has('item'))targets.push([...focus.querySelectorAll('tr[data-name]')].find(r=>r.dataset.name===q.get('item')));
+ else if(focus)targets.push(focus);
+ // Wide charts scroll sideways; bring the linked period into view.
+ if(q.has('date'))for(const band of document.querySelectorAll(`.group[data-key="${state.key}"] .band`)){const wrap=band.closest('.chart-wrap'),r=band.getBoundingClientRect(),w=wrap.getBoundingClientRect();wrap.scrollLeft+=r.left+r.width/2-(w.left+w.width/2);}
+ const found=targets.filter(Boolean);found.forEach(el=>el.classList.add('focus-glow'));
+ (focus||found.find(el=>!el.closest('.metrics,svg'))||found[0])?.scrollIntoView({block:'center'});}
+window.addEventListener('hashchange',applyLink);
 $('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
-render();
+render();applyLink();
