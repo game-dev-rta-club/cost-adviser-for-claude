@@ -11,7 +11,10 @@ Rate from what you see, using the signs below, not from a general impression,
 so the same proposal gets the same stars each time.
 [catalog.md](catalog.md) has sample proposals already rated this way.
 
-## Ease of use (`ease`)
+## Upkeep (`ease`)
+
+How little the proposal needs to be looked after once it is in: the less
+upkeep, the more stars.
 
 | Stars | When | Signs |
 |---|---|---|
