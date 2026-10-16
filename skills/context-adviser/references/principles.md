@@ -1,7 +1,7 @@
 # Principles
 
 Basic mechanics that stay true across versions. Each has its source so a new
-agent can check it. A principle explains why; the options in a note turn it
+agent can check it. A principle explains why; the proposals turn it
 into concrete actions, each checked against the current docs.
 
 ## P1 Every call re-reads the whole conversation

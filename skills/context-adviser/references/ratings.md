@@ -1,9 +1,10 @@
 # Rating an option
 
-Rate every option A, B or C on each axis below, in the note's `ratings`
+Rate every proposal A, B or C on each axis below, in its `ratings`
 (`ease`, `safety`, `savings`). **Do not propose an option rated C on any
-axis.** If no option is left, say so in the note's advice instead of offering
-weak ones.
+axis.** If nothing good is left for a finding, leave it out instead of offering
+weak options. The report shows the ratings as stars: two for B on every axis,
+one more for each A (A on all three is five stars).
 
 | Axis | A | B | C |
 |---|---|---|---|

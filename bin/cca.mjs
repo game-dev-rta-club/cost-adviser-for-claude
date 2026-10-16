@@ -9,6 +9,7 @@ import {dataDir, transcriptRoot} from '../lib/paths.mjs';
 import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
 import {addDeclined, readDeclined, removeDeclined} from '../lib/declined.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
+import {localDay} from '../lib/aggregate.mjs';
 import {createViewer, DEFAULT_PORT, LINK_KEYS, reportLink, viewerRunning} from '../lib/viewer.mjs';
 
 const HELP = `Context Adviser For Claude
@@ -25,9 +26,11 @@ Commands:
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
                         --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)
-  advise <file.json>    Show an agent's notes on the report, each next to the item it
-                        points at (the report is rebuilt). --clear removes them.
-                        {"title": "...", "notes": [{"title", "finding", "advice",
+  advise <file.json>    Replace the improvement proposals listed under the projects
+                        (the report is rebuilt). A proposal keeps its dates while
+                        its content stays the same. --clear removes them.
+                        {"proposals": [{"id", "action", "detail", "news", "project",
+                         "ratings": {"ease","safety","savings": "A"|"B"},
                          "source": "https://...", "link": {<link options>}}]}
   summary               Print this period against the one before: each day, cost by
                         model, tool use as a tree, top sessions, and each recorded
@@ -113,16 +116,17 @@ else if (command === 'build') {
   if (values.open) openFile(url);
 } else if (command === 'advise') {
   try {
-    if (values.clear) { await clearAdvice(home); console.log('Notes removed.'); }
+    if (values.clear) { await clearAdvice(home); console.log('Proposals removed.'); }
     else {
-      if (!positionals[0]) fail('give the notes file: cca advise notes.json');
-      const advice = checkAdvice(JSON.parse(await fs.readFile(positionals[0], 'utf8')));
+      if (!positionals[0]) fail('give the proposals file: cca advise proposals.json');
+      const {advice, changes} = checkAdvice(JSON.parse(await fs.readFile(positionals[0], 'utf8')), await readAdvice(home), localDay(Date.now()));
       await saveAdvice(home, advice);
-      console.log(`Saved ${advice.notes.length} notes.`);
+      console.log(`Saved ${advice.proposals.length} proposals.`);
+      for (const [k, ids] of Object.entries(changes)) if (ids.length) console.log(`  ${k}: ${ids.join(', ')}`);
     }
   } catch (error) { fail(error.message); }
   await build(30);
-  if (!values.clear) console.log(`Open: http://127.0.0.1:${DEFAULT_PORT}/#note=1${await viewerRunning(DEFAULT_PORT) ? '' : '  (start "cca serve" first)'}`);
+  if (!values.clear) console.log(`Open: http://127.0.0.1:${DEFAULT_PORT}/${await viewerRunning(DEFAULT_PORT) ? '' : '  (start "cca serve" first)'}`);
 } else if (command === 'collect') {
   const data = await collectCached({root, dataDir: home, days: count(values.days, 30, 'days')});
   const json = JSON.stringify(data) + '\n';

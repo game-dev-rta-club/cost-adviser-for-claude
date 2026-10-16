@@ -21,7 +21,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),openProposals:new Set(),allProjects:false,shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -52,10 +52,14 @@ function sumDaily(rows){const a={calls:0,cost:0,cacheRead:0,cacheWrite:0,input:0
   for(const f of ['byModel','byEffort','byModelEffort'])for(const [n,v] of Object.entries(r[f]||{})){const t=a[f][n]||(a[f][n]={cost:0,calls:0});t.cost+=v.cost;t.calls+=v.calls;}}return a;}
 function periods(){const keys=new Map();for(const r of D.daily.filter(inProject)){const k=periodKey(r.day,state.period);if(!keys.has(k))keys.set(k,[]);keys.get(k).push(r);}
  return [...keys.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,rows])=>({key:k,...sumDaily(rows)}));}
-// Projects are listed by cost, without the running totals.
+// Projects are listed by cost, without the running totals. Only the first ones
+// show until asked, so the proposals below stay in view; the chosen one always shows.
+const PROJECT_LIMIT=10;
 function renderProjects(){const total={};for(const r of D.daily)total[r.project]=(total[r.project]||0)+r.cost;
  const list=Object.keys(total).sort((a,b)=>total[b]-total[a]);
- $('#projects').innerHTML=[['all','All Project'],...list.map(p=>[p,p])].map(([id,name])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span></button>`).join('');}
+ const shown=state.allProjects?list:list.filter((p,i)=>i<PROJECT_LIMIT||p===state.project);
+ $('#projects').innerHTML=[['all','All Project'],...shown.map(p=>[p,p])].map(([id,name])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span></button>`).join('')
+  +(list.length>PROJECT_LIMIT?`<button type="button" class="indent more-projects" data-all-projects>${state.allProjects?'Show fewer':`Show all (${list.length-shown.length} more)`}</button>`:'');}
 // A time series per chart: each period is a group of bars, one per shown metric,
 // each on its own scale. The right axis shows one metric's scale at a time.
 const nice=v=>{const e=10**Math.floor(Math.log10(v)),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;};
@@ -179,9 +183,11 @@ function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>
  $('#sessions-note').textContent=`${rows.length} sessions`;
  $('#sessions').innerHTML=shown.map(s=>`<tr data-session="${esc(s.session)}"><td>${esc(s.title)}${s.sub?' <small>(subagent)</small>':''}<br><small style="color:var(--muted)">${esc(s.session.slice(0,8))}</small></td><td>${esc(s.project)}</td><td class="num">${num(s.calls)}</td><td class="num">${usd(s.cost)}</td><td class="num">${hrs(s.activeMs)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No data.</td></tr>';
  moreButtons('#sessions-more',shown.length,rows.length,5);}
-function render(){renderProjects();renderChart();renderProfile();renderTools();renderSessions();}
+function render(){renderProjects();renderProposals();renderChart();renderProfile();renderTools();renderSessions();}
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
 document.addEventListener('click',e=>{const t=e.target;
+ const pl=t.closest('[data-proposal-link]');if(pl){const p=PROPOSALS.find(x=>x.id===pl.dataset.proposalLink);history.replaceState(null,'',`#${new URLSearchParams(p.link)}`.replace(/\+/g,'%20'));applyLink();return;}
+ const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
  const per=t.closest('[data-p]');if(per){state.period=per.dataset.p;state.key=null;resetLimits();document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b===per));render();return;}
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
@@ -229,32 +235,28 @@ function applyView(q){
  const chart=metrics.length?$(`#chart-${metrics[0][0]}`).closest('.chart-box').previousElementSibling:null;
  return focus&&!q.has('item')?focus:found.find(el=>!el.closest('.metrics,svg'))||chart||found[0]||null;}
 
-// Notes an agent wrote about this data (cca advise). Each points at a view.
-const NOTES=Array.isArray(D.advice?.notes)?D.advice.notes:[];
-// An option's self-rating: A is best on every axis.
+// Improvement proposals an agent keeps (cca advise), listed under the projects.
+const PROPOSALS=Array.isArray(D.advice?.proposals)?D.advice.proposals:[];
 const RATING_NAMES={ease:'Ease of use',safety:'Few side effects',savings:'Savings'};
-const ratingTags=r=>{const keys=Object.keys(RATING_NAMES).filter(k=>r?.[k]);return keys.length?`<div class="ratings">${keys.map(k=>`<span class="rank-${r[k]}">${RATING_NAMES[k]} <b>${r[k]}</b></span>`).join('')}</div>`:'';};
-const callout=document.createElement('aside');callout.className='note-callout';callout.hidden=true;document.body.append(callout);
-let activeNote=0;
-// The list shows only while a note is open (#note=N), so the plain page stays clean.
-function renderNotes(){const box=$('#notes');if(!NOTES.length||!activeNote){box.hidden=true;return;}box.hidden=false;
- box.innerHTML=`<h2>Notes <small>${esc(D.advice.title||'')}${D.advice.createdAt?` · ${new Date(D.advice.createdAt).toLocaleString('en-US')}`:''}</small></h2><ol>${NOTES.map((n,i)=>`<li><a href="#note=${i+1}" class="${activeNote===i+1?'is-active':''}"><b class="note-no">${i+1}</b><span><strong>${esc(n.title)}</strong><small>${esc(n.finding||'')}</small></span></a></li>`).join('')}</ol>`;}
-// The card stays in a corner; the item it is about is scrolled into the upper
-// part of the window, so the card does not cover it.
-function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scrollTo({top:Math.max(0,r.top+scrollY-Math.max(80,innerHeight*.18))});}
-function showNote(n){const note=NOTES[n-1];if(!note)return;activeNote=n;
- const anchor=applyView(new URLSearchParams(note.link||{}));renderNotes();
- callout.innerHTML=`<header><b class="note-no">${n}</b><strong>${esc(note.title)}</strong><button type="button" data-note-close aria-label="Close note">✕</button></header>
-  ${note.finding?`<p>${esc(note.finding)}</p>`:''}${note.advice||note.options?.length?`<div class="note-advice"><span>Recommended</span>${note.advice?`<p>${esc(note.advice)}</p>`:''}${(note.options||[]).map((o,i)=>`<div class="note-option"><b>${String.fromCharCode(65+i)}</b><div><strong>${esc(o.title)}</strong>${o.action?`<div class="option-action"><span>Do this</span>${esc(o.action)}</div>`:''}${o.detail?`<p>${esc(o.detail)}</p>`:''}${/^https?:\/\//.test(o.source||'')?`<a class="option-source" href="${esc(o.source)}" target="_blank" rel="noopener">${esc(o.source)}</a>`:''}${ratingTags(o.ratings)}</div></div>`).join('')}</div>`:''}
-  ${/^https?:\/\//.test(note.source||'')?`<p class="note-source"><span>Source</span><a href="${esc(note.source)}" target="_blank" rel="noopener">${esc(note.source)}</a></p>`:''}
-  <footer>${n>1?`<a href="#note=${n-1}">← ${n-1}</a>`:'<span></span>'}<span>${n} / ${NOTES.length}</span>${n<NOTES.length?`<a href="#note=${n+1}">${n+1} →</a>`:'<span></span>'}</footer>`;
- callout.hidden=false;bringIntoView(anchor||$('#notes'));}
-function hideNote(){callout.hidden=true;activeNote=0;renderNotes();}
-callout.addEventListener('click',e=>{if(e.target.closest('[data-note-close]')){history.replaceState(null,'',location.pathname+location.search);hideNote();}});
-function applyLink(){const q=new URLSearchParams(location.hash.slice(1));
- if(q.has('note'))return showNote(Number(q.get('note')));
- hideNote();if(![...q.keys()].length)return;
- bringIntoView(applyView(q));}
+const ratingTags=r=>`<div class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<span class="rank-${r[k]}">${RATING_NAMES[k]} <b>${r[k]}</b></span>`).join('')}</div>`;
+const starText=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+// The latest run's changes are marked, so a reader sees what moved since last time.
+const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');
+function renderProposals(){const box=$('#proposals');
+ // Details the reader opened stay open when the list is drawn again.
+ for(const a of box.querySelectorAll('[data-proposal]'))a.querySelector('details').open?state.openProposals.add(a.dataset.proposal):state.openProposals.delete(a.dataset.proposal);
+ const list=PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
+ box.innerHTML=list.length?`<h2>Improvements</h2>${list.map(p=>`<article class="proposal" data-proposal="${esc(p.id)}">
+  <div class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:''}</div>
+  <strong>${esc(p.action)}</strong>${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
+  ${p.news?`<p class="proposal-news">${esc(p.news)}</p>`:''}
+  <details${state.openProposals.has(p.id)?' open':''}><summary>Details</summary>${p.detail?`<p>${esc(p.detail)}</p>`:''}${ratingTags(p.ratings)}
+   ${/^https?:\/\//.test(p.source||'')?`<a class="option-source" href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.source)}</a>`:''}
+   ${Object.keys(p.link||{}).length?`<button type="button" class="link" data-proposal-link="${esc(p.id)}">Show in report</button>`:''}
+   <small class="proposal-dates">Since ${md(p.since)}${p.updated!==p.since?` · updated ${md(p.updated)}`:''}</small></details></article>`).join('')}`:'';}
+// The item a proposal is about is scrolled into the upper part of the window.
+function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scrollTo({top:Math.max(0,r.top+scrollY-Math.max(80,innerHeight*.18)),behavior:'smooth'});}
+function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![...q.keys()].length)return;bringIntoView(applyView(q));}
 window.addEventListener('hashchange',applyLink);
 $('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
-render();renderNotes();applyLink();
+render();applyLink();
