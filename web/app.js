@@ -62,7 +62,7 @@ const nice=v=>{const e=10**Math.floor(Math.log10(v)),f=v/e;return (f<=1?1:f<=2?2
 // marks that period; the name runs right, or left near the right edge.
 function changeTags(ps,width){const stack={};
  return CHANGES.map(c=>{const i=ps.findIndex(p=>p.key===periodKey(c.date,state.period));if(i<0)return '';const n=stack[i]=(stack[i]||0)+1;
-  return `<g class="change-tag" data-cx="${(i+.5)*width}" data-n="${n}" data-label="${esc(c.label)}"><rect height="18" rx="9"/><text>⭐ ${esc(c.label)}</text><title>${esc(c.date)} ${esc(c.label)}</title></g>`;}).join('');}
+  return `<g class="change-tag" data-cx="${(i+.5)*width}" data-n="${n}" data-label="${esc(c.label)}" data-tip="⭐ ${esc(c.date)} ${esc(c.label)}"><rect height="18" rx="9"/><text>⭐ ${esc(c.label)}</text></g>`;}).join('');}
 // Size each tag to its text and keep it above every bar it covers.
 function fitTags(svg,plot,tops,width){for(const g of svg.querySelectorAll('.change-tag')){const t=g.querySelector('text'),r=g.querySelector('rect'),w=t.getComputedTextLength()+16,cx=+g.dataset.cx,pad=13;
  const right=cx-pad+w<=plot,x0=right?cx-pad:cx+pad-w;
@@ -82,9 +82,21 @@ function drawChart(name,metrics,shown,ps){const id=`#chart-${name}`,ms=Object.ke
 const tops=[];
  svg.innerHTML=`<line x1="0" x2="${plot}" y1="${base+.5}" y2="${base+.5}" stroke="var(--line)"/>`+ms.map(k=>`<g class="grid-set" data-axis="${k}">${[1,2,3,4].map(i=>`<line class="grid" x1="0" x2="${plot}" y1="${y(i/4)+.5}" y2="${y(i/4)+.5}" stroke="${metrics[k].color}"/>`).join('')}</g>`).join('')+ps.map((p,i)=>{const x0=i*gw*scale,cx=x0+gw*scale/2;let x=cx-groupW/2;
   tops[i]=base;const bars=ok(p)?ms.map((k,j)=>{const m=metrics[k],v=m.v(p),bh=Math.max(1,v/max[k]*(base-top)),bx=x;x+=widths[j]+gap;tops[i]=Math.min(tops[i],base-bh);
-   return `<rect x="${bx}" y="${base-bh}" width="${widths[j]}" height="${bh}" rx="${widths[j]>10?3:1.5}" fill="${m.color}"><title>${periodLabel(p.key,state.period)} ${m.name} ${m.f(v)}</title></rect>`;}).join('')
+   return `<rect x="${bx}" y="${base-bh}" width="${widths[j]}" height="${bh}" rx="${widths[j]>10?3:1.5}" fill="${m.color}" data-tip="${periodLabel(p.key,state.period)}|${m.name}|${m.f(v)}" data-color="${m.color}"></rect>`;}).join('')
    :'';
   return `<g class="group ${p.key===state.key?'is-sel':''}" data-key="${p.key}"><rect class="band" x="${x0+2}" y="0" width="${gw*scale-4}" height="${h}" rx="6"/>${bars}<text x="${cx}" y="${h-7}" text-anchor="middle">${periodLabel(p.key,state.period)}</text></g>`;}).join('')+changeTags(ps,gw*scale);fitTags(svg,plot,tops,gw*scale);}
+// A tooltip that shows at once (the browser's own waits about a second):
+// "where|what|value", with the item's color as a swatch.
+const tip=document.createElement('div');tip.className='tip';tip.hidden=true;document.body.append(tip);
+function placeTip(e){const pad=14,w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+pad,y=e.clientY-h-pad;
+ if(x+w>innerWidth-8)x=e.clientX-w-pad;if(y<8)y=e.clientY+pad;tip.style.transform=`translate(${Math.max(8,x)}px,${y}px)`;}
+document.addEventListener('pointerover',e=>{const el=e.target.closest?.('[data-tip]');if(!el){tip.hidden=true;return;}
+ const [where,what,value]=el.dataset.tip.split('|');
+ tip.innerHTML=value===undefined?`<span>${esc(where)}</span>`:`<small>${esc(where)}</small><span>${el.dataset.color?`<i style="background:${esc(el.dataset.color)}"></i>`:''}${esc(what)}</span><b>${esc(value)}</b>`;
+ tip.hidden=false;placeTip(e);});
+document.addEventListener('pointermove',e=>{if(!tip.hidden)placeTip(e);});
+document.addEventListener('pointerleave',()=>{tip.hidden=true;});
+addEventListener('scroll',()=>{tip.hidden=true;},{passive:true});
 // Hovering a metric button or its axis draws that metric's grid lines.
 function showGrid(chart,metric){for(const svg of [$(`#chart-${chart}`),$(`#chart-${chart}-axis`)]){if(!svg)continue;svg.classList.toggle('show-grid',!!metric);
   for(const g of svg.querySelectorAll('[data-axis]'))g.classList.toggle('is-on',g.dataset.axis===metric);}}
@@ -102,7 +114,7 @@ function fitLabels(){for(const span of document.querySelectorAll('.stack span'))
 addEventListener('resize',()=>fitLabels());
 function breakdown(title,entries,{calls=true,sorted=true,rows=null}={}){const total=entries.reduce((s,e)=>s+e.cost,0);if(!total)return '';
  entries=entries.filter(e=>e.cost>0);if(sorted)entries.sort((a,b)=>b.cost-a.cost);
- return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div title="${esc(e.name)} ${usd(e.cost)}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"><span>${esc(e.label||e.name)}</span></div>`).join('')}</div>
+ return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div data-tip="${esc(title)}|${esc(e.name)}|${usd(e.cost)}" data-color="${e.color||PALETTE[i%PALETTE.length]}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"><span>${esc(e.label||e.name)}</span></div>`).join('')}</div>
   <table><tbody>${(rows||entries).map((e,i)=>`<tr class="${e.kind||''}" data-name="${esc(e.name)}"><td>${e.kind==='group'?'':`<i style="background:${e.color||PALETTE[i%PALETTE.length]}"></i>`}${esc(e.name)}</td><td class="num">${usd(e.cost)}</td><td class="num">${Math.round(e.cost/total*100)}%</td><td class="num">${e.note??(calls?`${num(e.calls)} calls`:`${tok(e.tokens)} tokens`)}</td></tr>`).join('')}</tbody></table></div>`;}
 function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeriod(r)));
  $('#profile-title').innerHTML=`Profile <small>${state.key?periodLabel(state.key,state.period):''} · ${esc(state.project==='all'?'All projects':state.project)}</small>`;
