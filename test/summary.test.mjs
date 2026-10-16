@@ -43,5 +43,6 @@ test('summary compares windows, and each change before and after', () => {
   const text = formatSummary(s);
   assert.match(text, /Cost \$20\.00 \(-50%\)/);
   assert.match(text, /Subagent calls 20% \(\+20\.0pt\)/);
-  assert.match(text, /2026-10-14 Use subagents — 2 days each side/);
+  assert.match(text, /2026-10-14 Use subagents — 2 days each side; before: 200 calls, 2\.0h active/);
+  assert.match(text, /Previous period: \$40\.00, 200 calls, 2\.0h active\n/);
 });
