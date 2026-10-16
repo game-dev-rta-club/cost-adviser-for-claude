@@ -21,7 +21,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,showLow:false,shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -187,6 +187,7 @@ function render(){renderProjects();renderProposals();renderChart();renderProfile
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
 document.addEventListener('click',e=>{const t=e.target;
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
+ const sl=t.closest('[data-show-low]');if(sl){state.showLow=!state.showLow;renderProposals();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
  const per=t.closest('[data-p]');if(per){state.period=per.dataset.p;state.key=null;resetLimits();document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b===per));render();return;}
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
@@ -237,21 +238,23 @@ function applyView(q){
 // Improvement proposals an agent keeps (cca advise), listed under the projects.
 const PROPOSALS=Array.isArray(D.advice?.proposals)?D.advice.proposals:[];
 const starText=n=>'★'.repeat(n)+'☆'.repeat(5-n);
-const RATING_NAMES={ease:'Ease of use',safety:'Few side effects',savings:'Savings'};
+const RATING_NAMES={ease:'Ease of use',safety:'Quality kept',savings:'Savings'};
 // Each axis has its own stars; the overall rating is their rounded average.
 const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<div><dt>${RATING_NAMES[k]}</dt><dd class="stars" role="img" aria-label="${r[k]} of 5">${starText(r[k])}</dd></div>`).join('')}</dl>`;
 // The latest run's changes are marked, so a reader sees what moved since last time.
 const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');
 const mark=p=>p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:'';
+// Proposals under 3 stars (usually ones that cost quality) stay folded until asked for.
+const LOW=3;
 const visibleProposals=()=>PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
 let activeProposal=null;
 // Each card opens its details in a card at the lower right (#proposal=ID), so
 // the list stays short and the view it is about is highlighted beside it.
-function renderProposals(){const list=visibleProposals();
- $('#proposals').innerHTML=list.length?`<h2>Improvements</h2>${list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
+function renderProposals(){const all=visibleProposals(),low=all.filter(p=>p.stars<LOW&&p.id!==activeProposal).length,list=state.showLow?all:all.filter(p=>p.stars>=LOW||p.id===activeProposal);
+ $('#proposals').innerHTML=all.length?`<h2>Improvements</h2>${list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
   <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${mark(p)}</span>
   <strong>${esc(p.action)}</strong>${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
-  ${p.news?`<span class="proposal-news">${esc(p.news)}</span>`:''}<span class="proposal-more">Details ›</span></a>`).join('')}`:'';}
+  ${p.news?`<span class="proposal-news">${esc(p.news)}</span>`:''}<span class="proposal-more">Details ›</span></a>`).join('')}${low?`<button type="button" class="more-proposals" data-show-low>${state.showLow?'Hide ★1–2':`Show ★1–2 (${low})`}</button>`:''}`:'';}
 const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
 // The card stays in a corner; the item it is about is scrolled into the upper
 // part of the window, so the card does not cover it.

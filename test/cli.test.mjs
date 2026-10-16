@@ -97,7 +97,6 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   assert.throws(() => checkAdvice({}), /proposals/);
   assert.throws(() => one({id: 'Bad Id'}), /id is required/);
   assert.throws(() => one({action: ''}), /action is required/);
-  assert.throws(() => one({ratings: {ease: 5, safety: 2, savings: 5}}), /2 stars on safety; leave it out/);
   assert.throws(() => one({ratings: {ease: 6, safety: 4, savings: 4}}), /must be 1 to 5 stars/);
   assert.throws(() => one({ratings: {ease: 'A', safety: 4, savings: 4}}), /must be 1 to 5 stars/);
   assert.throws(() => one({ratings: {...AB, cost: 4}}), /not a rating/);
@@ -105,10 +104,12 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   assert.throws(() => one({link: {evil: '1'}}), /not a link option/);
   assert.throws(() => checkAdvice({proposals: [{id: 'x', action: 'a', ratings: AB}, {id: 'x', action: 'b', ratings: AB}]}), /used twice/);
   const first = one({action: ' Use Sonnet ', detail: 'd', source: 'https://example.com', link: {tool: 'bash cat', date: ''}});
-  assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4, since: '2026-10-16', updated: '2026-10-16'});
-  // The overall rating is the rounded average.
+  assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 3, since: '2026-10-16', updated: '2026-10-16'});
+  // The overall rating is the rounded average, never above the quality stars.
   assert.equal(one({ratings: {ease: 3, safety: 3, savings: 4}}).advice.proposals[0].stars, 3);
   assert.equal(one({ratings: {ease: 5, safety: 5, savings: 4}}).advice.proposals[0].stars, 5);
+  assert.equal(one({ratings: {ease: 5, safety: 2, savings: 5}}).advice.proposals[0].stars, 2);
+  assert.equal(one({ratings: {ease: 5, safety: 4, savings: 5}}).advice.proposals[0].stars, 4);
   // A later run: the same content keeps its dates, a change is marked, a gone id is listed.
   const prev = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', ratings: AB}, {id: 'gone', action: 'c', ratings: AB}]}, null, '2026-10-15').advice;
   const next = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', news: '82% → 80%', ratings: AB}, {id: 'new', action: 'd', ratings: AB}]}, prev, '2026-10-16');
@@ -123,7 +124,7 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
   assert.match(html, /"advice":\{"updatedAt":/);
   assert.equal(html.match(/<\/script>/g).length, 2);
-  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★★★★☆/);
+  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★★★☆☆/);
   await fs.writeFile(file, '{"proposals": [{}]}');
   await assert.rejects(cca(['advise', file, '--transcripts', root], env), e => e.code === 2 && /id is required/.test(e.stderr));
   await cca(['advise', '--clear', '--transcripts', root], env);

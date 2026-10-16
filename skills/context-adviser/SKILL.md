@@ -57,7 +57,10 @@ docs page and check the name and accepted values; put that page in `source`.
 Never invent a setting. A value is a starting point: say what to watch to tune
 it. Rate each proposal 1–5 stars on each axis with
 [ratings.md](references/ratings.md); the overall stars are their rounded
-average, and a proposal with 2 stars or fewer on any axis is left out.
+average, capped by the quality stars. Look first for waste: cost that buys
+nothing (repeated checks, oversized tool output, cache rebuilds, text the
+user's own hooks and skills add to every call), which keeps quality whole.
+Proposals that trade quality for cost are still listed, rated low.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
 session, focus, item); reading.md says which fits each signal. **The numbers in
