@@ -20,7 +20,7 @@ changed since the last run are read again.
 
 | Command | What it does |
 |---|---|
-| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals, the cost split (input, output, compacting) and stats over time, the cost profile, tools and sessions. |
+| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time (including compacting per active hour), the cost profile, tools and sessions. |
 | `cca summary [--days 7] [--project NAME] [--json]` | This period against the one before, top tools and sessions, and each recorded change before vs after. For a person or an agent. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |

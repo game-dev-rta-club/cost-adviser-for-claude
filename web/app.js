@@ -11,7 +11,7 @@ const md=d=>{const [,m,dd]=d.split('-');return `${+m}/${+dd}`;};
 function periodKey(day,p){if(p==='day')return day;if(p==='month')return day.slice(0,7);const d=new Date(day+'T00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 const periodLabel=(k,p)=>p==='day'?md(k):p==='week'?`Wk ${md(k)}`:new Date(k+'-01T00:00').toLocaleString('en-US',{month:'short'});
 // Chart on/off is kept per browser so the page reopens the same way.
-const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],split:['input','output','compact'],stats:['perHour','perCall','subShare']};
+const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCall','subShare']};
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
@@ -21,14 +21,12 @@ const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
 // Recorded changes come with the data when the page is built.
 const CHANGES=Array.isArray(D.changes)?D.changes:[];
-// Totals show how much Claude was used; Cost split shows where it went
-// (input, output, compacting); Stats show efficiency. The bar that matters
-// most in each chart is drawn wide.
-const inputCost=a=>a.cacheRead+a.cacheWrite+a.input,compactCost=a=>a.compactSummary+a.compactRebuild;
+// Totals show how much Claude was used; Stats show efficiency. The bar that
+// matters most in each chart is drawn wide.
+const compactCost=a=>a.compactSummary+a.compactRebuild;
 const CHARTS={
  totals:{cost:{name:'Cost',color:'#ea5f2c',wide:true,v:a=>a.cost,f:usd,af:usdAxis},activeMs:{name:'Active time',color:'#2f7fe0',v:a=>a.activeMs,f:hrs,unit:3600000},calls:{name:'Calls',color:'#18a874',v:a=>a.calls,f:v=>`${num(v)} calls`,af:short},tokens:{name:'Tokens',color:'#9b4de0',v:a=>Object.values(a.tokens).reduce((s,x)=>s+x,0),f:tok}},
- split:{input:{name:'Input',color:'#d97757',v:inputCost,f:usd,af:usdAxis},output:{name:'Output',color:'#2b4a96',v:a=>a.output,f:usd,af:usdAxis},compact:{name:'Compacting',color:'#18a874',wide:true,v:compactCost,f:usd,af:usdAxis},compactions:{name:'Compactions',color:'#9b4de0',v:a=>a.compactions,f:v=>`${num(v)}×`,af:short}},
- stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactShare:{name:'Compacting share',color:'#18a874',v:a=>a.cost?compactCost(a)/a.cost*100:0,f:v=>`${v.toFixed(1)}%`}}};
+ stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactPerHour:{name:'Compacting / active hour',color:'#18a874',v:a=>a.activeMs?compactCost(a)/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis}}};
 // Stats are ratios: hide them when the period has too little use.
 const sparse=name=>name==='stats';
 // Profile: Claude's orange is the base (Opus, Input). Other families get nearby
@@ -99,7 +97,7 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  $('#cost').textContent=usd(a.cost);
  const tokens=Object.values(a.tokens).reduce((s,v)=>s+v,0);
  const ratio=f=>enough(a)?f():'—';
- $('#stats').innerHTML=[['Calls',num(a.calls)],['Tokens',tok(tokens)],['Active time',hrs(a.activeMs)],['Cost / active hour',ratio(()=>`${usd(a.cost/(a.activeMs/3600000))}/h`)],['Avg context',ratio(()=>tok(a.ctx/a.calls))],['Cost / call',ratio(()=>usd(a.cost/a.calls))],['Cache hit rate',ratio(()=>pct(CHARTS.stats.cacheHit.v(a)))],['Subagent calls',ratio(()=>`${pct(a.subCalls/a.calls*100)} (${num(a.subCalls)})`)],['Compactions',num(a.compactions)]].map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+ $('#stats').innerHTML=[['Calls',num(a.calls)],['Tokens',tok(tokens)],['Active time',hrs(a.activeMs)],['Cost / active hour',ratio(()=>`${usd(a.cost/(a.activeMs/3600000))}/h`)],['Avg context',ratio(()=>tok(a.ctx/a.calls))],['Cost / call',ratio(()=>usd(a.cost/a.calls))],['Cache hit rate',ratio(()=>pct(CHARTS.stats.cacheHit.v(a)))],['Subagent calls',ratio(()=>`${pct(a.subCalls/a.calls*100)} (${num(a.subCalls)})`)],['Compactions',num(a.compactions)],['Compacting / active hour',ratio(()=>`${usd(compactCost(a)/(a.activeMs/3600000))}/h`)]].map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
  // Input is split by cache use. Compacting is the summary (estimated: it is
  // not logged as a call) and the cache write right after it. None overlap.
  // Each group (Input, Output, Compacting) lists its parts below it, so the
@@ -143,8 +141,8 @@ document.addEventListener('click',e=>{const t=e.target;
 document.addEventListener('input',e=>{if(e.target.id!=='tool-filter')return;state.filter=e.target.value.trim();state.toolLimit=10;renderTools();});
 // A link can open the page on one item and highlight it, e.g.
 // #project=app&period=day&date=2026-10-14&metrics=stats.ctx&tool=bash%20cat&focus=tools
-// focus: totals, split, stats, profile, cost-type, cost-model, tools, sessions; item: a row in a cost breakdown.
-const FOCUS={totals:'#chart-totals',split:'#chart-split',stats:'#chart-stats',profile:'#profile','cost-type':'[data-breakdown="Cost by type"]','cost-model':'[data-breakdown="Cost by model"]',tools:'#tools-section',sessions:'#sessions-section'};
+// focus: totals, stats, profile, cost-type, cost-model, tools, sessions; item: a row in a cost breakdown.
+const FOCUS={totals:'#chart-totals',stats:'#chart-stats',profile:'#profile','cost-type':'[data-breakdown="Cost by type"]','cost-model':'[data-breakdown="Cost by model"]',tools:'#tools-section',sessions:'#sessions-section'};
 // Set the whole view from link parameters and return what to highlight.
 function applyView(q){
  document.querySelectorAll('.focus-glow').forEach(el=>el.classList.remove('focus-glow'));

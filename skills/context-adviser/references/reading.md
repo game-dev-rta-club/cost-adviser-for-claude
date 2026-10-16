@@ -16,7 +16,7 @@ much work there was.
 | Cost by type: Cache write | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |
 | Subagent calls | Moves after a delegation change | Whether delegation happens at all; judge cost with P5 | `--metrics stats.subShare` |
-| Cost split: Compacting, Compactions | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics split.compact,split.compactions` |
+| Compacting / active hour, and Cost by type: Compacting | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics stats.compactPerHour` or `--focus cost-type --item Compacting` |
 | Cost by model | The mix shifts | A mix change can explain a cost change by itself; rule it out first | `--focus cost-model` |
 
 Add `--project NAME` when the signal belongs to one project. The report shows

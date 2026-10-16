@@ -22,7 +22,7 @@ Commands:
   link [options]        Print a link that opens the report on one item and highlights it:
                         --project --period day|week|month --date YYYY-MM-DD
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
-                        --focus totals|split|stats|profile|cost-type|cost-model|tools|sessions
+                        --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)
   advise <file.json>    Show an agent's notes on the report, each next to the item it
                         points at (the report is rebuilt). --clear removes them.
