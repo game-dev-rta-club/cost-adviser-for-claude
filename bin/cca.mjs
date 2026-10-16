@@ -169,7 +169,7 @@ else if (command === 'build') {
     `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `tool results keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
     `Replayed cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
     `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed}`,
-    `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}).`,
+    `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}): it leaves out cache rebuilds, such as a conversation reread after the cache expired, which the change does not affect.`,
     `It compares against the conversations as they ran. If the setting changed during these days, use --days to cover only the days since.`,
   ].join('\n'));
 } else if (command === 'mark') {

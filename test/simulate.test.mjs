@@ -65,3 +65,23 @@ test('cli: simulate prints both costs and checks its options', async () => {
   await assert.rejects(sim(['--tool-results', '2']), e => e.code === 2 && /share from 0 to 1/.test(e.stderr));
   await assert.rejects(sim(['--compact-at', '10']), e => e.code === 2 && /--compact-at/.test(e.stderr));
 });
+
+test('a request copied into a resumed conversation is counted once', async () => {
+  const {dropCopies} = await import('../lib/transcripts.mjs');
+  const call = (id, ts) => ({id, ts, model: 'claude-opus-5-5', input: 0, cacheWrite: 10, cacheRead: 0, output: 1, tools: []});
+  const original = {file: 'a.jsonl', mtimeMs: 1, calls: [call('m1', 1), call('m2', 2)]};
+  const resumed = {file: 'b.jsonl', mtimeMs: 2, calls: [call('m1', 1), call('m2', 2), call('m3', 3)]};
+  const [a, b] = dropCopies([original, resumed]);
+  assert.deepEqual(a.calls.map(c => c.id), ['m1', 'm2']);
+  assert.deepEqual(b.calls.map(c => c.id), ['m3']);
+});
+
+test('cli: summary counts a copied request once', async () => {
+  const {writeTranscript: write, assistant: msg, tempDir: temp} = await import('./helpers.mjs');
+  const home = await temp(), root = await temp(), now = Date.now();
+  const at = i => new Date(now - (10 - i) * 60000).toISOString();
+  await write(root, 'p/a.jsonl', [msg({id: 'm1', at: at(1), output: 10}), msg({id: 'm2', at: at(2), output: 10})]);
+  await write(root, 'p/b.jsonl', [msg({id: 'm1', at: at(1), output: 10}), msg({id: 'm2', at: at(2), output: 10}), msg({id: 'm3', at: at(3), output: 10})]);
+  const out = await run(process.execPath, [cli, 'summary', '--json', '--transcripts', root], {env: {...process.env, CCA_HOME: home}});
+  assert.equal(JSON.parse(out.stdout).current.calls, 3);
+});

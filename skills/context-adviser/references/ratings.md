@@ -65,7 +65,10 @@ the window (7 days by default, the same days as the summary). The replay
 compares against the conversations as they ran, not against the current
 setting: it prints the length they really compacted at. If the setting changed
 during the window, use `--days` to cover only the days since; for one step down
-from the current compaction length, give the length after the step. For other proposals, estimate the cut from the share of
+from the current compaction length, give the length after the step. The
+replay leaves out cache rebuilds (a conversation reread after the cache
+expired), so its cost is below the recorded cost; rate by the percentage, not
+by the dollar amounts. For other proposals, estimate the cut from the share of
 cost the proposal touches and how much of it goes away: halving a command that
 takes 26% of the cost cuts about 13%.
 
