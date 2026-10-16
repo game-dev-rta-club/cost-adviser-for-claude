@@ -19,9 +19,10 @@ current docs, and leave out what the user declined.
 
 | Proposal | You see | ease | safety | savings |
 |---|---|---|---|---|
-| Compact at 500k instead of 1M tokens (`"autoCompactWindow": 500000`) | Calls above 500k tokens take a clear share of cost | 5 | 4 | by cut |
+| Compact at half the window, 500k of 1M tokens (`"autoCompactWindow": 500000`) | Calls above 500k tokens take a clear share of cost | 5 | 4 | by cut |
 | Start a new conversation when switching to unrelated work | One conversation runs for many hours across several tasks | 1 | 4 | by cut |
-| Compact at 200k (`"autoCompactWindow": 200000`) | Most cost is in calls above 200k tokens | 5 | 2 | by cut |
+| Below half the window, one small step down (500k → 450k), then watch | The window is already at half; the last step has run for some days without more retries, rework or confusion after compaction | 5 | 3 | by cut |
+| Compact far lower in one go (`"autoCompactWindow": 200000`) | Most cost is in calls above 200k tokens | 5 | 1 | by cut |
 
 ## Model and effort
 
@@ -36,4 +37,10 @@ Overall stars, for example: halving a command that takes 26% of cost (a 13%
 cut) rates 3·5·5 → 4.2; compacting at 500k when calls above it take 33% of
 cost (about a 10% cut) rates 5·4·5 → 4.6; shortening added text rates
 3·5·1 → 2.5; trimming tool results by 30% (about a 2% cut) rates 3·5·2 → 3.1;
-a smaller model with a 30% cut rates 5·1·5 → 2.9.
+a smaller model with a 30% cut rates 5·1·5 → 2.9; one step from 500k to 450k
+(about a 4.7% cut) rates 5·3·3 → 3.6.
+
+Below half the window, propose one small step at a time. Each run proposes
+the next step only when the last one, recorded with `cca mark add`, shows no
+more retries, rework or confusion after compaction; otherwise it proposes
+going back up a step.

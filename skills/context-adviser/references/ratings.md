@@ -26,10 +26,10 @@ so the same proposal gets the same stars each time.
 | Stars | When | Signs |
 |---|---|---|
 | 5 | No loss of quality, speed or context | Removes waste: the same model, effort and context get the same work done with fewer or smaller calls |
-| 4 | Affected in theory, but not noticeably | Compacting at 500k instead of 1M tokens; trimming tool output that is rarely read in full |
-| 3 | Some kinds of work may lose quality | A lighter model for one kind of subtask (such as searching) |
-| 2 | Some kinds of work lose quality | Compacting at 200k |
-| 1 | Everyday work loses quality | Lower effort or a smaller model for all work; turning off checks, tests or tools the work relies on |
+| 4 | Affected in theory, but not noticeably | Compacting at half the model's window (500k of 1M tokens); trimming tool output that is rarely read in full |
+| 3 | Some kinds of work may lose quality | A lighter model for one kind of subtask (such as searching); one small step of compaction below half the window |
+| 2 | Some kinds of work lose quality | — |
+| 1 | Everyday work loses quality | Lower effort or a smaller model for all work; compacting far below half the window in one go, whose effect cannot be known; turning off checks, tests or tools the work relies on |
 
 ## Savings (`savings`)
 
