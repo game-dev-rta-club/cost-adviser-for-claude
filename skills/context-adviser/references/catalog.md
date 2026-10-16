@@ -54,7 +54,7 @@ counting the extra compactions. **Overall: 4.6.**
 ## 5. Below half of the context window, lower the compaction length by one step
 
 **Propose it when** the compaction length is already at half of the context
-window or lower. One step is one twentieth of the context window: for a
+window or lower (read `autoCompactWindow` in the user's settings). One step is one twentieth of the context window: for a
 one-million-token window, 500,000 to 450,000, then 450,000 to 400,000, and so
 on. Context windows differ between models and grow with new ones, so work out
 the step from the window of the model in use, read from its documentation.
