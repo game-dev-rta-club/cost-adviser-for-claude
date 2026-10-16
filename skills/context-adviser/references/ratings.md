@@ -18,7 +18,7 @@ so the same proposal gets the same stars each time.
 | Stars | When | Signs |
 |---|---|---|
 | 5 | Set up once, then it works with no attention | One settings key or one line in a file |
-| 4 | Set up once with some effort, and no upkeep after | Rare: a setting written in several places once |
+| 4 | Not used: a proposal needs either no upkeep (5) or some (3) | — |
 | 3 | Needs upkeep, or a small routine at natural points | A change to the user's own tool, hook or skill that must be kept up; a setting per project; a step at the start or end of a task |
 | 2 | The user must remember it often | A habit such as starting a new conversation when switching tasks |
 | 1 | The user must remember it every time | A step before each request |
