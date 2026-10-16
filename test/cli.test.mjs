@@ -99,12 +99,15 @@ test('advice: notes are checked, embedded in the report, and can be cleared', as
   const ok = checkAdvice({title: 'Week', notes: [{title: ' Long context ', finding: 'f', advice: 'a', source: 'https://example.com', link: {tool: 'bash cat', date: ''}}]});
   assert.deepEqual(ok.notes[0], {title: 'Long context', finding: 'f', advice: 'a', options: [], source: 'https://example.com', link: {tool: 'bash cat'}});
   assert.deepEqual(checkAdvice({notes: [{title: 'x', options: [{title: ' New conversation ', detail: 'd'}, {title: 'Summarize'}]}]}).notes[0].options,
-    [{title: 'New conversation', detail: 'd', ratings: {}}, {title: 'Summarize', detail: undefined, ratings: {}}]);
+    [{title: 'New conversation', action: undefined, detail: 'd', ratings: {}}, {title: 'Summarize', action: undefined, detail: undefined, ratings: {}}]);
+  assert.equal(checkAdvice({notes: [{title: 'x', options: [{title: 'o', action: ' Add "autoCompactWindow": 200000 '}]}]}).notes[0].options[0].action, 'Add "autoCompactWindow": 200000');
   assert.throws(() => checkAdvice({notes: [{title: 'x', options: [{detail: 'd'}]}]}), /options\[0\]\.title is required/);
   assert.throws(() => checkAdvice({notes: [{title: 'x', options: 'a'}]}), /must be a list/);
   assert.deepEqual(checkAdvice({notes: [{title: 'x', options: [{title: 'o', ratings: {ease: 'A', safety: 'B', savings: 'A'}}]}]}).notes[0].options[0].ratings, {ease: 'A', safety: 'B', savings: 'A'});
   assert.throws(() => checkAdvice({notes: [{title: 'x', options: [{title: 'o', ratings: {ease: 'D'}}]}]}), /must be A, B or C/);
   assert.throws(() => checkAdvice({notes: [{title: 'x', options: [{title: 'o', ratings: {cost: 'A'}}]}]}), /not a rating/);
+  assert.equal(checkAdvice({notes: [{title: 'x', options: [{title: 'o', source: 'https://d'}]}]}).notes[0].options[0].source, 'https://d');
+  assert.throws(() => checkAdvice({notes: [{title: 'x', options: [{title: 'o', source: 'file:///x'}]}]}), /options\[0\]\.source/);
 
   const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
   await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);

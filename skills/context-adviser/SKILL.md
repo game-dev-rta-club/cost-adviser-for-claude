@@ -32,8 +32,11 @@ notes (`cca advise`) and, when the user agrees, `cca mark add`.
     "finding": "What is happening here: the numbers, their share of cost, and what they suggest. A short paragraph.",
     "advice": "The principle, and why it fits these numbers. One or two sentences.",
     "options": [
-      {"title": "One way to apply it", "detail": "What it means in practice, and when it suits.",
-       "ratings": {"ease": "A", "safety": "A", "savings": "B"}},
+      {"title": "A concrete action, e.g. set autoCompactWindow to 200000",
+       "action": "The conclusion in one line: exactly what to do, e.g. Add \"autoCompactWindow\": 200000 to ~/.claude/settings.json",
+       "detail": "Exactly where and what to change (file, key, value or text to add), what it does to these numbers, and how to tell if the value should move.",
+       "source": "https://… (the docs page for that setting or feature)",
+       "ratings": {"ease": "A", "safety": "B", "savings": "A"}},
       {"title": "Another way", "detail": "How it differs, and when to pick it instead.",
        "ratings": {"ease": "B", "safety": "A", "savings": "A"}}
     ],
@@ -49,8 +52,14 @@ a note must be the ones the linked view shows**: the report shows one period at
 a time, so quote that period's numbers, not the summary's window.
 
 Give each note two or three `options`: different ways to apply the principle,
-each in its own entry, so the user can compare and choose. Say what each one
-suits. Rate each option with [ratings.md](references/ratings.md) and leave out
+each in its own entry, so the user can compare and choose. **Each option is a
+concrete action that is enough on its own**: the setting, file, skill or
+subagent to change and what to put there (a key and value, a line to add).
+Before naming a setting or feature, open its current docs page and check the
+name and accepted values; put that page in the option's `source`. Never invent
+a setting. Start each option with `action`: the conclusion in one line, so the
+user knows what to do without reading the rest. A value is a starting point: say what to watch to tune it. Say what
+each option suits. Rate each option with [ratings.md](references/ratings.md) and leave out
 any option rated C on an axis; prefer options that work once set up over ones
 the user must remember each time.
 
@@ -65,8 +74,8 @@ fine, and a blank line starts a new paragraph.
 
 ## Do not
 
-- Prescribe a specific product, setting value or tool. State the principle and
-  let the user choose the means; specifics go stale.
+- Give vague advice ("keep conversations short"). Turn the principle into an
+  action the user can take now, checked against the current docs.
 - Claim a cause the numbers do not show. Say "suggests", and name the
   alternative explanation (a different mix of work, model or project).
 - Judge a change on too little data. Follow measuring.md.
