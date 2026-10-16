@@ -6,10 +6,11 @@ import {parseArgs} from 'node:util';
 import {checkAdvice, clearAdvice, readAdvice, saveAdvice} from '../lib/advice.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {dataDir, transcriptRoot} from '../lib/paths.mjs';
-import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
+import {buildReport, collectCached, readTranscriptsCached, reportFile} from '../lib/report.mjs';
 import {addDeclined, readDeclined, removeDeclined} from '../lib/declined.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
-import {localDay} from '../lib/aggregate.mjs';
+import {localDay, projectOf} from '../lib/aggregate.mjs';
+import {simulate} from '../lib/simulate.mjs';
 import {createViewer, DEFAULT_PORT, LINK_KEYS, reportLink, viewerRunning} from '../lib/viewer.mjs';
 
 const HELP = `Context Adviser For Claude
@@ -36,6 +37,11 @@ Commands:
                         model, tool use as a tree, top sessions, and each recorded
                         change before vs after. --tool NAME adds that tool or group
                         (e.g. "bash chill") by day, with the uses that cost most.
+  simulate              Replay the recent conversations as if a change had been in
+                        place, and print the cost with and without it.
+                        --compact-at <tokens>: compaction starts at this length.
+                        --tool-results <share>: tool results keep this share of
+                        their size (0.7 = 30% shorter). Give one or both.
   collect               Write the collected data as JSON.
   mark add <date> <label>     Record the day a change went in (YYYY-MM-DD).
   mark remove <date> <label>  Remove a recorded change.
@@ -47,9 +53,9 @@ Commands:
   decline list                List declined options.
 
 Options:
-  --days <n>            Days to read. build/collect: 30. summary: 7 (and the 7 before).
-  --project <name>      summary: one project only.
-  --json                summary/mark list/decline list: print JSON.
+  --days <n>            Days to read. build/collect: 30. summary/simulate: 7 (summary also the 7 before).
+  --project <name>      summary/simulate: one project only.
+  --json                summary/simulate/mark list/decline list: print JSON.
   --reason <text>       decline add: why the option was declined.
   --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
   --open                build/link: open it in the default browser.
@@ -68,6 +74,7 @@ function options(args) {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string'}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
+      'compact-at': {type: 'string'}, 'tool-results': {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
 }
@@ -139,6 +146,27 @@ else if (command === 'build') {
   const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
   const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool || null, declined, advice});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
+} else if (command === 'simulate') {
+  const change = {};
+  if (values['compact-at'] !== undefined) change.compactAt = count(values['compact-at'], 0, 'compact-at', 1000);
+  if (values['tool-results'] !== undefined) {
+    const share = Number(values['tool-results']);
+    if (!(share >= 0 && share <= 1)) fail('--tool-results must be a share from 0 to 1, e.g. 0.7 for 30% shorter.');
+    change.toolResults = share;
+  }
+  if (!Object.keys(change).length) fail('give a change to replay: --compact-at <tokens> and/or --tool-results <share>.');
+  const days = count(values.days, 7, 'days');
+  const transcripts = (await readTranscriptsCached({root, dataDir: home, days})).filter(t => !values.project || projectOf(t.cwd) === values.project);
+  const r = simulate(transcripts, change);
+  const usd = v => `$${v.toLocaleString('en-US', {maximumFractionDigits: v < 100 ? 2 : 0})}`;
+  if (values.json) console.log(JSON.stringify({days, project: values.project || null, change, ...r}, null, 2));
+  else console.log([
+    `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations from the last ${days} days (${values.project || 'all projects'}).`,
+    `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `tool results keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
+    `Cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
+    `Compactions: ${r.compactions.base} → ${r.compactions.changed}`,
+    `This is an estimate: the replay follows each conversation's context call by call (the recorded cost of the same calls is ${usd(r.recorded)}).`,
+  ].join('\n'));
 } else if (command === 'mark') {
   const [action, date, ...words] = positionals, label = words.join(' ');
   try {
