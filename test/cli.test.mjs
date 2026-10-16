@@ -92,20 +92,23 @@ test('links describe one view, and the viewer only sends the built report', asyn
 });
 
 test('advice: proposals are checked, keep their dates while unchanged, and show in the report', async () => {
-  const AB = {ease: 'A', safety: 'B', savings: 'A'};
+  const AB = {ease: 5, safety: 3, savings: 5};
   const one = p => checkAdvice({proposals: [{id: 'x', action: 'Do x', ratings: AB, ...p}]}, null, '2026-10-16');
   assert.throws(() => checkAdvice({}), /proposals/);
   assert.throws(() => one({id: 'Bad Id'}), /id is required/);
   assert.throws(() => one({action: ''}), /action is required/);
-  assert.throws(() => one({ratings: {ease: 'A', safety: 'C', savings: 'A'}}), /rated C on safety; leave it out/);
-  assert.throws(() => one({ratings: {ease: 'D', safety: 'A', savings: 'A'}}), /must be A, B or C/);
-  assert.throws(() => one({ratings: {...AB, cost: 'A'}}), /not a rating/);
+  assert.throws(() => one({ratings: {ease: 5, safety: 2, savings: 5}}), /2 stars on safety; leave it out/);
+  assert.throws(() => one({ratings: {ease: 6, safety: 4, savings: 4}}), /must be 1 to 5 stars/);
+  assert.throws(() => one({ratings: {ease: 'A', safety: 4, savings: 4}}), /must be 1 to 5 stars/);
+  assert.throws(() => one({ratings: {...AB, cost: 4}}), /not a rating/);
   assert.throws(() => one({source: 'javascript:alert(1)'}), /http/);
   assert.throws(() => one({link: {evil: '1'}}), /not a link option/);
   assert.throws(() => checkAdvice({proposals: [{id: 'x', action: 'a', ratings: AB}, {id: 'x', action: 'b', ratings: AB}]}), /used twice/);
   const first = one({action: ' Use Sonnet ', detail: 'd', source: 'https://example.com', link: {tool: 'bash cat', date: ''}});
   assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4, since: '2026-10-16', updated: '2026-10-16'});
-  assert.equal(one({ratings: {ease: 'B', safety: 'B', savings: 'B'}}).advice.proposals[0].stars, 2);
+  // The overall rating is the rounded average.
+  assert.equal(one({ratings: {ease: 3, safety: 3, savings: 4}}).advice.proposals[0].stars, 3);
+  assert.equal(one({ratings: {ease: 5, safety: 5, savings: 4}}).advice.proposals[0].stars, 5);
   // A later run: the same content keeps its dates, a change is marked, a gone id is listed.
   const prev = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', ratings: AB}, {id: 'gone', action: 'c', ratings: AB}]}, null, '2026-10-15').advice;
   const next = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', news: '82% → 80%', ratings: AB}, {id: 'new', action: 'd', ratings: AB}]}, prev, '2026-10-16');

@@ -1,6 +1,6 @@
 ---
 name: context-adviser
-description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, reads the numbers against basic principles, and updates the proposals listed under the projects, each with a recommendation rating, the action to take and its details. Use for /context-adviser or a scheduled cost review.
+description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, reads the numbers against basic principles, and updates the proposals listed under the projects, each with an overall star rating from three rated axes, the action to take and its details. Use for /context-adviser or a scheduled cost review.
 ---
 
 # Context Adviser
@@ -36,7 +36,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
   "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
   "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Leave it out when nothing moved.",
   "project": "Optional: the project it is for; leave it out when it is for all",
-  "ratings": {"ease": "A", "safety": "B", "savings": "A"},
+  "ratings": {"ease": 5, "safety": 3, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
   "link": {"period": "week", "date": "2026-10-16", "focus": "cost-model"}
 }]}
@@ -55,9 +55,9 @@ setting, file, skill or subagent to change and what to put there (a key and
 value, a line to add). Before naming a setting or feature, open its current
 docs page and check the name and accepted values; put that page in `source`.
 Never invent a setting. A value is a starting point: say what to watch to tune
-it. Rate each proposal with [ratings.md](references/ratings.md); the stars
-come from the ratings (two for B on every axis, one more per A), and an option
-rated C on any axis is left out.
+it. Rate each proposal 1–5 stars on each axis with
+[ratings.md](references/ratings.md); the overall stars are their rounded
+average, and a proposal with 2 stars or fewer on any axis is left out.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
 session, focus, item); reading.md says which fits each signal. **The numbers in

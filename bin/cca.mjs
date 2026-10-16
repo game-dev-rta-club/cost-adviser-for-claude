@@ -30,7 +30,7 @@ Commands:
                         (the report is rebuilt). A proposal keeps its dates while
                         its content stays the same. --clear removes them.
                         {"proposals": [{"id", "action", "detail", "news", "project",
-                         "ratings": {"ease","safety","savings": "A"|"B"},
+                         "ratings": {"ease","safety","savings": 3-5 stars},
                          "source": "https://...", "link": {<link options>}}]}
   summary               Print this period against the one before: each day, cost by
                         model, tool use as a tree, top sessions, and each recorded

@@ -21,7 +21,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),openProposals:new Set(),allProjects:false,shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -186,7 +186,6 @@ function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>
 function render(){renderProjects();renderProposals();renderChart();renderProfile();renderTools();renderSessions();}
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
 document.addEventListener('click',e=>{const t=e.target;
- const pl=t.closest('[data-proposal-link]');if(pl){const p=PROPOSALS.find(x=>x.id===pl.dataset.proposalLink);history.replaceState(null,'',`#${new URLSearchParams(p.link)}`.replace(/\+/g,'%20'));applyLink();return;}
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
  const per=t.closest('[data-p]');if(per){state.period=per.dataset.p;state.key=null;resetLimits();document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b===per));render();return;}
@@ -237,26 +236,41 @@ function applyView(q){
 
 // Improvement proposals an agent keeps (cca advise), listed under the projects.
 const PROPOSALS=Array.isArray(D.advice?.proposals)?D.advice.proposals:[];
-const RATING_NAMES={ease:'Ease of use',safety:'Few side effects',savings:'Savings'};
-const ratingTags=r=>`<div class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<span class="rank-${r[k]}">${RATING_NAMES[k]} <b>${r[k]}</b></span>`).join('')}</div>`;
 const starText=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const RATING_NAMES={ease:'Ease of use',safety:'Few side effects',savings:'Savings'};
+// Each axis has its own stars; the overall rating is their rounded average.
+const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<div><dt>${RATING_NAMES[k]}</dt><dd class="stars" role="img" aria-label="${r[k]} of 5">${starText(r[k])}</dd></div>`).join('')}</dl>`;
 // The latest run's changes are marked, so a reader sees what moved since last time.
 const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');
-function renderProposals(){const box=$('#proposals');
- // Details the reader opened stay open when the list is drawn again.
- for(const a of box.querySelectorAll('[data-proposal]'))a.querySelector('details').open?state.openProposals.add(a.dataset.proposal):state.openProposals.delete(a.dataset.proposal);
- const list=PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
- box.innerHTML=list.length?`<h2>Improvements</h2>${list.map(p=>`<article class="proposal" data-proposal="${esc(p.id)}">
-  <div class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:''}</div>
+const mark=p=>p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:'';
+const visibleProposals=()=>PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
+let activeProposal=null;
+// Each card opens its details in a card at the lower right (#proposal=ID), so
+// the list stays short and the view it is about is highlighted beside it.
+function renderProposals(){const list=visibleProposals();
+ $('#proposals').innerHTML=list.length?`<h2>Improvements</h2>${list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
+  <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${mark(p)}</span>
   <strong>${esc(p.action)}</strong>${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
-  ${p.news?`<p class="proposal-news">${esc(p.news)}</p>`:''}
-  <details${state.openProposals.has(p.id)?' open':''}><summary>Details</summary>${p.detail?`<p>${esc(p.detail)}</p>`:''}${ratingTags(p.ratings)}
-   ${/^https?:\/\//.test(p.source||'')?`<a class="option-source" href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.source)}</a>`:''}
-   ${Object.keys(p.link||{}).length?`<button type="button" class="link" data-proposal-link="${esc(p.id)}">Show in report</button>`:''}
-   <small class="proposal-dates">Since ${md(p.since)}${p.updated!==p.since?` · updated ${md(p.updated)}`:''}</small></details></article>`).join('')}`:'';}
-// The item a proposal is about is scrolled into the upper part of the window.
+  ${p.news?`<span class="proposal-news">${esc(p.news)}</span>`:''}<span class="proposal-more">Details ›</span></a>`).join('')}`:'';}
+const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
+// The card stays in a corner; the item it is about is scrolled into the upper
+// part of the window, so the card does not cover it.
 function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scrollTo({top:Math.max(0,r.top+scrollY-Math.max(80,innerHeight*.18)),behavior:'smooth'});}
-function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![...q.keys()].length)return;bringIntoView(applyView(q));}
+function showProposal(id){const p=PROPOSALS.find(x=>x.id===id);if(!p)return hideProposal();activeProposal=id;
+ const anchor=applyView(new URLSearchParams(p.link||{}));
+ const list=visibleProposals(),i=list.findIndex(x=>x.id===id),prev=list[i-1],next=list[i+1];
+ callout.innerHTML=`<header><span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${mark(p)}</span><button type="button" data-callout-close aria-label="Close">✕</button></header>
+  <h3>${esc(p.action)}</h3>${p.project?`<small class="proposal-project">${esc(p.project)}</small>`:''}
+  ${p.news?`<p class="proposal-news">${esc(p.news)}</p>`:''}${p.detail?`<p class="callout-detail">${esc(p.detail)}</p>`:''}${ratingTags(p.ratings)}
+  ${/^https?:\/\//.test(p.source||'')?`<a class="option-source" href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.source)}</a>`:''}
+  <footer>${prev?`<a href="#proposal=${encodeURIComponent(prev.id)}">← Previous</a>`:'<span></span>'}<small>Since ${md(p.since)}${p.updated!==p.since?` · updated ${md(p.updated)}`:''}</small>${next?`<a href="#proposal=${encodeURIComponent(next.id)}">Next →</a>`:'<span></span>'}</footer>`;
+ callout.hidden=false;callout.classList.remove('flash');void callout.offsetWidth;callout.classList.add('flash');
+ bringIntoView(anchor);}
+function hideProposal(){callout.hidden=true;if(activeProposal){activeProposal=null;renderProposals();}}
+callout.addEventListener('click',e=>{if(e.target.closest('[data-callout-close]')){history.replaceState(null,'',location.pathname+location.search);hideProposal();}});
+function applyLink(){const q=new URLSearchParams(location.hash.slice(1));
+ if(q.has('proposal'))return showProposal(q.get('proposal'));
+ hideProposal();if(![...q.keys()].length)return;bringIntoView(applyView(q));}
 window.addEventListener('hashchange',applyLink);
 $('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
 render();applyLink();
