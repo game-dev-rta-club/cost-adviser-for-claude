@@ -39,7 +39,7 @@ const sparse=name=>name==='stats';
 // cool hues; effort only changes the shade.
 const HUES={opus:[16,72],sonnet:[268,52],haiku:[292,45],fable:[226,55]};
 const hue=(family,l)=>{const [h,sat]=HUES[family]||[30,8];return `hsl(${h} ${sat}% ${l}%)`;};
-const EFFORT={low:76,medium:66,high:56,xhigh:46,max:36};
+const EFFORT={low:72,medium:62,high:56,xhigh:46,max:36};
 const modelColor=name=>{const [model,effort='']=name.split(' · '),family=Object.keys(HUES).find(f=>model.includes(f));return hue(family,EFFORT[effort.trim()]||56);};
 // Profile shares use Claude's orange, darkest to lightest by cost.
 const PALETTE=['#d97757','#a8462e','#e9a37f','#7a3320','#f2c6a8','#c26a4a','#5c2a1c','#f7e0cf'];
@@ -98,8 +98,7 @@ function renderChart(){const ps=periods();if(!ps.some(p=>p.key===state.key))stat
 // A part's label sits on its bar when the bar is wide enough: the group on
 // the first line and the part on the second, e.g. "Input\n(cache read)".
 const modelLabel=name=>{const [model,effort]=name.split(' · ');return [model.replace(/^(\w)(\w*)-(\d+)-(\d+)$/,(m,a,b,x,y)=>`${a.toUpperCase()}${b} ${x}.${y}`),effort].filter(Boolean).join('\n');};
-function fitLabels(){for(const span of document.querySelectorAll('.stack span')){const box=span.parentElement;span.classList.toggle('is-hidden',span.scrollWidth>box.clientWidth-16||span.scrollHeight>box.clientHeight);
- const [r,g,b]=getComputedStyle(box).backgroundColor.match(/\d+/g).map(Number);span.style.color=(.299*r+.587*g+.114*b)>150?'#2b2b2b':'#fff';}}
+function fitLabels(){for(const span of document.querySelectorAll('.stack span')){const box=span.parentElement;span.classList.toggle('is-hidden',span.scrollWidth>box.clientWidth-16||span.scrollHeight>box.clientHeight);}}
 addEventListener('resize',()=>fitLabels());
 function breakdown(title,entries,{calls=true,sorted=true,rows=null}={}){const total=entries.reduce((s,e)=>s+e.cost,0);if(!total)return '';
  entries=entries.filter(e=>e.cost>0);if(sorted)entries.sort((a,b)=>b.cost-a.cost);
@@ -115,9 +114,9 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  // not logged as a call) and the cache write right after it. None overlap.
  // Each group (Input, Output, Compacting) lists its parts below it, so the
  // colored parts line up.
- const parts=[['cacheRead','Cache read',hue('opus',66),'Input\n(cache read)'],['cacheWrite','Cache write',hue('opus',54),'Input\n(cache write)'],['input','Uncached',hue('opus',80),'Input\n(uncached)'],['output','Output',hue('fable',38),'Output']].map(([k,name,color,label])=>({name,label,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
+ const parts=[['cacheRead','Cache read',hue('opus',61),'Input\n(cache read)'],['cacheWrite','Cache write',hue('opus',54),'Input\n(cache write)'],['input','Uncached',hue('opus',74),'Input\n(uncached)'],['output','Output',hue('fable',38),'Output']].map(([k,name,color,label])=>({name,label,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
  const inputs=parts.slice(0,3),input={name:'Input',kind:'group',cost:inputs.reduce((s,e)=>s+e.cost,0),tokens:inputs.reduce((s,e)=>s+e.tokens,0)};
- const compacts=[{name:'Summary (est.)',label:'Compacting\n(summary)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',label:'Compacting\n(rebuild)',color:'#7fd3b0',cost:a.compactRebuild,kind:'sub',note:''}];
+ const compacts=[{name:'Summary (est.)',label:'Compacting\n(summary)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',label:'Compacting\n(rebuild)',color:'#5fc49c',cost:a.compactRebuild,kind:'sub',note:''}];
  const compact={name:'Compacting',kind:'group',cost:compactCost(a),note:`${num(a.compactions)} compactions`};
  $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{name:'Output',kind:'group',cost:parts[3].cost,tokens:parts[3].tokens},{...parts[3],kind:'sub'},...(a.compactions?[compact,...compacts]:[])]})
   +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,label:modelLabel(name),...v,color:modelColor(name)})));
