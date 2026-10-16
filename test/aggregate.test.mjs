@@ -22,6 +22,8 @@ test('tool keys group similar uses', () => {
   assert.equal(bash("python3 -c 'import json; print(json.load(open(\"a.json\")))'"), 'bash python3 (read data)');
   assert.equal(bash('python3 -I scripts/run.py --x'), 'bash python3 run.py');
   assert.equal(bash("python3 - <<'EOF'\nimport re\nfor m in re.finditer('x', open('a.html').read()): print(m)\nEOF"), 'bash python3 (read files)');
+  assert.equal(bash("python3 - <<'EOF'\nimport math\nprint(math.pi)\nEOF"), 'bash python3 (uses math)');
+  assert.equal(bash("python3 -c 'print(1)'"), 'bash python3 (other)');
   assert.equal(bash("git status; python3 - <<'EOF'\nprint(1)\nEOF"), 'bash git status');
   assert.equal(bash("'/a/runtime/chill' connection reply --event 4"), 'bash chill connection reply');
   assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
