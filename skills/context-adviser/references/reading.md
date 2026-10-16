@@ -22,7 +22,8 @@ much work there was.
 Add `--project NAME` when the signal belongs to one project. The report shows
 Profile, Tool Use and Sessions for one period at a time (the latest day unless
 told otherwise), so add `--period week --date DAY` to match the summary's
-week, or `--date DAY` for a single day. A link opens the report on that item
+week, `--period 3d` for the last three days (counted back from the build
+day), or `--date DAY` for a single day. A link opens the report on that item
 and highlights it.
 
 Compacting is partly estimated: the summary request is not logged, so its

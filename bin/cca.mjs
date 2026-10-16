@@ -20,7 +20,7 @@ Commands:
   serve                 Show the built report at http://127.0.0.1:7319 so links to it
                         can be clicked. It only sends the file; run build to update it.
   link [options]        Print a link that opens the report on one item and highlights it:
-                        --project --period day|week|month --date YYYY-MM-DD
+                        --project --period day|3d|week|month --date YYYY-MM-DD
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
                         --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)

@@ -1,15 +1,21 @@
 const D=window.CCA,$=s=>document.querySelector(s);
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd=v=>`$${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-const short=v=>v>=1e6?`${+(v/1e6).toFixed(1)}M`:v>=1e3?`${+(v/1e3).toFixed(1)}k`:`${+v.toFixed(2)}`;
+const short=v=>v>=1e9?`${+(v/1e9).toFixed(1)}B`:v>=1e6?`${+(v/1e6).toFixed(1)}M`:v>=1e3?`${+(v/1e3).toFixed(1)}k`:`${+v.toFixed(2)}`;
 const usdAxis=v=>`$${short(v)}`;
 const pct=v=>`${v.toFixed(0)}%`;
-const tok=v=>v>=1e6?`${(v/1e6).toFixed(1)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:`${Math.round(v)}`;
+const tok=v=>v>=1e9?`${(v/1e9).toFixed(2)}B`:v>=1e6?`${(v/1e6).toFixed(1)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:`${Math.round(v)}`;
 const num=v=>Math.round(v).toLocaleString('en-US');
 const hrs=ms=>ms>=3600000?`${(ms/3600000).toFixed(1)}h`:`${Math.round(ms/60000)}m`;
 const md=d=>{const [,m,dd]=d.split('-');return `${+m}/${+dd}`;};
-function periodKey(day,p){if(p==='day')return day;if(p==='month')return day.slice(0,7);const d=new Date(day+'T00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-const periodLabel=(k,p)=>p==='day'?md(k):p==='week'?`Wk ${md(k)}`:new Date(k+'-01T00:00').toLocaleString('en-US',{month:'short'});
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addDays=(day,n)=>{const d=new Date(day+'T00:00');d.setDate(d.getDate()+n);return ymd(d);};
+// 3 days are counted back from the day the page was built, so the latest
+// period is always whole; the key is its first day.
+const LAST_DAY=ymd(new Date(D.generatedAt));
+function periodKey(day,p){if(p==='day')return day;
+ if(p==='3d'){const back=Math.round((new Date(LAST_DAY+'T00:00')-new Date(day+'T00:00'))/86400000);return addDays(LAST_DAY,-(Math.floor(back/3)*3+2));}if(p==='month')return day.slice(0,7);const d=new Date(day+'T00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+const periodLabel=(k,p)=>p==='3d'?(e=>`${md(k)}–${e.slice(5,7)===k.slice(5,7)?+e.slice(8):md(e)}`)(addDays(k,2)):p==='day'?md(k):p==='week'?`Wk ${md(k)}`:new Date(k+'-01T00:00').toLocaleString('en-US',{month:'short'});
 // Chart on/off is kept per browser so the page reopens the same way.
 const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCall','subShare']};
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
@@ -25,7 +31,7 @@ const CHANGES=Array.isArray(D.changes)?D.changes:[];
 // matters most in each chart is drawn wide.
 const compactCost=a=>a.compactSummary+a.compactRebuild;
 const CHARTS={
- totals:{cost:{name:'Cost',color:'#ea5f2c',wide:true,v:a=>a.cost,f:usd,af:usdAxis},activeMs:{name:'Active time',color:'#2f7fe0',v:a=>a.activeMs,f:hrs,unit:3600000},calls:{name:'Calls',color:'#18a874',v:a=>a.calls,f:v=>`${num(v)} calls`,af:short},tokens:{name:'Tokens',color:'#9b4de0',v:a=>Object.values(a.tokens).reduce((s,x)=>s+x,0),f:tok}},
+ totals:{cost:{name:'Cost',color:'#ea5f2c',wide:true,v:a=>a.cost,f:usd,af:usdAxis},activeMs:{name:'Active time',color:'#2f7fe0',v:a=>a.activeMs,f:hrs,af:v=>`${+(v/3600000).toFixed(1)}h`,unit:3600000},calls:{name:'Calls',color:'#18a874',v:a=>a.calls,f:v=>`${num(v)} calls`,af:short},tokens:{name:'Tokens',color:'#9b4de0',v:a=>Object.values(a.tokens).reduce((s,x)=>s+x,0),f:tok,af:short}},
  stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactPerHour:{name:'Compacting / active hour',color:'#18a874',v:a=>a.activeMs?compactCost(a)/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis}}};
 // Stats are ratios: hide them when the period has too little use.
 const sparse=name=>name==='stats';
@@ -155,7 +161,7 @@ const FOCUS={totals:'#chart-totals',stats:'#chart-stats',profile:'#profile','cos
 function applyView(q){
  document.querySelectorAll('.focus-glow').forEach(el=>el.classList.remove('focus-glow'));
  // Each link describes the whole view, so anything it leaves out goes back to the default.
- state.project=q.get('project')||'all';state.period=['day','week','month'].includes(q.get('period'))?q.get('period'):'day';
+ state.project=q.get('project')||'all';state.period=['day','3d','week','month'].includes(q.get('period'))?q.get('period'):'day';
  document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===state.period));
  state.key=q.has('date')?periodKey(q.get('date'),state.period):null;resetLimits();state.filter='';$('#tool-filter').value='';
  const metrics=(q.get('metrics')||'').split(',').map(m=>m.split('.')).filter(([c,m])=>CHARTS[c]?.[m]);
