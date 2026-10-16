@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Context Adviser For Claude</title>
+<style>
+:root{--bg:#f6f7f5;--panel:#fff;--ink:#1f2a27;--muted:#62706b;--line:#e2e7e4;--accent:#0f6e64;--accent-soft:#e3f1ee;
+ --c-read:#7fb3d5;--c-write:#2e86c1;--c-input:#e59866;--c-output:#58a55c;--warn:#b8621b;--warn-soft:#fbefe4;--sel:#fff6dc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420}}
+:root[data-theme="dark"]{--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 system-ui,-apple-system,"Hiragino Sans",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{margin:0;font-size:17px}header h1 small{font-weight:400;font-size:12px;color:var(--muted);margin-left:4px}header p{margin:0;color:var(--muted);font-size:12px}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;max-width:1280px;margin:0 auto;padding:16px}
+nav{position:sticky;top:16px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
+nav h2{margin:6px 8px 6px;font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+nav button{display:flex;justify-content:space-between;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+nav button:hover{background:var(--accent-soft)}nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:650}
+nav button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+nav .indent{padding-left:22px}
+main{display:grid;gap:16px;min-width:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+section>h2{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:15px}
+section>h2 small{font-weight:400;color:var(--muted);font-size:12px}
+.advice{display:grid;gap:8px}
+.advice article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.advice article.is-open{border-color:var(--accent);background:var(--accent-soft)}
+.advice .mark{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.advice h3{margin:0;font-size:14px}.advice p{grid-column:2;margin:0;color:var(--muted);font-size:12.5px}
+.advice button{grid-row:1/3;grid-column:3}
+button.link{border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+button.link:hover{border-color:var(--accent)}
+.tabs{display:inline-flex;margin-left:auto;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tabs button{border:0;background:none;color:var(--muted);padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.metrics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.metrics label{display:inline-flex;gap:6px;align-items:center;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.kpi span{display:block;font-size:11.5px;color:var(--muted)}.kpi b{font-size:18px;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:28px;border-radius:7px;overflow:hidden;margin:4px 0 8px}
+.stack div{min-width:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend b{font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11.5px;font-weight:600;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th button{all:unset;cursor:pointer;border-bottom:1px dashed var(--muted)}th button:hover{color:var(--accent)}th button[aria-pressed="true"]{color:var(--accent);border-bottom-style:solid}th button[aria-pressed="true"]::after{content:" ▼";font-size:9px}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tool{cursor:pointer}tr.tool:hover{background:var(--accent-soft)}tr.tool.is-focus{background:var(--sel)}
+.share{display:flex;align-items:center;gap:6px;justify-content:flex-end}.share i{display:block;height:6px;border-radius:3px;background:#ea5f2c}
+tr.detail td{background:var(--bg);padding:10px 12px}
+.ex{display:grid;gap:6px}.ex div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.ex code{font-size:12px;word-break:break-all}.ex small{color:var(--muted);font-size:11.5px}
+.empty{color:var(--muted);font-size:13px}
+.scroll{overflow-x:auto}
+.note{color:var(--muted);font-size:12px;margin:8px 0 0}
+.flash{animation:flash 1.2s ease-out}@keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.chart-wrap{overflow-x:auto}.chart{display:block;width:100%;height:214px}.chart-title{margin:14px 0 4px;font-size:12.5px;color:var(--muted);font-weight:650}.chart-title small{font-weight:400;margin-left:6px}
+.chart .group{cursor:pointer}.chart .band{fill:transparent}.chart .group:hover .band{fill:var(--accent-soft)}.chart .group.is-sel .band{fill:var(--sel)}
+.chart text{font-size:11px;fill:var(--muted)}.chart .axis text{font-size:10.5px;font-variant-numeric:tabular-nums}.chart .axis.is-hidden{display:none}.chart .grid{stroke-opacity:0;stroke-dasharray:3 3;transition:stroke-opacity .15s}.chart-box{display:grid;grid-template-columns:minmax(0,1fr) auto}.chart-axis{height:214px;cursor:crosshair}.chart-axis .axis-hit{fill:transparent}.chart-axis .axis{opacity:.85}.chart-axis.show-grid .axis{opacity:.35}.chart-axis.show-grid .axis.is-on{opacity:1}.chart .grid-set{display:none}.chart.show-grid .grid-set.is-on{display:inline}.chart.show-grid .grid{stroke-opacity:.45}.chart .change-tag rect{fill:var(--panel);stroke:#e8b100;stroke-width:1.5}.chart .change-tag text{font-size:11px;fill:var(--ink);font-weight:600}.chart text.sparse{fill:var(--muted)}.chart .group.is-sel text{fill:var(--ink);font-weight:650}
+.metrics{justify-content:center;margin:10px 0 0}.metrics button{display:inline-flex;gap:6px;align-items:center;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
+.metrics button[aria-pressed="false"]{color:var(--muted);opacity:.55}.metrics button i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.overview{display:grid;grid-template-columns:minmax(140px,auto) minmax(0,1fr);gap:8px 28px;align-items:start;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.headline span{display:block;color:var(--muted);font-size:12px}.headline b{font-size:32px;font-variant-numeric:tabular-nums;line-height:1.2}
+#stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px 24px;margin:0}
+#stats div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}#stats dt{color:var(--muted);font-size:12.5px}#stats dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.breakdown{margin:0 0 18px}.breakdown h3{margin:0 0 6px;font-size:13px}
+.breakdown table{font-size:12.5px;width:auto;min-width:min(520px,100%)}.breakdown td{padding:5px 8px}.breakdown tr.sub td:first-child{padding-left:26px}.breakdown tr.group td{font-weight:650}.breakdown i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+details.block{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 18px}
+details.block>summary{list-style:none;cursor:pointer}details.block>summary::-webkit-details-marker{display:none}
+details.block>summary h2{display:flex;align-items:center;gap:8px;margin:0;font-size:15px}details.block>summary h2::before{content:"▸";color:var(--muted);transition:transform .15s}details.block[open]>summary h2::before{transform:rotate(90deg)}
+details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px}details.block[open]>summary{margin-bottom:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px}.toolbar input{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:220px;max-width:100%}
+.sorts{font-size:12px;color:var(--muted);display:inline-flex;gap:4px;align-items:center}.sorts button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:6px;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer}.sorts button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+.more{display:flex;gap:8px;justify-content:center;margin-top:10px}.more:empty{display:none}
+@media (max-width:820px){.overview{grid-template-columns:1fr}}
+@media (max-width:820px){.layout{grid-template-columns:1fr;padding:12px 16px}nav{position:static}}
+</style>
+</head>
+<body>
+<header><h1>Context Adviser For Claude</h1><p id="meta"></p></header>
+<div class="layout">
+ <nav aria-label="Projects"><h2>Project</h2><div id="projects"></div></nav>
+ <main>
+  <section><h2>Summary <span class="tabs" id="period"><button data-p="day" aria-pressed="true">Day</button><button data-p="week" aria-pressed="false">Week</button><button data-p="month" aria-pressed="false">Month</button></span></h2>
+   <h3 class="chart-title">Totals</h3>
+   <div class="chart-box"><div class="chart-wrap"><svg id="chart-totals" class="chart" role="img" aria-label="Totals by period"></svg></div><svg id="chart-totals-axis" class="chart chart-axis" aria-hidden="true"></svg></div>
+   <div class="metrics" data-chart="totals"></div>
+   <h3 class="chart-title">Stats <small>hidden under 10 min or 10 calls</small></h3>
+   <div class="chart-box"><div class="chart-wrap"><svg id="chart-stats" class="chart" role="img" aria-label="Stats by period"></svg></div><svg id="chart-stats-axis" class="chart chart-axis" aria-hidden="true"></svg></div>
+   <div class="metrics" data-chart="stats"></div></section>
+  <section id="profile"><h2 id="profile-title">Profile</h2>
+   <div class="overview"><div class="headline"><span>Cost</span><b id="cost"></b></div><dl id="stats"></dl></div>
+   <div id="breakdowns"></div></section>
+  <details class="block" id="tools-section" open><summary><h2>Tool Use <small id="tools-note"></small></h2></summary>
+   <div class="toolbar"><input id="tool-filter" type="search" placeholder="Filter (e.g. bash chill)" aria-label="Filter tools"></div>
+   <div class="scroll"><table><thead><tr><th>#</th><th>Tool</th><th class="num"><button data-sort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-sort="count">Uses</button></th></tr></thead><tbody id="tools"></tbody></table></div>
+   <div class="more" id="tools-more"></div></details>
+  <details class="block" id="sessions-section" open><summary><h2>Sessions <small id="sessions-note"></small></h2></summary>
+   <div class="scroll"><table><thead><tr><th>Session</th><th>Project</th><th class="num"><button data-ssort="calls">Calls</button></th><th class="num"><button data-ssort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-ssort="activeMs">Active time</button></th></tr></thead><tbody id="sessions"></tbody></table></div>
+   <div class="more" id="sessions-more"></div></details>
+ </main>
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

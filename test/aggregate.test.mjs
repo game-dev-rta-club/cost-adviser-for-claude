@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {collect, createCache, localDay, projectOf} from '../lib/aggregate.mjs';
+import {callCost} from '../lib/prices.mjs';
+import {toolKey} from '../lib/transcripts.mjs';
+import {assistant, result, tempDir, user, writeTranscript} from './helpers.mjs';
+
+const NOW = Date.parse('2026-10-16T12:00:00');
+const at = minutes => new Date(Date.parse('2026-10-16T09:00:00') + minutes * 60000).toISOString();
+
+test('tool keys group similar uses', () => {
+  const bash = command => toolKey({name: 'Bash', input: {command}});
+  assert.equal(bash('cd /x && FOO=1 git status'), 'bash git status');
+  assert.equal(bash('npm run check 2>&1 | tail'), 'bash npm run check');
+  assert.equal(bash('node scripts/build.mjs --fast'), 'bash node build.mjs');
+  assert.equal(bash("'/a/runtime/chill' connection reply --event 4"), 'bash chill connection reply');
+  assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
+  assert.equal(toolKey({name: 'mcp__Claude_Browser__navigate'}), 'mcp Browser.navigate');
+  assert.equal(toolKey({name: 'Read'}), 'read');
+});
+
+test('projects: worktrees join their checkout and temporary folders share a name', () => {
+  assert.equal(projectOf('/Users/me/dev/app/.claude/worktrees/x'), 'app');
+  assert.equal(projectOf('/private/tmp/scratch'), '(temp)');
+  assert.equal(projectOf(null), '(unknown)');
+});
+
+test('collect counts each call once and splits its cost', async () => {
+  const root = await tempDir();
+  const first = {id: 'm1', at: at(0), input: 1000, cacheWrite: 2000, cacheRead: 10000, output: 10, tools: [{id: 't1', name: 'Bash', input: {command: 'git status'}}, {id: 't2', name: 'Read', input: {file_path: '/a'}}]};
+  await writeTranscript(root, '-work-app/s1.jsonl', [
+    {type: 'custom-title', customTitle: 'Fix login'},
+    user('Please fix login'),
+    assistant(first),
+    // The same message again while it streams, with the final output count.
+    assistant({...first, output: 300}),
+    result('t1', 'x'.repeat(50)),
+    result('t2', [{type: 'text', text: 'abc'}, {type: 'image'}]),
+    assistant({id: 'm2', at: at(2), input: 10, cacheRead: 5000, output: 20}),
+    // A long pause counts only five minutes of active time.
+    assistant({id: 'm3', at: at(60), input: 10, cacheRead: 5000, output: 20}),
+    assistant({id: 'm4', at: at(61), model: '<synthetic>', output: 5}),
+    'not json',
+  ]);
+  await writeTranscript(root, '-work-app/s1/subagents/agent-a.jsonl', [
+    assistant({id: 'a1', at: at(3), model: 'claude-haiku-5-5', effort: null, input: 100, output: 50}),
+  ]);
+  const data = await collect({root, days: 30, now: NOW});
+  assert.equal(data.calls, 4);
+  const [row] = data.daily;
+  assert.equal(row.day, localDay(Date.parse(at(0))));
+  assert.equal(row.project, 'app');
+  assert.equal(row.calls, 4);
+  assert.equal(row.subCalls, 1);
+  assert.equal(row.tokens.output, 300 + 20 + 20 + 50);
+  assert.equal(row.activeMs, (2 + 5) * 60000);
+  const expected = [callCost({model: 'claude-opus-5-5', input: 1000, cacheWrite: 2000, cacheRead: 10000, output: 300}),
+    callCost({model: 'claude-opus-5-5', input: 10, cacheRead: 5000, output: 20}), callCost({model: 'claude-opus-5-5', input: 10, cacheRead: 5000, output: 20}),
+    callCost({model: 'claude-haiku-5-5', input: 100, output: 50})].reduce((s, c) => s + c.total, 0);
+  assert.ok(Math.abs(row.cost - expected) < 1e-3);
+  assert.deepEqual(Object.keys(row.byModelEffort).sort(), ['haiku-5-5 · (subagent)', 'opus-5-5 · high']);
+  const tools = Object.fromEntries(data.tools.map(t => [t.tool, t]));
+  assert.equal(tools['bash git status'].count, 1);
+  assert.equal(tools['bash git status'].resultChars, 50);
+  assert.equal(tools.read.resultChars, 3 + 6400);
+  assert.equal(tools['(text only)'].count, 3);
+  const main = data.sessions.find(s => s.session === 's1');
+  assert.equal(main.title, 'Fix login');
+  assert.equal(main.calls, 3);
+  assert.equal(data.sessions.find(s => s.sub).session, 's1/agent-a');
+  assert.equal(data.examples[`${row.day}|app|bash git status`][0].label, 'git status');
+});
+
+test('collect skips old calls and reuses unchanged transcripts', async () => {
+  const root = await tempDir();
+  await writeTranscript(root, 'p/s.jsonl', [
+    assistant({id: 'old', at: '2026-08-01T09:00:00Z', output: 5}),
+    assistant({id: 'new', at: at(0), output: 5}),
+  ]);
+  const cache = createCache();
+  assert.equal((await collect({root, days: 7, now: NOW, cache})).calls, 1);
+  assert.equal(cache.size, 1);
+  assert.equal((await collect({root, days: 7, now: NOW, cache})).calls, 1);
+  assert.equal((await collect({root: `${root}/missing`, days: 7, now: NOW})).calls, 0);
+});

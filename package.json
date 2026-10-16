@@ -1,0 +1,24 @@
+{
+  "name": "context-adviser-for-claude",
+  "version": "0.1.0",
+  "description": "Measure what Claude Code conversations cost, and whether a change made them cheaper.",
+  "type": "module",
+  "bin": {
+    "cca": "bin/cca.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "skills",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check bin/cca.mjs && node --test test/*.test.mjs"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
