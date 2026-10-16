@@ -237,7 +237,9 @@ function applyView(q){
 
 // Improvement proposals an agent keeps (cca advise), listed under the projects.
 const PROPOSALS=Array.isArray(D.advice?.proposals)?D.advice.proposals:[];
-const starText=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+// Stars drawn as a filled share of five, so a half star shows; the number follows.
+const starText=n=>`<span class="meter" style="--v:${n/5*100}%"><i></i></span>`;
+const overallText=n=>`${starText(n)}<b class="score">${n.toFixed(1)}</b>`;
 const RATING_NAMES={ease:'Ease of use',safety:'Quality kept',savings:'Savings'};
 // Each axis has its own stars; the overall rating is their rounded average.
 const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<div><dt>${RATING_NAMES[k]}</dt><dd class="stars" role="img" aria-label="${r[k]} of 5">${starText(r[k])}</dd></div>`).join('')}</dl>`;
@@ -252,7 +254,7 @@ let activeProposal=null;
 // the list stays short and the view it is about is highlighted beside it.
 function renderProposals(){const all=visibleProposals(),low=all.filter(p=>p.stars<LOW&&p.id!==activeProposal).length,list=state.showLow?all:all.filter(p=>p.stars>=LOW||p.id===activeProposal);
  $('#proposals').innerHTML=all.length?`<h2>Improvements</h2>${list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
-  <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${mark(p)}</span>
+  <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span>
   <strong>${esc(p.action)}</strong>${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
   ${p.news?`<span class="proposal-news">${esc(p.news)}</span>`:''}<span class="proposal-more">Details ›</span></a>`).join('')}${low?`<button type="button" class="more-proposals" data-show-low>${state.showLow?'Hide ★1–2':`Show ★1–2 (${low})`}</button>`:''}`:'';}
 const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
@@ -262,7 +264,7 @@ function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scro
 function showProposal(id){const p=PROPOSALS.find(x=>x.id===id);if(!p)return hideProposal();activeProposal=id;
  const anchor=applyView(new URLSearchParams(p.link||{}));
  const list=visibleProposals(),i=list.findIndex(x=>x.id===id),prev=list[i-1],next=list[i+1];
- callout.innerHTML=`<header><span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${starText(p.stars)}${mark(p)}</span><button type="button" data-callout-close aria-label="Close">✕</button></header>
+ callout.innerHTML=`<header><span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span><button type="button" data-callout-close aria-label="Close">✕</button></header>
   <h3>${esc(p.action)}</h3>${p.project?`<small class="proposal-project">${esc(p.project)}</small>`:''}
   ${p.news?`<p class="proposal-news">${esc(p.news)}</p>`:''}${p.detail?`<p class="callout-detail">${esc(p.detail)}</p>`:''}${ratingTags(p.ratings)}
   ${/^https?:\/\//.test(p.source||'')?`<a class="option-source" href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.source)}</a>`:''}

@@ -2,8 +2,8 @@
 
 Give every proposal 1–5 stars on each axis below, in its `ratings`
 (`ease`, `safety`, `savings`), as numbers. The overall rating shown on the
-report is the rounded average of the three, **but never above the quality
-stars** (`safety`): a proposal that costs quality stays low however much it
+report is the average of the three to one decimal place (for example
+3.7), **but never above the quality stars** (`safety`): a proposal that costs quality stays low however much it
 saves. Quality comes first, but it is a balance: a small loss for a large
 saving can still rate well, and a proposal that costs more quality is still
 listed, low, so the user keeps it in mind. The report folds proposals under 3

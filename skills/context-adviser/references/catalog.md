@@ -32,6 +32,7 @@ leave out what the user declined.
 | Lower effort by default (`"effortLevel": "medium"`) | Output takes a clear share of cost | 5 | 2 | by cut |
 
 Overall stars, for example: halving a command that takes 26% of cost (a 13%
-cut) rates 3·5·4 → 4; compacting at 500k when calls above it take 33% of cost
-(about a 10% cut) rates 5·4·4 → 4; a smaller model rates 5·2·5 → 2 however
-much it saves (capped by quality).
+cut) rates 3·5·4 → 4.0; turning off an unused MCP server rates 5·5·1 → 3.7;
+compacting at 500k when calls above it take 33% of cost (about a 10% cut)
+rates 5·4·4 → 4.3, capped at 4.0 by quality; a smaller model rates 5·2·5 → 2.0
+however much it saves.
