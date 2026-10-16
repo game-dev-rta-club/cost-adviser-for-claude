@@ -19,7 +19,8 @@ const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'co
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
-let CHANGES=[];
+// Recorded changes come with the data when the page is built.
+const CHANGES=Array.isArray(D.changes)?D.changes:[];
 // Totals show how much Claude was used; Stats show efficiency. The bar that
 // matters most in each chart is drawn wide.
 const CHARTS={
@@ -132,4 +133,4 @@ document.addEventListener('click',e=>{const t=e.target;
 });
 document.addEventListener('input',e=>{if(e.target.id!=='tool-filter')return;state.filter=e.target.value.trim();state.toolLimit=10;renderTools();});
 $('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
-fetch('changes.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[]).then(list=>{CHANGES=Array.isArray(list)?list:[];render();});
+render();

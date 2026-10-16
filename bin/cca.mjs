@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Context Adviser For Claude: measure what Claude Code conversations cost.
+import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
 import {parseArgs} from 'node:util';
-import {collect} from '../lib/aggregate.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {dataDir, transcriptRoot} from '../lib/paths.mjs';
-import {createServer} from '../lib/server.mjs';
+import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
 
 const HELP = `Context Adviser For Claude
@@ -13,23 +13,26 @@ const HELP = `Context Adviser For Claude
 Usage: cca <command> [options]
 
 Commands:
-  serve                 Show the Web view (http://127.0.0.1:7319 by default).
+  build                 Collect and write the Web view as one HTML file
+                        (~/.context-adviser-for-claude/report.html). --open opens it.
   summary               Print this period against the one before, top tools and
                         sessions, and each recorded change before vs after.
   collect               Write the collected data as JSON.
   mark add <date> <label>     Record the day a change went in (YYYY-MM-DD).
   mark remove <date> <label>  Remove a recorded change.
+                              Both rebuild the HTML when it exists.
   mark list                   List recorded changes.
 
 Options:
-  --days <n>            Days to read. serve/collect: 30. summary: 7 (and the 7 before).
+  --days <n>            Days to read. build/collect: 30. summary: 7 (and the 7 before).
   --project <name>      summary: one project only.
   --json                summary/mark list: print JSON.
-  --port <n>            serve: port (default 7319). 0 picks a free one.
-  --out <file>          collect: write here instead of standard output.
+  --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
+  --open                build: open the HTML in the default browser.
   --transcripts <dir>   Read transcripts here (default: $CLAUDE_CONFIG_DIR/projects or ~/.claude/projects).
 
-Recorded changes are kept in $CCA_HOME/changes.json (default ~/.context-adviser-for-claude).
+Recorded changes, the HTML and a cache of read transcripts are kept in
+$CCA_HOME (default ~/.context-adviser-for-claude). Only changed transcripts are read again.
 Prices are provisional list prices; see lib/prices.mjs.`;
 
 const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usage.`); process.exit(2); };
@@ -37,7 +40,7 @@ const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usa
 function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
-      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, port: {type: 'string'},
+      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
     }});
   } catch (error) { fail(error.message); }
@@ -50,25 +53,40 @@ function count(value, fallback, name, min = 1) {
   return n;
 }
 
+async function build(days, out) {
+  const r = await buildReport({root, dataDir: home, days, out});
+  console.log(`Wrote ${r.file}\n${r.calls} calls from ${r.files} transcripts in ${(r.ms / 1000).toFixed(1)}s (read ${r.read} changed files, reused ${r.reused})`);
+  return r;
+}
+
+// Keep the default HTML in step with recorded changes.
+async function rebuildIfBuilt() {
+  try { await fs.access(reportFile(home)); } catch { return; }
+  await build(30);
+}
+
+function openFile(file) {
+  const [cmd, args] = process.platform === 'darwin' ? ['open', [file]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', file]] : ['xdg-open', [file]];
+  execFile(cmd, args, error => { if (error) console.error(`cca: could not open ${file}: ${error.message}`); });
+}
+
 const [command, ...rest] = process.argv.slice(2);
 const {values, positionals} = options(rest);
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
 if (!command || command === 'help' || values.help) console.log(HELP);
-else if (command === 'serve') {
-  const port = count(values.port, 7319, 'port', 0), days = count(values.days, 30, 'days');
-  const server = createServer({root, dataDir: home, days});
-  server.on('error', error => fail(error.code === 'EADDRINUSE' ? `port ${port} is in use; try --port 0.` : error.message));
-  server.listen(port, '127.0.0.1', () => console.log(`Context Adviser For Claude: http://127.0.0.1:${server.address().port}/ (last ${days} days; Ctrl+C to stop)`));
+else if (command === 'build') {
+  const report = await build(count(values.days, 30, 'days'), values.out);
+  if (values.open) openFile(report.file);
 } else if (command === 'collect') {
-  const data = await collect({root, days: count(values.days, 30, 'days')});
+  const data = await collectCached({root, dataDir: home, days: count(values.days, 30, 'days')});
   const json = JSON.stringify(data) + '\n';
   if (values.out) { await fs.writeFile(values.out, json); console.error(`Wrote ${data.calls} calls from ${data.files} transcripts to ${values.out}`); }
   else process.stdout.write(json);
 } else if (command === 'summary') {
   const days = count(values.days, 7, 'days'), changes = await readChanges(home);
   // Enough history for the previous window and for every recorded change.
-  const data = await collect({root, days: Math.max(days * 2, 30)});
+  const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
   const summary = summarize(data, {days, project: values.project || null, changes});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'mark') {
@@ -80,10 +98,12 @@ else if (command === 'serve') {
     } else if (action === 'add') {
       const {added} = await addChange(home, date, label);
       console.log(added ? `Recorded: ${date} ${label.trim()}` : `Already recorded: ${date} ${label.trim()}`);
+      if (added) await rebuildIfBuilt();
     } else if (action === 'remove') {
       const {removed} = await removeChange(home, date, label);
       if (!removed) fail(`no change "${label.trim()}" on ${date}.`);
       console.log(`Removed: ${date} ${label.trim()}`);
+      await rebuildIfBuilt();
     } else fail(`unknown mark action "${action}".`);
   } catch (error) { fail(error.message); }
 } else fail(`unknown command "${command}".`);

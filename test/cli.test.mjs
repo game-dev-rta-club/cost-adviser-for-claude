@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
-import {execFile, spawn} from 'node:child_process';
-import {once} from 'node:events';
+import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
@@ -45,23 +44,27 @@ test('cli: mark, summary, collect and errors', async () => {
   await assert.rejects(cca(['mark', 'remove', today, 'Missing'], env), e => e.code === 2);
 });
 
-test('cli: serve shows the Web view with live data', async () => {
-  const home = await tempDir(), root = await tempDir();
-  await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);
-  const server = spawn(process.execPath, [cli, 'serve', '--port', '0', '--transcripts', root], {env: {...process.env, CCA_HOME: home}});
-  try {
-    const [chunk] = await once(server.stdout, 'data');
-    const url = String(chunk).match(/http:\/\/127\.0\.0\.1:\d+\//)[0];
-    const page = await fetch(url);
-    assert.equal(page.status, 200);
-    assert.match(await page.text(), /Context Adviser For Claude/);
-    const data = await (await fetch(url + 'data.js')).text();
-    assert.match(data, /^window\.CCA=\{/);
-    assert.match(data, /"calls":1/);
-    assert.deepEqual(await (await fetch(url + 'changes.json')).json(), []);
-    assert.equal((await fetch(url + 'secret')).status, 404);
-    assert.equal((await fetch(url + 'app.js', {method: 'POST'})).status, 405);
-  } finally {
-    server.kill();
-  }
+test('cli: build writes one HTML with the data, reusing unchanged transcripts', async () => {
+  const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
+  const file = await writeTranscript(root, 'p/s.jsonl', [
+    assistant({id: 'm', at: new Date().toISOString(), output: 10, tools: [{id: 't', name: 'Bash', input: {command: 'echo "</script><b>x"; ls'}}]}),
+  ]);
+  const first = (await cca(['build', '--transcripts', root], env)).stdout;
+  assert.match(first, /1 calls from 1 transcripts .*read 1 changed files, reused 0/);
+  const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
+  assert.match(html, /<title>Context Adviser For Claude<\/title>/);
+  assert.match(html, /window\.CCA=\{/);
+  assert.doesNotMatch(html, /cca:data|cca:app|src="data\.js"/);
+  // Text from transcripts can never close the data script early.
+  assert.equal(html.match(/<\/script>/g).length, 2);
+  assert.match((await cca(['build', '--transcripts', root], env)).stdout, /read 0 changed files, reused 1/);
+  await fs.appendFile(file, JSON.stringify(assistant({id: 'm2', at: new Date().toISOString(), output: 5})) + '\n');
+  assert.match((await cca(['build', '--transcripts', root], env)).stdout, /2 calls .*read 1 changed files/);
+  // Recording a change rebuilds the HTML so the tag shows at once.
+  const today = new Date().toLocaleDateString('sv-SE');
+  assert.match((await cca(['mark', 'add', today, 'Try this', '--transcripts', root], env)).stdout, /Recorded[\s\S]*Wrote/);
+  assert.match(await fs.readFile(path.join(home, 'report.html'), 'utf8'), /"changes":\[\{"date":"[\d-]+","label":"Try this"\}\]/);
+  // A broken cache only costs a full read.
+  await fs.writeFile(path.join(home, 'cache.json'), '{broken');
+  assert.match((await cca(['build', '--transcripts', root], env)).stdout, /read 1 changed files, reused 0/);
 });

@@ -7,22 +7,45 @@ already keeps (`~/.claude/projects`). Nothing is sent anywhere.
 Requires Node.js 20 or later. No dependencies.
 
 ```sh
-npm link            # or run node bin/cca.mjs directly
-cca serve           # open http://127.0.0.1:7319
+npm link            # puts cca on your PATH (or run node bin/cca.mjs)
+cca build --open    # write the report and open it
 ```
+
+The report is one HTML file with the data inside
+(`~/.context-adviser-for-claude/report.html`), so it opens at once and needs
+no server. Run `cca build` again to bring it up to date; only transcripts that
+changed since the last run are read again.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `cca serve [--days 30] [--port 7319]` | The Web view: totals and stats over time, the cost profile, tools and sessions. Reload to read new transcripts. |
+| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time, the cost profile, tools and sessions. |
 | `cca summary [--days 7] [--project NAME] [--json]` | This period against the one before, top tools and sessions, and each recorded change before vs after. For a person or an agent. |
-| `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts. |
+| `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
 | `cca collect [--days 30] [--out data.json]` | The collected data as JSON. |
 
-`--transcripts DIR` reads another transcript folder. Recorded changes are kept
-in `~/.context-adviser-for-claude/changes.json` (set `CCA_HOME` to move it).
+`--transcripts DIR` reads another transcript folder. Recorded changes, the
+report and a cache of read transcripts are kept in `~/.context-adviser-for-claude`
+(set `CCA_HOME` to move it). Deleting `cache.json` only costs one full read.
+
+## The /context-adviser skill
+
+`skills/context-adviser` lets an agent run the review: it refreshes the report,
+reads the summary, explains what it sees with basic principles, and proposes
+up to three next steps with how to measure them. Run it on a schedule.
+
+```sh
+ln -s "$PWD/skills/context-adviser" ~/.claude/skills/context-adviser
+```
+
+- `references/reading.md`: where to look in the results.
+- `references/principles.md`: the principles, each with its source.
+- `references/measuring.md`: how to judge whether a change helped.
+
+The references stay at the level of principles on purpose, so they do not go
+stale when tools and settings change.
 
 ## How numbers are counted
 
