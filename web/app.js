@@ -45,9 +45,10 @@ function sumDaily(rows){const a={calls:0,cost:0,cacheRead:0,cacheWrite:0,input:0
   for(const f of ['byModel','byEffort','byModelEffort'])for(const [n,v] of Object.entries(r[f]||{})){const t=a[f][n]||(a[f][n]={cost:0,calls:0});t.cost+=v.cost;t.calls+=v.calls;}}return a;}
 function periods(){const keys=new Map();for(const r of D.daily.filter(inProject)){const k=periodKey(r.day,state.period);if(!keys.has(k))keys.set(k,[]);keys.get(k).push(r);}
  return [...keys.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,rows])=>({key:k,...sumDaily(rows)}));}
+// Projects are listed by cost, without the running totals.
 function renderProjects(){const total={};for(const r of D.daily)total[r.project]=(total[r.project]||0)+r.cost;
- const list=Object.entries(total).sort((a,b)=>b[1]-a[1]),all=list.reduce((s,[,v])=>s+v,0);
- $('#projects').innerHTML=[['all','All Project',all],...list.map(([p,v])=>[p,p,v])].map(([id,name,v])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span><span>${usd(v)}</span></button>`).join('');}
+ const list=Object.keys(total).sort((a,b)=>total[b]-total[a]);
+ $('#projects').innerHTML=[['all','All Project'],...list.map(p=>[p,p])].map(([id,name])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span></button>`).join('');}
 // A time series per chart: each period is a group of bars, one per shown metric,
 // each on its own scale. The right axis shows one metric's scale at a time.
 const nice=v=>{const e=10**Math.floor(Math.log10(v)),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;};
@@ -88,9 +89,15 @@ document.addEventListener('pointerout',e=>{const el=hovered(e.target);if(!el||el
 function renderChart(){const ps=periods();if(!ps.some(p=>p.key===state.key))state.key=ps.at(-1)?.key||null;
  for(const [name,metrics] of Object.entries(CHARTS)){drawChart(name,metrics,state.shown[name],ps);
   document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}</button>`).join('');}}
+// A part's label sits on its bar when the bar is wide enough: the group on
+// the first line and the part on the second, e.g. "Input\n(cache read)".
+const modelLabel=name=>{const [model,effort]=name.split(' · ');return [model.replace(/^(\w)(\w*)-(\d+)-(\d+)$/,(m,a,b,x,y)=>`${a.toUpperCase()}${b} ${x}.${y}`),effort].filter(Boolean).join('\n');};
+function fitLabels(){for(const span of document.querySelectorAll('.stack span')){const box=span.parentElement;span.classList.toggle('is-hidden',span.scrollWidth>box.clientWidth-16||span.scrollHeight>box.clientHeight);
+ const [r,g,b]=getComputedStyle(box).backgroundColor.match(/\d+/g).map(Number);span.style.color=(.299*r+.587*g+.114*b)>150?'#2b2b2b':'#fff';}}
+addEventListener('resize',()=>fitLabels());
 function breakdown(title,entries,{calls=true,sorted=true,rows=null}={}){const total=entries.reduce((s,e)=>s+e.cost,0);if(!total)return '';
  entries=entries.filter(e=>e.cost>0);if(sorted)entries.sort((a,b)=>b.cost-a.cost);
- return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div title="${esc(e.name)} ${usd(e.cost)}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"></div>`).join('')}</div>
+ return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div title="${esc(e.name)} ${usd(e.cost)}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"><span>${esc(e.label||e.name)}</span></div>`).join('')}</div>
   <table><tbody>${(rows||entries).map((e,i)=>`<tr class="${e.kind||''}" data-name="${esc(e.name)}"><td>${e.kind==='group'?'':`<i style="background:${e.color||PALETTE[i%PALETTE.length]}"></i>`}${esc(e.name)}</td><td class="num">${usd(e.cost)}</td><td class="num">${Math.round(e.cost/total*100)}%</td><td class="num">${e.note??(calls?`${num(e.calls)} calls`:`${tok(e.tokens)} tokens`)}</td></tr>`).join('')}</tbody></table></div>`;}
 function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeriod(r)));
  $('#profile-title').innerHTML=`Profile <small>${state.key?periodLabel(state.key,state.period):''} · ${esc(state.project==='all'?'All projects':state.project)}</small>`;
@@ -102,12 +109,13 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  // not logged as a call) and the cache write right after it. None overlap.
  // Each group (Input, Output, Compacting) lists its parts below it, so the
  // colored parts line up.
- const parts=[['cacheRead','Cache read',hue('opus',66)],['cacheWrite','Cache write',hue('opus',54)],['input','Uncached',hue('opus',80)],['output','Output',hue('fable',38)]].map(([k,name,color])=>({name,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
+ const parts=[['cacheRead','Cache read',hue('opus',66),'Input\n(cache read)'],['cacheWrite','Cache write',hue('opus',54),'Input\n(cache write)'],['input','Uncached',hue('opus',80),'Input\n(uncached)'],['output','Output',hue('fable',38),'Output']].map(([k,name,color,label])=>({name,label,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
  const inputs=parts.slice(0,3),input={name:'Input',kind:'group',cost:inputs.reduce((s,e)=>s+e.cost,0),tokens:inputs.reduce((s,e)=>s+e.tokens,0)};
- const compacts=[{name:'Summary (est.)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',color:'#7fd3b0',cost:a.compactRebuild,kind:'sub',note:''}];
+ const compacts=[{name:'Summary (est.)',label:'Compacting\n(summary)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',label:'Compacting\n(rebuild)',color:'#7fd3b0',cost:a.compactRebuild,kind:'sub',note:''}];
  const compact={name:'Compacting',kind:'group',cost:compactCost(a),note:`${num(a.compactions)} compactions`};
  $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{name:'Output',kind:'group',cost:parts[3].cost,tokens:parts[3].tokens},{...parts[3],kind:'sub'},...(a.compactions?[compact,...compacts]:[])]})
-  +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,...v,color:modelColor(name)})));}
+  +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,label:modelLabel(name),...v,color:modelColor(name)})));
+ fitLabels();}
 function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
  const by={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};return [...m.values()].sort((a,b)=>by[state.sort](b)-by[state.sort](a));}
 const titles=Object.fromEntries(D.sessions.map(s=>[s.session,s.title]));
@@ -175,7 +183,8 @@ function applyView(q){
 const NOTES=Array.isArray(D.advice?.notes)?D.advice.notes:[];
 const callout=document.createElement('aside');callout.className='note-callout';callout.hidden=true;document.body.append(callout);
 let activeNote=0;
-function renderNotes(){const box=$('#notes');if(!NOTES.length){box.hidden=true;return;}box.hidden=false;
+// The list shows only while a note is open (#note=N), so the plain page stays clean.
+function renderNotes(){const box=$('#notes');if(!NOTES.length||!activeNote){box.hidden=true;return;}box.hidden=false;
  box.innerHTML=`<h2>Notes <small>${esc(D.advice.title||'')}${D.advice.createdAt?` · ${new Date(D.advice.createdAt).toLocaleString('en-US')}`:''}</small></h2><ol>${NOTES.map((n,i)=>`<li><a href="#note=${i+1}" class="${activeNote===i+1?'is-active':''}"><b class="note-no">${i+1}</b><span><strong>${esc(n.title)}</strong><small>${esc(n.finding||'')}</small></span></a></li>`).join('')}</ol>`;}
 // The card stays in a corner; the item it is about is scrolled into the upper
 // part of the window, so the card does not cover it.
