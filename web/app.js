@@ -136,7 +136,8 @@ document.addEventListener('input',e=>{if(e.target.id!=='tool-filter')return;stat
 // #project=app&period=day&date=2026-10-14&metrics=stats.ctx&tool=bash%20cat&focus=tools
 // focus: totals, stats, profile, cost-type, cost-model, tools, sessions; item: a row in a cost breakdown.
 const FOCUS={totals:'#chart-totals',stats:'#chart-stats',profile:'#profile','cost-type':'[data-breakdown="Cost by type"]','cost-model':'[data-breakdown="Cost by model"]',tools:'#tools-section',sessions:'#sessions-section'};
-function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![...q.keys()].length)return;
+// Set the whole view from link parameters and return what to highlight.
+function applyView(q){
  document.querySelectorAll('.focus-glow').forEach(el=>el.classList.remove('focus-glow'));
  // Each link describes the whole view, so anything it leaves out goes back to the default.
  state.project=q.get('project')||'all';state.period=['day','week','month'].includes(q.get('period'))?q.get('period'):'day';
@@ -144,9 +145,9 @@ function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![..
  state.key=q.has('date')?periodKey(q.get('date'),state.period):null;resetLimits();state.filter='';$('#tool-filter').value='';
  const metrics=(q.get('metrics')||'').split(',').map(m=>m.split('.')).filter(([c,m])=>CHARTS[c]?.[m]);
  for(const [c,m] of metrics)state.shown[c].add(m);
- if(q.has('tool')){state.filter='';$('#tool-filter').value='';state.tool=q.get('tool');const i=toolRows().findIndex(t=>t.tool===state.tool);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
+ if(q.has('tool')){state.tool=q.get('tool');const i=toolRows().findIndex(t=>t.tool===state.tool);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
  render();
- if(q.has('session')){const id=q.get('session');const all=[...document.querySelectorAll('#sessions tr')];if(!all.some(r=>r.dataset.session?.startsWith(id))){state.sessionLimit=1000;renderSessions();}}
+ if(q.has('session')){const id=q.get('session');if(![...document.querySelectorAll('#sessions tr')].some(r=>r.dataset.session?.startsWith(id))){state.sessionLimit=1000;renderSessions();}}
  const targets=[];
  for(const [c,m] of metrics){targets.push($(`.metrics [data-chart="${c}"][data-metric="${m}"]`));showGrid(c,m);}
  if(q.has('date'))targets.push(...document.querySelectorAll(`.group[data-key="${state.key}"] .band`));
@@ -158,7 +159,33 @@ function applyLink(){const q=new URLSearchParams(location.hash.slice(1));if(![..
  // Wide charts scroll sideways; bring the linked period into view.
  if(q.has('date'))for(const band of document.querySelectorAll(`.group[data-key="${state.key}"] .band`)){const wrap=band.closest('.chart-wrap'),r=band.getBoundingClientRect(),w=wrap.getBoundingClientRect();wrap.scrollLeft+=r.left+r.width/2-(w.left+w.width/2);}
  const found=targets.filter(Boolean);found.forEach(el=>el.classList.add('focus-glow'));
- (focus||found.find(el=>!el.closest('.metrics,svg'))||found[0])?.scrollIntoView({block:'center'});}
+ // The note sits by the main item: a row or section rather than a chart button.
+ // A chart is shown from its title, so the whole chart sits above the note.
+ const chart=metrics.length?$(`#chart-${metrics[0][0]}`).closest('.chart-box').previousElementSibling:null;
+ return focus&&!q.has('item')?focus:found.find(el=>!el.closest('.metrics,svg'))||chart||found[0]||null;}
+
+// Notes an agent wrote about this data (cca advise). Each points at a view.
+const NOTES=Array.isArray(D.advice?.notes)?D.advice.notes:[];
+const callout=document.createElement('aside');callout.className='note-callout';callout.hidden=true;document.body.append(callout);
+let activeNote=0;
+function renderNotes(){const box=$('#notes');if(!NOTES.length){box.hidden=true;return;}box.hidden=false;
+ box.innerHTML=`<h2>Notes <small>${esc(D.advice.title||'')}${D.advice.createdAt?` · ${new Date(D.advice.createdAt).toLocaleString('en-US')}`:''}</small></h2><ol>${NOTES.map((n,i)=>`<li><a href="#note=${i+1}" class="${activeNote===i+1?'is-active':''}"><b class="note-no">${i+1}</b><span><strong>${esc(n.title)}</strong><small>${esc(n.finding||'')}</small></span></a></li>`).join('')}</ol>`;}
+// The card stays in a corner; the item it is about is scrolled into the upper
+// part of the window, so the card does not cover it.
+function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scrollTo({top:Math.max(0,r.top+scrollY-Math.max(80,innerHeight*.18))});}
+function showNote(n){const note=NOTES[n-1];if(!note)return;activeNote=n;
+ const anchor=applyView(new URLSearchParams(note.link||{}));renderNotes();
+ callout.innerHTML=`<header><b class="note-no">${n}</b><strong>${esc(note.title)}</strong><button type="button" data-note-close aria-label="Close note">✕</button></header>
+  ${note.finding?`<p>${esc(note.finding)}</p>`:''}${note.advice?`<p class="note-advice"><span>Recommended</span>${esc(note.advice)}</p>`:''}
+  ${/^https?:\/\//.test(note.source||'')?`<p class="note-source"><span>Source</span><a href="${esc(note.source)}" target="_blank" rel="noopener">${esc(note.source)}</a></p>`:''}
+  <footer>${n>1?`<a href="#note=${n-1}">← ${n-1}</a>`:'<span></span>'}<span>${n} / ${NOTES.length}</span>${n<NOTES.length?`<a href="#note=${n+1}">${n+1} →</a>`:'<span></span>'}</footer>`;
+ callout.hidden=false;bringIntoView(anchor||$('#notes'));}
+function hideNote(){callout.hidden=true;activeNote=0;renderNotes();}
+callout.addEventListener('click',e=>{if(e.target.closest('[data-note-close]')){history.replaceState(null,'',location.pathname+location.search);hideNote();}});
+function applyLink(){const q=new URLSearchParams(location.hash.slice(1));
+ if(q.has('note'))return showNote(Number(q.get('note')));
+ hideNote();if(![...q.keys()].length)return;
+ bringIntoView(applyView(q));}
 window.addEventListener('hashchange',applyLink);
 $('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
-render();applyLink();
+render();renderNotes();applyLink();

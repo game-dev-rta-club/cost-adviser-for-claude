@@ -60,7 +60,15 @@ tr.detail td{background:var(--bg);padding:10px 12px}
 .flash{animation:flash 1.2s ease-out}@keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
 .chart-wrap{overflow-x:auto}.chart{display:block;width:100%;height:214px}.chart-title{margin:14px 0 4px;font-size:12.5px;color:var(--muted);font-weight:650}.chart-title small{font-weight:400;margin-left:6px}
 .chart .group{cursor:pointer}.chart .band{fill:transparent}.chart .group:hover .band{fill:var(--accent-soft)}.chart .group.is-sel .band{fill:var(--sel)}
-.chart text{font-size:11px;fill:var(--muted)}.chart .axis text{font-size:10.5px;font-variant-numeric:tabular-nums}.chart .axis.is-hidden{display:none}.chart .grid{stroke-opacity:0;stroke-dasharray:3 3;transition:stroke-opacity .15s}.chart-box{display:grid;grid-template-columns:minmax(0,1fr) auto}.chart-axis{height:214px;cursor:crosshair}.chart-axis .axis-hit{fill:transparent}.chart-axis .axis{opacity:.85}.chart-axis.show-grid .axis{opacity:.35}.chart-axis.show-grid .axis.is-on{opacity:1}.chart .grid-set{display:none}.chart.show-grid .grid-set.is-on{display:inline}.chart.show-grid .grid{stroke-opacity:.45}.focus-glow{outline:2px solid #ea5f2c;outline-offset:3px;border-radius:6px;animation:focus-glow 1.2s ease-out 3}
+.chart text{font-size:11px;fill:var(--muted)}.chart .axis text{font-size:10.5px;font-variant-numeric:tabular-nums}.chart .axis.is-hidden{display:none}.chart .grid{stroke-opacity:0;stroke-dasharray:3 3;transition:stroke-opacity .15s}.chart-box{display:grid;grid-template-columns:minmax(0,1fr) auto}.chart-axis{height:214px;cursor:crosshair}.chart-axis .axis-hit{fill:transparent}.chart-axis .axis{opacity:.85}.chart-axis.show-grid .axis{opacity:.35}.chart-axis.show-grid .axis.is-on{opacity:1}.chart .grid-set{display:none}.chart.show-grid .grid-set.is-on{display:inline}.chart.show-grid .grid{stroke-opacity:.45}.notes h2 small{font-weight:400;color:var(--muted);font-size:12px}.notes ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.notes a{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none}
+.notes a:hover,.notes a.is-active{border-color:#ea5f2c;background:rgba(234,95,44,.06)}.notes a span{display:grid;gap:2px;min-width:0}.notes a small{color:var(--muted);font-size:12.5px}
+.note-no{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#ea5f2c;color:#fff;font-size:12px;font-weight:700}
+.note-callout{position:fixed;right:16px;bottom:16px;width:min(380px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;z-index:20;background:var(--panel);border:2px solid #ea5f2c;border-radius:12px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.14);font-size:13.5px}
+.note-callout header{display:flex;gap:8px;align-items:center}.note-callout header strong{flex:1}.note-callout header button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px}
+.note-callout p{margin:8px 0}.note-callout p span{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.note-callout .note-source a{word-break:break-all;color:var(--accent)}.note-callout footer{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}.note-callout footer a{color:var(--accent);text-decoration:none}
+.focus-glow{outline:2px solid #ea5f2c;outline-offset:3px;border-radius:6px;animation:focus-glow 1.2s ease-out 3}
 @keyframes focus-glow{0%{box-shadow:0 0 0 0 rgba(234,95,44,.55)}100%{box-shadow:0 0 0 10px rgba(234,95,44,0)}}
 .chart .band.focus-glow{fill:rgba(234,95,44,.12);outline:none;animation:none}
 .chart .change-tag rect{fill:var(--panel);stroke:#e8b100;stroke-width:1.5}.chart .change-tag text{font-size:11px;fill:var(--ink);font-weight:600}.chart text.sparse{fill:var(--muted)}.chart .group.is-sel text{fill:var(--ink);font-weight:650}
@@ -88,6 +96,7 @@ details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px
 <div class="layout">
  <nav aria-label="Projects"><h2>Project</h2><div id="projects"></div></nav>
  <main>
+  <section id="notes" class="notes" hidden></section>
   <section><h2>Summary <span class="tabs" id="period"><button data-p="day" aria-pressed="true">Day</button><button data-p="week" aria-pressed="false">Week</button><button data-p="month" aria-pressed="false">Month</button></span></h2>
    <h3 class="chart-title">Totals</h3>
    <div class="chart-box"><div class="chart-wrap"><svg id="chart-totals" class="chart" role="img" aria-label="Totals by period"></svg></div><svg id="chart-totals-axis" class="chart chart-axis" aria-hidden="true"></svg></div>

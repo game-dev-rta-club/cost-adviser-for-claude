@@ -1,44 +1,50 @@
 ---
 name: context-adviser
-description: Review what Claude Code conversations cost and propose the next step. Runs the cca CLI, reads the numbers against basic principles, and suggests up to three changes with how to measure them, each with a link to the place in the report. Use for /context-adviser or a scheduled cost review.
+description: Review what Claude Code conversations cost and propose the next step. Runs the cca CLI, reads the numbers against basic principles, and writes up to three findings as notes on the report, each next to the item it is about. Use for /context-adviser or a scheduled cost review.
 ---
 
 # Context Adviser
 
-Read-only review of Claude Code cost. The only writes are `cca build` (the
-report) and, when the user agrees, `cca mark add`.
+Review Claude Code cost and leave the findings on the report itself, so the
+reader sees each note next to the data. The only writes are the report, the
+notes (`cca advise`) and, when the user agrees, `cca mark add`.
 
 1. **Refresh.** Run `cca build`, then `cca summary --json` (add
    `--project NAME` when asked). If `cca` is missing, say so and stop.
 2. **Read.** Follow [reading.md](references/reading.md): find at most three
    signals, each with its numbers, period and sample size.
-3. **Link.** For each signal, run `cca link` with the options reading.md gives,
-   so the reader lands on that item with it highlighted. If `cca link` says
+3. **Explain.** Match each signal to a principle in
+   [principles.md](references/principles.md), with its source.
+4. **Check past changes.** For each recorded change, judge it with
+   [measuring.md](references/measuring.md). A verdict can be a note too.
+5. **Write the notes.** Save a JSON file and run `cca advise FILE`. If it says
    nothing is serving the report, start `cca serve` in the background.
-4. **Explain.** Match each signal to a principle in
-   [principles.md](references/principles.md). Cite the principle's source.
-5. **Check past changes.** For each recorded change, judge it with
-   [measuring.md](references/measuring.md).
-6. **Propose.** Up to three next steps. For each: the principle it applies,
-   which number should move and which way, and when to look again. Offer to
-   record the day it starts with `cca mark add YYYY-MM-DD "short name"`.
 
-## Report
-
-Keep it short. One block per signal, in this shape:
-
-```text
-[Item name](link)
-- What is happening here, with the numbers and how much of the cost it carries.
-- Recommended response: the principle, in a sentence (source URL).
+```json
+{
+  "title": "This week (10/12–10/16)",
+  "notes": [{
+    "title": "Short headline",
+    "finding": "What is happening here, with the numbers and its share of cost.",
+    "advice": "The principle as a recommendation, in a sentence.",
+    "source": "https://… (the principle's source)",
+    "link": {"period": "week", "date": "2026-10-16", "tool": "bash grep"}
+  }]
+}
 ```
 
-Then:
+`link` takes the `cca link` options (project, period, date, metrics, tool,
+session, focus, item); reading.md says which fits each signal. **The numbers in
+a note must be the ones the linked view shows**: the report shows one period at
+a time, so quote that period's numbers, not the summary's window.
 
-- What changed since the previous period, in one or two lines (or why it
-  cannot be compared).
-- Each past change: the verdict, or "too early" with what is missing.
-- Next steps, each with the number to watch and when.
+Write the notes in the user's language.
+
+6. **Reply briefly.** One line per note, plus the link to the first note
+   (`http://127.0.0.1:7319/#note=1`), what changed since the previous period
+   (or why it cannot be compared), and up to three next steps with the number
+   to watch and when. Offer to record a step's start with
+   `cca mark add YYYY-MM-DD "short name"`.
 
 ## Do not
 

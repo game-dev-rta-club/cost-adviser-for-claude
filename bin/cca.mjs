@@ -3,6 +3,7 @@
 import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
 import {parseArgs} from 'node:util';
+import {checkAdvice, clearAdvice, saveAdvice} from '../lib/advice.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {dataDir, transcriptRoot} from '../lib/paths.mjs';
 import {buildReport, collectCached, reportFile} from '../lib/report.mjs';
@@ -23,6 +24,10 @@ Commands:
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
                         --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)
+  advise <file.json>    Show an agent's notes on the report, each next to the item it
+                        points at (the report is rebuilt). --clear removes them.
+                        {"title": "...", "notes": [{"title", "finding", "advice",
+                         "source": "https://...", "link": {<link options>}}]}
   summary               Print this period against the one before, top tools and
                         sessions, and each recorded change before vs after.
   collect               Write the collected data as JSON.
@@ -49,7 +54,7 @@ const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usa
 function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
-      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'},
+      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string'}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
     }});
@@ -98,6 +103,18 @@ else if (command === 'build') {
   console.log(url);
   if (!await viewerRunning(port)) console.error(`cca: nothing is serving the report on port ${port}; start "cca serve" to make the link work.`);
   if (values.open) openFile(url);
+} else if (command === 'advise') {
+  try {
+    if (values.clear) { await clearAdvice(home); console.log('Notes removed.'); }
+    else {
+      if (!positionals[0]) fail('give the notes file: cca advise notes.json');
+      const advice = checkAdvice(JSON.parse(await fs.readFile(positionals[0], 'utf8')));
+      await saveAdvice(home, advice);
+      console.log(`Saved ${advice.notes.length} notes.`);
+    }
+  } catch (error) { fail(error.message); }
+  await build(30);
+  if (!values.clear) console.log(`Open: http://127.0.0.1:${DEFAULT_PORT}/#note=1${await viewerRunning(DEFAULT_PORT) ? '' : '  (start "cca serve" first)'}`);
 } else if (command === 'collect') {
   const data = await collectCached({root, dataDir: home, days: count(values.days, 30, 'days')});
   const json = JSON.stringify(data) + '\n';

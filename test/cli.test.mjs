@@ -7,6 +7,7 @@ import {promisify} from 'node:util';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
 import {assistant, tempDir, writeTranscript} from './helpers.mjs';
 import {createViewer, reportLink} from '../lib/viewer.mjs';
+import {checkAdvice} from '../lib/advice.mjs';
 
 const run = promisify(execFile), cli = new URL('../bin/cca.mjs', import.meta.url).pathname;
 const cca = (args, env) => run(process.execPath, [cli, ...args], {env: {...process.env, ...env}});
@@ -88,4 +89,26 @@ test('links describe one view, and the viewer only sends the built report', asyn
     assert.equal((await fetch(url + '../cache.json')).status, 404);
     assert.equal((await fetch(url, {method: 'POST'})).status, 405);
   } finally { server.close(); }
+});
+
+test('advice: notes are checked, embedded in the report, and can be cleared', async () => {
+  assert.throws(() => checkAdvice({}), /notes/);
+  assert.throws(() => checkAdvice({notes: [{finding: 'x'}]}), /title is required/);
+  assert.throws(() => checkAdvice({notes: [{title: 'x', source: 'javascript:alert(1)'}]}), /http/);
+  assert.throws(() => checkAdvice({notes: [{title: 'x', link: {evil: '1'}}]}), /not a link option/);
+  const ok = checkAdvice({title: 'Week', notes: [{title: ' Long context ', finding: 'f', advice: 'a', source: 'https://example.com', link: {tool: 'bash cat', date: ''}}]});
+  assert.deepEqual(ok.notes[0], {title: 'Long context', finding: 'f', advice: 'a', source: 'https://example.com', link: {tool: 'bash cat'}});
+
+  const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
+  await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);
+  const file = path.join(home, 'notes.json');
+  await fs.writeFile(file, JSON.stringify({title: 'Week', notes: [{title: '</script><b>x', finding: 'f'}]}));
+  assert.match((await cca(['advise', file, '--transcripts', root], env)).stdout, /Saved 1 notes[\s\S]*#note=1/);
+  const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
+  assert.match(html, /"advice":\{"title":"Week"/);
+  assert.equal(html.match(/<\/script>/g).length, 2);
+  await fs.writeFile(file, '{"notes": [{}]}');
+  await assert.rejects(cca(['advise', file, '--transcripts', root], env), e => e.code === 2 && /title is required/.test(e.stderr));
+  await cca(['advise', '--clear', '--transcripts', root], env);
+  assert.match(await fs.readFile(path.join(home, 'report.html'), 'utf8'), /"advice":null/);
 });
