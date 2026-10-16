@@ -10,7 +10,7 @@ much work there was.
 |---|---|---|---|
 | Cost / call and Avg context | Both rise together | Conversations carry more context. P1, P2 | `--metrics stats.ctx,stats.perCall --date DAY` |
 | Calls (with Active time) | Calls rise faster than active time, or one session takes most calls | More round trips per piece of work. P4 | `--metrics totals.calls,totals.activeMs` |
-| Top tools | One tool or command takes a large and growing share of cost | Repeated calls of the same kind; its examples show what. P4, P5 | `--tool NAME` |
+| Top tools | One tool or command takes a large and growing share of cost | Repeated calls of the same kind; its examples show what. P4, P5 | `--tool NAME` (a group works too, e.g. `--tool "bash chill"`) |
 | `(final reply)` share | Large share of cost in calls that use no tool (the reply that ends each turn) | Many turns back to the user, each reading a long context. P1, P2 | `--tool "(final reply)"` |
 | Cache hit rate | Drops against its own history | Something is rebuilding the cache. P3 | `--metrics stats.cacheHit` |
 | Cost by type: Cache write | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
@@ -24,7 +24,8 @@ Profile, Tool Use and Sessions for one period at a time (the latest day unless
 told otherwise), so add `--period week --date DAY` to match the summary's
 week, `--period 3d` for the last three days (counted back from the build
 day), or `--date DAY` for a single day. A link opens the report on that item
-and highlights it.
+and highlights it. Tool Use is a tree: commands that share leading words add
+up (bash › chill › connection › reply), so compare groups as well as leaves.
 
 Compacting is partly estimated: the summary request is not logged, so its
 cost is worked out from the conversation size before it (read from the cache)

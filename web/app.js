@@ -21,7 +21,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -136,16 +136,44 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  fitLabels();}
 function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
  const by={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};return [...m.values()].sort((a,b)=>by[state.sort](b)-by[state.sort](a));}
+// Tool Use is a tree, like a profiler: uses that share leading words add up
+// (bash › chill › connection › reply). Each node's id is the start of the
+// key up to it, so a leaf's id is its key.
+const tokens=key=>[...key.matchAll(key.startsWith('mcp ')?/\([^)]*\)|[^\s.]+/g:/\([^)]*\)|\S+/g)].map(m=>({text:m[0],id:key.slice(0,m.index+m[0].length)}));
+const emptyNode=(id,text,depth)=>({id,text,depth,count:0,resultChars:0,cost:0,keys:[],children:new Map(),self:null});
+function toolTree(){const root=emptyNode('','',0);
+ for(const t of toolRows()){let node=root;
+  for(const tk of tokens(t.tool)){node.count+=t.count;node.resultChars+=t.resultChars;node.cost+=t.cost;node.keys.push(...t.keys);
+   if(!node.children.has(tk.text))node.children.set(tk.text,emptyNode(tk.id,tk.text,node.depth+1));node=node.children.get(tk.text);}
+  node.count+=t.count;node.resultChars+=t.resultChars;node.cost+=t.cost;node.keys.push(...t.keys);node.self=t;}
+ return root;}
+const SORT={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};
+// A node with uses of its own and longer ones lists its own as a child.
+function kids(node){const list=[...node.children.values()];
+ if(node.self&&list.length)list.push({...emptyNode(`${node.id} ·`,'(no subcommand)',node.depth+1),count:node.self.count,resultChars:node.self.resultChars,cost:node.self.cost,keys:node.self.keys});
+ return list.sort((a,b)=>SORT[state.sort](b)-SORT[state.sort](a));}
+// Open by default: the top level, and Python and Node one level further.
+const isOpen=n=>state.filter?true:state.toggled.has(n.id)?state.toggled.get(n.id):n.depth===1||(n.depth===2&&/^(python3?|node)$/.test(n.text));
+// Show a node: open its parents and widen any list it is hidden in.
+function revealTool(id){for(const tk of tokens(id).slice(0,-1)){state.toggled.set(tk.id,true);state.moreTree.add(tk.id);}
+ const top=tokens(id)[0]?.text,i=kids(toolTree()).findIndex(n=>n.text===top);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
 const titles=Object.fromEntries(D.sessions.map(s=>[s.session,s.title]));
 const when=ts=>new Date(ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 function moreButtons(id,shown,total,step){$(id).innerHTML=`${shown<total?`<button class="link" data-more="${id}" data-step="${step}">Show ${Math.min(step,total-shown)} more (${total-shown} left)</button>`:''}${shown>step?`<button class="link" data-less="${id}" data-step="${step}">Back to top ${step}</button>`:''}`;}
-function renderTools(){const rows=toolRows(),total=rows.reduce((s,t)=>s+t.cost,0),shown=rows.slice(0,state.toolLimit);
- $('#tools-note').textContent=`${rows.length} tools · ${usd(total)}`;
- $('#tools').innerHTML=shown.map((t,i)=>{const share=total?t.cost/total:0,open=state.tool===t.tool;let detail='';
-  if(open){const ex=t.keys.flatMap(k=>D.examples[k]||[]).sort((a,b)=>b.result-a.result).slice(0,6);
-   detail=`<tr class="detail"><td colspan="4"><div class="ex">${ex.length?ex.map(e=>`<div><code>${esc(e.label)}</code><small>${usd(e.cost)}</small><small>${when(e.at)} · ${esc(titles[e.session]||'')} · ${esc(e.session.slice(0,8))}</small><small>result ${tok(e.result/4)} · context ${tok(e.ctx)}</small></div>`).join(''):'<p class="empty">No examples.</p>'}</div></td></tr>`;}
-  return `<tr class="tool ${open?'is-focus':''}" data-tool="${esc(t.tool)}"><td class="num">${i+1}</td><td>${esc(t.tool)}</td><td class="num"><span class="share"><i style="width:${Math.max(2,share*90)}px"></i>${usd(t.cost)} <small>${Math.round(share*100)}%</small></span></td><td class="num">${num(t.count)}</td></tr>${detail}`;}).join('')||'<tr><td colspan="4" class="empty">No data.</td></tr>';
- moreButtons('#tools-more',shown.length,rows.length,10);}
+const CHILD_LIMIT=8;
+function findNode(id){let node=toolTree();for(const tk of tokens(id)){node=node.children.get(tk.text);if(!node)return null;}return node;}
+function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),shown=top.slice(0,state.toolLimit),out=[];
+ $('#tools-note').textContent=`${toolRows().length} tools · ${usd(total)}`;
+ const row=(n,rank)=>{const share=total?n.cost/total:0,list=kids(n),leaf=!list.length,open=!leaf&&isOpen(n),sel=state.tool===n.id;
+  out.push(`<tr class="tool ${sel?'is-focus':''} ${leaf?'is-leaf':''}" data-tool="${esc(n.id)}"><td class="num">${rank||''}</td><td class="tool-name" style="padding-left:${8+(n.depth-1)*18}px"><span class="caret">${leaf?'':open?'▾':'▸'}</span>${esc(n.text)}</td><td class="num"><span class="share"><i style="width:${Math.max(2,share*90)}px"></i>${usd(n.cost)} <small>${Math.round(share*100)}%</small></span></td><td class="num">${num(n.count)}</td></tr>`);
+  if(leaf&&sel){const ex=n.keys.flatMap(k=>D.examples[k]||[]).sort((a,b)=>b.result-a.result).slice(0,6);
+   out.push(`<tr class="detail"><td colspan="4"><div class="ex">${ex.length?ex.map(e=>`<div><code>${esc(e.label)}</code><small>${usd(e.cost)}</small><small>${when(e.at)} · ${esc(titles[e.session]||'')} · ${esc(e.session.slice(0,8))}</small><small>result ${tok(e.result/4)} · context ${tok(e.ctx)}</small></div>`).join(''):'<p class="empty">No examples.</p>'}</div></td></tr>`);}
+  if(!open)return;const all=state.moreTree.has(n.id)||state.filter,part=all?list:list.slice(0,CHILD_LIMIT);
+  for(const c of part)row(c);
+  if(part.length<list.length){const rest=list.slice(part.length);out.push(`<tr class="tool-more"><td></td><td colspan="3" style="padding-left:${8+n.depth*18}px"><button class="link" data-more-tree="${esc(n.id)}">${rest.length} more · ${usd(rest.reduce((s,c)=>s+c.cost,0))}</button></td></tr>`);}};
+ shown.forEach((n,i)=>row(n,i+1));
+ $('#tools').innerHTML=out.join('')||'<tr><td colspan="4" class="empty">No data.</td></tr>';
+ moreButtons('#tools-more',shown.length,top.length,10);}
 function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>inProject(s)&&inPeriod(s))){const t=m.get(s.session)||{...s,calls:0,cost:0,activeMs:0};t.calls+=s.calls;t.cost+=s.cost;t.activeMs+=s.activeMs;t.first=Math.min(t.first,s.first);t.last=Math.max(t.last,s.last);m.set(s.session,t);}
  const rows=[...m.values()].sort((a,b)=>b[state.ssort]-a[state.ssort]),shown=rows.slice(0,state.sessionLimit);
  $('#sessions-note').textContent=`${rows.length} sessions`;
@@ -162,7 +190,10 @@ document.addEventListener('click',e=>{const t=e.target;
  const ss=t.closest('[data-ssort]');if(ss){state.ssort=ss.dataset.ssort;document.querySelectorAll('[data-ssort]').forEach(b=>b.setAttribute('aria-pressed',b===ss));renderSessions();return;}
  const more=t.closest('[data-more]');if(more){const k=more.dataset.more==='#tools-more'?'toolLimit':'sessionLimit';state[k]+=+more.dataset.step;more.dataset.more==='#tools-more'?renderTools():renderSessions();return;}
  const less=t.closest('[data-less]');if(less){const k=less.dataset.less==='#tools-more'?'toolLimit':'sessionLimit';state[k]=+less.dataset.step;less.dataset.less==='#tools-more'?renderTools():renderSessions();return;}
- const row=t.closest('tr.tool');if(row){state.tool=state.tool===row.dataset.tool?null:row.dataset.tool;renderTools();}
+ const mt=t.closest('[data-more-tree]');if(mt){state.moreTree.add(mt.dataset.moreTree);renderTools();return;}
+ // A group opens and closes; a single tool shows its examples.
+ const row=t.closest('tr.tool');if(row){const id=row.dataset.tool;if(row.classList.contains('is-leaf'))state.tool=state.tool===id?null:id;
+  else{const n=findNode(id);state.toggled.set(id,!isOpen(n));}renderTools();}
 });
 document.addEventListener('input',e=>{if(e.target.id!=='tool-filter')return;state.filter=e.target.value.trim();state.toolLimit=10;renderTools();});
 // A link can open the page on one item and highlight it, e.g.
@@ -178,7 +209,8 @@ function applyView(q){
  state.key=q.has('date')?periodKey(q.get('date'),state.period):null;resetLimits();state.filter='';$('#tool-filter').value='';
  const metrics=(q.get('metrics')||'').split(',').map(m=>m.split('.')).filter(([c,m])=>CHARTS[c]?.[m]);
  for(const [c,m] of metrics)state.shown[c].add(m);
- if(q.has('tool')){state.tool=q.get('tool');const i=toolRows().findIndex(t=>t.tool===state.tool);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
+ state.toggled.clear();state.moreTree.clear();
+ if(q.has('tool')){state.tool=q.get('tool');revealTool(state.tool);const n=findNode(state.tool);if(n?.children.size)state.toggled.set(n.id,true);}
  render();
  if(q.has('session')){const id=q.get('session');if(![...document.querySelectorAll('#sessions tr')].some(r=>r.dataset.session?.startsWith(id))){state.sessionLimit=1000;renderSessions();}}
  const targets=[];
