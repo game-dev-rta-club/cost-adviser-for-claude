@@ -24,7 +24,7 @@ changed since the last run are read again.
 | `cca summary [--days 7] [--project NAME] [--tool NAME] [--json]` | The report as text, for a person or an agent: this period against the one before, each day, cost by model, tool use as a tree, top sessions, and each recorded change before vs after. `--tool` adds one tool or group (e.g. `"bash chill"`) by day with its costliest examples. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
-| `cca advise notes.json` / `cca advise --clear` | Show an agent's notes on the report. They appear only when the page is opened with `#note=N`: a numbered list at the top, and a card next to the item each note is about. |
+| `cca advise notes.json` / `cca advise --clear` | Show an agent's notes on the report. A note can list `options` (title and detail each), shown as separate choices A, B, C. They appear only when the page is opened with `#note=N`: a numbered list at the top, and a card next to the item each note is about. |
 | `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
 | `cca collect [--days 30] [--out data.json]` | The collected data as JSON. |

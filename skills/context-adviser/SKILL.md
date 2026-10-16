@@ -30,7 +30,11 @@ notes (`cca advise`) and, when the user agrees, `cca mark add`.
   "notes": [{
     "title": "Short headline",
     "finding": "What is happening here: the numbers, their share of cost, and what they suggest. A short paragraph.",
-    "advice": "The principle as a recommendation, and why it fits these numbers.",
+    "advice": "The principle, and why it fits these numbers. One or two sentences.",
+    "options": [
+      {"title": "One way to apply it", "detail": "What it means in practice, and when it suits."},
+      {"title": "Another way", "detail": "How it differs, and when to pick it instead."}
+    ],
     "source": "https://… (the principle's source)",
     "link": {"period": "week", "date": "2026-10-16", "tool": "bash grep"}
   }]
@@ -41,6 +45,10 @@ notes (`cca advise`) and, when the user agrees, `cca mark add`.
 session, focus, item); reading.md says which fits each signal. **The numbers in
 a note must be the ones the linked view shows**: the report shows one period at
 a time, so quote that period's numbers, not the summary's window.
+
+Give each note two or three `options`: different ways to apply the principle,
+each in its own entry, so the user can compare and choose. Say what each one
+suits; do not rank them unless the numbers favor one.
 
 Write the notes in the user's language. Give them room: a few sentences each is
 fine, and a blank line starts a new paragraph.
