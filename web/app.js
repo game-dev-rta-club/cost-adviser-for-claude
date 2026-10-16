@@ -35,10 +35,11 @@ const CHARTS={
  stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactPerHour:{name:'Compacting / active hour',color:'#18a874',v:a=>a.activeMs?compactCost(a)/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis}}};
 // Stats are ratios: hide them when the period has too little use.
 const sparse=name=>name==='stats';
-// Profile: Claude's orange is the base (Opus, Input). Other families get nearby
-// cool hues; effort only changes the shade.
-const HUES={opus:[16,72],sonnet:[268,52],haiku:[292,45],fable:[226,55]};
-const hue=(family,l)=>{const [h,sat]=HUES[family]||[30,8];return `hsl(${h} ${sat}% ${l}%)`;};
+// Profile: Claude's orange is the base (Opus, Input); effort only changes the shade.
+// By spec, largest first: Fable is redder than Opus, then Sonnet and Haiku move
+// toward blue, with Haiku a navy (its shades are darker).
+const HUES={fable:[356,70,0],opus:[16,72,0],sonnet:[270,48,0],haiku:[226,58,-16]};
+const hue=(family,l)=>{const [h,sat,dl]=HUES[family]||[30,8,0];return `hsl(${h} ${sat}% ${l+dl}%)`;};
 const EFFORT={low:72,medium:62,high:56,xhigh:46,max:36};
 const modelColor=name=>{const [model,effort='']=name.split(' · '),family=Object.keys(HUES).find(f=>model.includes(f));return hue(family,EFFORT[effort.trim()]||56);};
 // Profile shares use Claude's orange, darkest to lightest by cost.
@@ -126,7 +127,7 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  // not logged as a call) and the cache write right after it. None overlap.
  // Each group (Input, Output, Compacting) lists its parts below it, so the
  // colored parts line up.
- const parts=[['cacheRead','Cache read',hue('opus',61),'Input\n(cache read)'],['cacheWrite','Cache write',hue('opus',54),'Input\n(cache write)'],['input','Uncached',hue('opus',74),'Input\n(uncached)'],['output','Output',hue('fable',38),'Output']].map(([k,name,color,label])=>({name,label,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
+ const parts=[['cacheRead','Cache read',hue('opus',61),'Input\n(cache read)'],['cacheWrite','Cache write',hue('opus',54),'Input\n(cache write)'],['input','Uncached',hue('opus',74),'Input\n(uncached)'],['output','Output','hsl(226 55% 38%)','Output']].map(([k,name,color,label])=>({name,label,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
  const inputs=parts.slice(0,3),input={name:'Input',kind:'group',cost:inputs.reduce((s,e)=>s+e.cost,0),tokens:inputs.reduce((s,e)=>s+e.tokens,0)};
  const compacts=[{name:'Summary (est.)',label:'Compacting\n(summary)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',label:'Compacting\n(rebuild)',color:'#5fc49c',cost:a.compactRebuild,kind:'sub',note:''}];
  const compact={name:'Compacting',kind:'group',cost:compactCost(a),note:`${num(a.compactions)} compactions`};
