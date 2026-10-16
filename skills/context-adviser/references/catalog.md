@@ -19,10 +19,10 @@ current docs, and leave out what the user declined.
 
 | Proposal | You see | ease | safety | savings |
 |---|---|---|---|---|
-| Compact at half the window, 500k of 1M tokens (`"autoCompactWindow": 500000`) | Calls above 500k tokens take a clear share of cost | 5 | 4 | by cut |
+| Compact at half the model's window (`autoCompactWindow` = window / 2) | Calls above half the window take a clear share of cost | 5 | 4 | by cut |
 | Start a new conversation when switching to unrelated work | One conversation runs for many hours across several tasks | 1 | 4 | by cut |
-| Below half the window, one small step down (500k → 450k), then watch | The window is already at half; the last step has run for some days without more retries, rework or confusion after compaction | 5 | 3 | by cut |
-| Compact far lower in one go (`"autoCompactWindow": 200000`) | Most cost is in calls above 200k tokens | 5 | 1 | by cut |
+| Below half the window, one step of window / 20 down, then watch | The setting is already at half or below; the last step has run for some days without more retries, rework or confusion after compaction | 5 | 3 | by cut |
+| Compact far below half in one go | Most cost is in calls far below half the window | 5 | 1 | by cut |
 
 ## Model and effort
 
@@ -40,7 +40,12 @@ cost (about a 10% cut) rates 5·4·5 → 4.6; shortening added text rates
 a smaller model with a 30% cut rates 5·1·5 → 2.9; one step from 500k to 450k
 (about a 4.7% cut) rates 5·3·3 → 3.6.
 
-Below half the window, propose one small step at a time. Each run proposes
+The window grows with new models, so these steps follow its size, not a fixed
+number of tokens: down to half the window in one go, then window / 20 a step.
+For a 1M-token window: 500k, then 450k, 400k, 350k and so on. For a 2M window:
+1M, then 900k, 800k. Read the window of the model in use from its docs.
+
+Below half the window, propose one step at a time. Each run proposes
 the next step only when the last one, recorded with `cca mark add`, shows no
 more retries, rework or confusion after compaction; otherwise it proposes
 going back up a step. The risk builds up with every step, so a step keeps
