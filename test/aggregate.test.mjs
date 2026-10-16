@@ -13,6 +13,16 @@ test('tool keys group similar uses', () => {
   assert.equal(bash('cd /x && FOO=1 git status'), 'bash git status');
   assert.equal(bash('npm run check 2>&1 | tail'), 'bash npm run check');
   assert.equal(bash('node scripts/build.mjs --fast'), 'bash node build.mjs');
+  // Inline Python is named by what it does.
+  assert.equal(bash("python3 - <<'EOF'\np='a';s=open(p).read()\nopen(p,'w').write(s.replace('x','y'))\nEOF"), 'bash python3 (edit files)');
+  assert.equal(bash("python3 - <<'EOF'\np='docs/a.md';s=open(p).read()\nopen(p,'w').write(s.replace('x','y'))\nEOF"), 'bash python3 (edit .md)');
+  assert.equal(bash('.venv/bin/python tools/x.py;'), 'bash python3 x.py');
+  assert.equal(bash("S=1 python3 - <<EOF\nopen('new.md','w').write('x')\nEOF"), 'bash python3 (write .md)');
+  assert.equal(bash("cd x && python3 - <<'EOF'\nfor l in open('/u/.claude/projects/a.jsonl'): pass\nEOF"), 'bash python3 (read transcripts)');
+  assert.equal(bash("python3 -c 'import json; print(json.load(open(\"a.json\")))'"), 'bash python3 (read data)');
+  assert.equal(bash('python3 -I scripts/run.py --x'), 'bash python3 run.py');
+  assert.equal(bash("python3 - <<'EOF'\nimport re\nfor m in re.finditer('x', open('a.html').read()): print(m)\nEOF"), 'bash python3 (read files)');
+  assert.equal(bash("git status; python3 - <<'EOF'\nprint(1)\nEOF"), 'bash git status');
   assert.equal(bash("'/a/runtime/chill' connection reply --event 4"), 'bash chill connection reply');
   assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
   assert.equal(toolKey({name: 'mcp__Claude_Browser__navigate'}), 'mcp Browser.navigate');

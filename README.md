@@ -63,6 +63,8 @@ stale when tools and settings change.
   measured and counted as compacting, not input. Tool Use shows it as
   `(compacting)`.
 - **Tool cost**: a call's cost is shared equally among the tools it asked for.
+  An inline Python script (`python3 - <<EOF`, `python3 -c`) is named by what it
+  does: `(edit .md)`, `(write .json)`, `(read files)`, `(read data)`, `(read transcripts)`.
   Calls without a tool are "(text only)".
 - **Subagent calls** are calls from subagent transcripts, as a share of all calls.
 - **Cache hit rate** is cache reads as a share of all input tokens.
