@@ -1,53 +1,107 @@
 # Sample proposals
 
-Proposals that often fit, each with what you see when it applies and how it
-rates by [ratings.md](ratings.md). `ease` and `safety` are fixed here;
-`savings` follows the cut you estimate from the numbers. They are samples: rate
-a new kind of proposal by the same signs, check every setting against its
-current docs, and leave out what the user declined.
+These proposals often fit. Upkeep and quality are fixed for each one; savings
+depends on the user's numbers, and the savings given here come from one real
+week, except where they are marked as estimates. Rate them by
+[ratings.md](ratings.md). Do not propose anything the user has declined; the
+summary lists declined proposals. Check the name and value of every setting
+against its current documentation before proposing it.
 
-## Waste: the same work with fewer or smaller calls (quality 5)
+## 1. Combine a command that is called many times into fewer calls
 
-| Proposal | You see | ease | safety | savings |
-|---|---|---|---|---|
-| Make one command do the work of a repeated series (a CLI that is polled, or a status check before every step) | One command group takes a large share in Tool Use, with many uses and short output | 3 | 5 | by cut |
-| Make a tool return less (limit flags, a summary instead of the full list, reading the part of a file needed) | A tool with a high result size per use; the same large file read again and again | 3 | 5 | by cut (`g × U` in ratings.md; usually 1–2) |
-| Shorten text the user's own hooks or skills add to every call, or add it only when it changed | The same added context in every call; a large fixed instruction in each conversation | 3 | 5 | by cut (`g × U` in ratings.md; usually 1) |
-| Turn off MCP servers a project never uses | Tools from a server that never appear in Tool Use | 5 | 5 | 1 |
+**Propose it when** the same command, or the same check, is called many times
+and takes a large share of the cost: for example, a status check before every
+step, or asking again and again until something finishes.
 
-## Context length
+**Ratings:** upkeep 3 stars, because the tool has to be changed to fit that
+workflow; quality 5 stars, because the same work is done with fewer calls;
+savings 5 stars in the example week, where halving a command that took 26% of
+the cost cut 13%. **Overall: 4.2.**
 
-| Proposal | You see | ease | safety | savings |
-|---|---|---|---|---|
-| Compact at half the model's window (`autoCompactWindow` = window / 2) | Calls above half the window take a clear share of cost | 5 | 4 | by cut |
-| Start a new conversation when switching to unrelated work | One conversation runs for many hours across several tasks | 1 | 4 | by cut |
-| Below half the window, one step of window / 20 down, then watch | The setting is already at half or below; the last step has run for some days without more retries, rework or confusion after compaction | 5 | 3 | by cut |
-| Compact far below half in one go | Most cost is in calls far below half the window | 5 | 1 | by cut |
+## 2. Make tool results smaller
 
-## Model and effort
+**Propose it when** a tool returns large results each time, or the same large
+file is read again and again. Ways to do it include a limit on the number of
+results, a summary instead of a full list, and reading only the part of a file
+that is needed.
 
-| Proposal | You see | ease | safety | savings |
-|---|---|---|---|---|
-| A subagent on a lighter model for searching and reading | Search and read tools take a large share | 3 | 3 | by cut |
-| Lower effort for all work (`"effortLevel": "medium"`) | Output takes a clear share of cost | 5 | 1 | by cut |
-| Lower effort only for some tasks, chosen each time | Output takes a clear share, and some tasks are routine | 1 | 3 | by cut |
-| A smaller model by default (`"model": "sonnet"`) | One large model takes most of the cost | 5 | 1 | by cut |
+**Ratings:** upkeep 3 stars; quality 5 stars; savings 3 stars in the example
+week, where `cca simulate --tool-results 0.7` (results 30% shorter) cut 2.1%
+(see "Making the context smaller saves little" in ratings.md).
+**Overall: 3.6.**
 
-Overall stars, for example: halving a command that takes 26% of cost (a 13%
-cut) rates 3·5·5 → 4.2; compacting at 500k when calls above it take 33% of
-cost (about a 10% cut) rates 5·4·5 → 4.6; shortening added text rates
-3·5·1 → 2.5; trimming tool results by 30% (about a 2% cut) rates 3·5·2 → 3.1;
-a smaller model with a 30% cut rates 5·1·5 → 2.9; one step from 500k to 450k
-(about a 4.7% cut) rates 5·3·3 → 3.6.
+## 3. Shorten the text the user's own hooks or skills add to every call
 
-The window grows with new models, so these steps follow its size, not a fixed
-number of tokens: down to half the window in one go, then window / 20 a step.
-For a 1M-token window: 500k, then 450k, 400k, 350k and so on. For a 2M window:
-1M, then 900k, 800k. Read the window of the model in use from its docs.
+**Propose it when** the same text is added to every call, or a large fixed
+instruction is loaded in every conversation. Adding the text only when it has
+changed works too.
 
-Below half the window, propose one step at a time. Each run proposes
-the next step only when the last one, recorded with `cca mark add`, shows no
-more retries, rework or confusion after compaction; otherwise it proposes
-going back up a step. The risk builds up with every step, so a step keeps
-quality 3 however well the last one went: it stays on the list without looking
-urgent.
+**Ratings:** upkeep 3 stars; quality 5 stars; savings 1 star, usually under 1%
+for the reason in "Making the context smaller saves little". **Overall: 2.5.**
+
+## 4. Start compaction at half of the context window
+
+**Propose it when** calls that read more than half of the context window take a
+clear share of the cost. The setting is `autoCompactWindow`; set it to half of
+the context window of the model in use. For a model with a one-million-token
+window, that is 500,000.
+
+**Ratings:** upkeep 5 stars, though it should be checked again when the model
+changes; quality 4 stars; savings 5 stars in the example week, where
+`cca simulate --compact-at 500000` (from one million) cut about 16%, even after
+counting the extra compactions. **Overall: 4.6.**
+
+## 5. Below half of the context window, lower the compaction length by one step
+
+**Propose it when** the compaction length is already at half of the context
+window or lower. One step is one twentieth of the context window: for a
+one-million-token window, 500,000 to 450,000, then 450,000 to 400,000, and so
+on. Context windows differ between models and grow with new ones, so work out
+the step from the window of the model in use, read from its documentation.
+
+Propose one step at a time, never a large cut at once. Nobody knows where the
+work starts to suffer, and the adviser cannot see whether quality dropped. So
+say plainly, when proposing it, that a lower compaction length may lower the
+quality of the work. The risk adds up with every step, so the quality rating
+stays at 3 stars however many steps have gone well.
+
+**Ratings:** upkeep 5 stars; quality 3 stars; savings 3 stars in the example
+week, where one step from 500,000 to 450,000 cut about 4.7%. **Overall: 3.6.**
+
+## 6. Hand research to a subagent and keep only its result
+
+**Propose it when** search and read tools take a large share, and most of what
+they return is never used later in the conversation. The subagent uses the
+same model; only its final answer comes back into the main conversation.
+
+**Ratings:** upkeep 4 stars, because it works across projects with almost no
+tuning; quality 4 stars, because some of what was read does not stay in the
+main conversation; savings 2 stars, estimated at about 1.5%, because this makes
+the context smaller and the subagent's own calls cost money too.
+**Overall: 3.2.**
+
+## 7. Hand research to a subagent on a lighter model
+
+**Propose it when** search and read tools take a large share of the cost.
+
+**Ratings:** upkeep 3 stars; quality 3 stars, because a lighter model may miss
+things; savings 5 stars, estimated at about 10% when those calls take a large
+share, from the lower price per call. **Overall: 3.6.**
+
+## 8. Use a smaller model by default
+
+**Propose it when** one large model takes most of the cost. It works well for
+some users, so it is worth showing as a choice to consider.
+
+**Ratings:** upkeep 5 stars; quality 1 star, because everyday work loses
+quality; savings 5 stars, estimated at about 30% from the lower price per call.
+**Overall: 2.9.**
+
+## 9. Lower the effort level for all work
+
+**Propose it when** output, which includes the model's thinking, takes a clear
+share of the cost.
+
+**Ratings:** upkeep 5 stars; quality 1 star, because all work gets less
+thinking; savings 3 stars, estimated at about 4% in the example week, where
+output was 9% of the cost. **Overall: 2.5.**

@@ -26,6 +26,7 @@ changed since the last run are read again.
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
 | `cca advise proposals.json` / `cca advise --clear` | Replace the improvement proposals listed under the projects: overall stars (the geometric mean, to one decimal place, of 1–5 stars on upkeep, quality kept and savings; proposals under 3 stars are folded), the action in one line, and details that open in a card at the lower right while the related view is highlighted (`#proposal=ID` opens one directly). A proposal keeps its dates while its content stays the same, so only what changed is marked New or Updated. |
+| `cca simulate [--compact-at TOKENS] [--tool-results SHARE] [--days 7] [--project NAME] [--json]` | Replay the recent conversations call by call as if a change had been in place, and print the cost with and without it: compaction starting at another length, or tool results keeping a share of their size (0.7 = 30% shorter). An estimate, used to rate how much a proposal would save. |
 | `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
 | `cca collect [--days 30] [--out data.json]` | The collected data as JSON. |
@@ -37,8 +38,10 @@ report and a cache of read transcripts are kept in `~/.context-adviser-for-claud
 ## The /context-adviser skill
 
 `skills/context-adviser` lets an agent run the review: it refreshes the report,
-reads the summary, explains what it sees with basic principles, and proposes
-up to three next steps with how to measure them. Run it on a schedule.
+reads the summary, explains what it sees with basic principles, and keeps the
+list of improvement proposals on the report up to date, each rated and with
+how to measure it. Run it whenever you like; each run looks at the numbers as
+they are.
 
 ```sh
 ln -s "$PWD/skills/context-adviser" ~/.claude/skills/context-adviser
@@ -47,6 +50,17 @@ ln -s "$PWD/skills/context-adviser" ~/.claude/skills/context-adviser
 - `references/reading.md`: where to look in the results.
 - `references/principles.md`: the principles, each with its source.
 - `references/measuring.md`: how to judge whether a change helped.
+- `references/ratings.md`: how a proposal is rated.
+- `references/catalog.md`: sample proposals, already rated.
+
+### How proposals are rated
+
+Each proposal is rated from one to five stars on three axes: upkeep (how little
+attention it needs once it is in place), quality kept (how well the work keeps
+its quality), and savings (how much it is expected to cut your total cost,
+estimated from your recent conversations). The overall rating multiplies the
+three and takes the cube root, so one weak axis pulls it down. Proposals under
+three stars are folded until you open them.
 
 The references stay at the level of principles on purpose, so they do not go
 stale when tools and settings change.

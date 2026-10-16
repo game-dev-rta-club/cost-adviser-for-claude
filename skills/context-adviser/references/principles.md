@@ -17,7 +17,10 @@ input (mostly cache reads) is the bulk of the bill, not output.
 
 Stale context is paid for on every later message. Start fresh between
 unrelated tasks; summarize at natural breaks rather than mid-task. Long inputs
-also make models less reliable, so a smaller context helps accuracy too.
+also make models less reliable, so a smaller context helps accuracy too. With
+automatic compaction, the compaction length sets how much each call reads on
+average, not how much each call adds; [ratings.md](ratings.md) says how much a
+smaller context really saves.
 
 - Manage costs, "Manage context proactively" — https://code.claude.com/docs/en/costs
 - Best practices for Claude Code — https://code.claude.com/docs/en/best-practices

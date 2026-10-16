@@ -33,12 +33,12 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 ```json
 {"proposals": [{
-  "id": "sonnet-for-routine-projects",
-  "action": "The conclusion in one line: exactly what to do, e.g. Add \"model\": \"sonnet\" to .claude/settings.json of projects with routine work",
+  "id": "compact-at-half-window",
+  "action": "The conclusion in one line: exactly what to do, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
   "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
   "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Leave it out when nothing moved.",
   "project": "Optional: the project it is for; leave it out when it is for all",
-  "ratings": {"ease": 5, "safety": 3, "savings": 5},
+  "ratings": {"ease": 5, "safety": 4, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
   "link": {"period": "week", "date": "2026-10-16", "focus": "cost-model"}
 }]}
@@ -58,11 +58,14 @@ value, a line to add). Before naming a setting or feature, open its current
 docs page and check the name and accepted values; put that page in `source`.
 Never invent a setting. A value is a starting point: say what to watch to tune
 it. Rate each proposal 1–5 stars on each axis with
-[ratings.md](references/ratings.md); the overall stars are their geometric mean
-to one decimal place. Look first for waste: cost that buys
-nothing (repeated checks, oversized tool output, cache rebuilds, text the
-user's own hooks and skills add to every call), which keeps quality whole.
-Proposals that trade quality for cost are still listed, so the user can weigh them.
+[ratings.md](references/ratings.md), starting from the closest sample in
+[catalog.md](references/catalog.md); the overall stars are their geometric
+mean to one decimal place. When a proposal changes the compaction length or
+the size of tool results, measure its savings with `cca simulate` rather than
+estimating them. Look first for fewer calls: every call reads the whole
+conversation again, so cutting repeated calls saves far more than making each
+one smaller. Proposals that trade quality for cost are still listed, so the
+user can weigh them.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
 session, focus, item); reading.md says which fits each signal. **The numbers in

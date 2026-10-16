@@ -1,69 +1,94 @@
-# Rating a proposal
+# How to rate a proposal
 
-Give every proposal 1–5 stars on each axis below, in its `ratings`
-(`ease`, `safety`, `savings`), as numbers. The overall rating shown on the
-report is their geometric mean to one decimal place (for example 3.7), so one
-weak axis pulls the whole down. Proposals that cost quality are listed too, so
-the user can weigh them; the report folds those under 3 stars until the user
-opens them.
+Every proposal gets from one to five stars on each of three axes: upkeep,
+quality kept, and savings. In the proposals file they are `ratings.ease`,
+`ratings.safety` and `ratings.savings`, as whole numbers. The overall rating is
+the geometric mean of the three: multiply the three numbers together, take the
+cube root, and round to one decimal place. `cca advise` works it out. Because
+the numbers are multiplied, one weak axis pulls the overall rating down even
+when the other two are high. A proposal that costs quality may still be listed
+so that the user can weigh it; the report folds every proposal under three
+stars until the user opens it.
 
-Rate from what you see, using the signs below, not from a general impression,
-so the same proposal gets the same stars each time.
-[catalog.md](catalog.md) has sample proposals already rated this way.
+Rate by the descriptions below and by the sample proposals in
+[catalog.md](catalog.md), not by a general impression, so that the same
+proposal gets the same stars every time. For a new kind of proposal, find the
+closest sample and rate it the same way.
 
 ## Upkeep (`ease`)
 
-How little the proposal needs to be looked after once it is in: the less
-upkeep, the more stars.
+How little attention the proposal needs once it is in place. The less upkeep,
+the more stars.
 
-| Stars | When | Signs |
-|---|---|---|
-| 5 | Set up once; only a check at big events, such as a model update | One settings key or one line in a file; a one-time change to a setting that should be reviewed after a model update |
-| 4 | Not used | — |
-| 3 | Needs tuning for each project or kind of task | A change to the user's own tool, hook or skill for one workflow; a setting per project; a subagent for one kind of task |
-| 2 | Not done after one setup: needs frequent tuning, regular upkeep or growing | A value or list that must be adjusted as the work changes |
-| 1 | The user must think about it every time | A habit such as starting a new conversation when switching tasks; a step before each request |
+- **5 stars:** Set it once and it keeps working. It only needs a look at big
+  events, such as a new model.
+- **4 stars:** It works across many different projects with almost no tuning.
+- **3 stars:** It has to be tuned for each project or each kind of task.
+- **2 stars:** It is not finished after one setup. It needs frequent tuning, or
+  regular care as the work changes.
+- **1 star:** The user has to think about it every time.
 
 ## Quality kept (`safety`)
 
-| Stars | When | Signs |
-|---|---|---|
-| 5 | No loss of quality, speed or context | Removes waste: the same model, effort and context get the same work done with fewer or smaller calls |
-| 4 | Affected in theory, but not noticeably | Compacting at half the model's window (500k of a 1M window); trimming tool output that is rarely read in full |
-| 3 | Some kinds of work may lose quality | A lighter model for one kind of subtask (such as searching); one step of compaction below half the window (window / 20) |
-| 2 | Some kinds of work lose quality | — |
-| 1 | Everyday work loses quality | Lower effort or a smaller model for all work; compacting far below half the window in one go, whose effect cannot be known; turning off checks, tests or tools the work relies on |
+How well the work keeps its quality and speed.
+
+- **5 stars:** Nothing is lost. The proposal only removes waste: the same
+  model, at the same effort, does the same work with fewer or smaller calls.
+- **4 stars:** It affects the work in theory, but not enough to notice.
+- **3 stars:** Some kinds of work may lose quality.
+- **2 stars:** Some kinds of work lose quality.
+- **1 star:** Everyday work loses quality, or the change is large and nobody
+  can tell what it will do.
 
 ## Savings (`savings`)
 
-| Stars | Expected cut in total cost |
-|---|---|
-| 5 | 10% or more |
-| 4 | 5–10% |
-| 3 | 3–5% |
-| 2 | 1–3% |
-| 1 | Under 1%, or no clear link to the numbers |
+How much the proposal is expected to cut the user's total cost, estimated from
+their recent numbers.
 
-Estimate the cut from the share the proposal touches in the linked view and how
-much of it goes away (for example, half of a 26% command share is a 13% cut).
-Say both numbers in the detail. A 10% cut is already large. Even a small cut is
-worth proposing when the setup costs little: the overall rating weighs the two.
+- **5 stars:** 10% or more. A 10% cut is already large.
+- **4 stars:** 5% to 10%.
+- **3 stars:** 2% to 5%.
+- **2 stars:** 1% to 2%.
+- **1 star:** Under 1%, or no clear link to the numbers.
 
-Do not overrate making the context smaller (shorter tool results, or less
-text that hooks, skills or MCP tools add). Cost follows the number of calls
-and the context each call reads, and the second is set by compaction:
+When the proposal changes the compaction length or the size of tool results,
+measure the cut with `cca simulate` instead of estimating it. It replays the
+user's recent conversations call by call as if the change had been in place:
 
-- In a conversation that compacts, the context moves between about 20% and
-  100% of the window and averages near 60%, whatever each call adds. Adding
-  less only delays compaction, so the saving is that share of cache writes and
-  compactions: almost nothing.
-- Only a conversation that ends before it compacts reads less on every later
-  call.
+```sh
+cca simulate --compact-at 500000      # compaction starts at 500,000 tokens
+cca simulate --tool-results 0.7       # tool results 30% shorter
+```
 
-So estimate the cut as `g × U`, where `g` is the share of context growth that
-goes away (the share of added context the change touches × how much of it
-goes) and `U` is the share of cost in conversations that never compact. For
-example, tool results that are 30% of the growth, cut by 30%, give g = 9%; with
-U = 28%, the cut is about 2.5%. A replay of a week of real conversations gave
-2.1% for this case, and 0.5% within the conversations that compact. Rate such
-proposals by this estimate, which is usually 1 or 2 stars.
+Add `--project NAME` for a proposal about one project, and `--days N` to change
+the window (7 days by default). The replay compares against the conversations
+as they ran, so for one step down from the current compaction length, give the
+length after the step. For other proposals, estimate the cut from the share of
+cost the proposal touches and how much of it goes away: halving a command that
+takes 26% of the cost cuts about 13%.
+
+### Fewer tool calls save far more than smaller ones
+
+Every tool call makes the model read the whole conversation again. So cost
+grows with the number of calls, almost in proportion. A call with a short
+result is still expensive when it is repeated many times. Proposals that cut
+the number of calls are usually the ones that save the most.
+
+### Making the context smaller saves little
+
+The context window is the largest number of tokens a model can read in one
+call. When a conversation reaches the compaction length, Claude Code summarizes
+it and continues from the summary. In a conversation that compacts, the context
+rises from about a fifth of the compaction length to all of it, again and
+again, so on average each call reads about 60% of that length, whatever each
+call adds. Adding less to the context only delays the next compaction; each
+call still reads about as much. Only conversations that end before they ever
+compact read less on every later call.
+
+So estimate such a proposal like this, when `cca simulate` does not cover it:
+the share of context growth that goes away, multiplied by the share of cost in
+conversations that never compact. For example, if tool results are 30% of the
+context growth and the proposal makes them 30% shorter, 9% of the growth goes
+away; if conversations that never compact are 28% of the cost, the cut is about
+9% × 28%, or 2.5%. Replaying a real week of conversations gave 2.1% for this
+case.
