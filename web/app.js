@@ -102,11 +102,13 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  $('#stats').innerHTML=[['Calls',num(a.calls)],['Tokens',tok(tokens)],['Active time',hrs(a.activeMs)],['Cost / active hour',ratio(()=>`${usd(a.cost/(a.activeMs/3600000))}/h`)],['Avg context',ratio(()=>tok(a.ctx/a.calls))],['Cost / call',ratio(()=>usd(a.cost/a.calls))],['Cache hit rate',ratio(()=>pct(CHARTS.stats.cacheHit.v(a)))],['Subagent calls',ratio(()=>`${pct(a.subCalls/a.calls*100)} (${num(a.subCalls)})`)],['Compactions',num(a.compactions)]].map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
  // Input is split by cache use. Compacting is the summary (estimated: it is
  // not logged as a call) and the cache write right after it. None overlap.
- const parts=[['cacheRead','Cache read',hue('opus',66)],['cacheWrite','Cache write',hue('opus',54)],['input','Uncached',hue('opus',80)],['output','Output',hue('fable',38)]].map(([k,name,color])=>({name,color,cost:a[k],tokens:a.tokens[k],kind:k==='output'?'group':'sub'}));
+ // Each group (Input, Output, Compacting) lists its parts below it, so the
+ // colored parts line up.
+ const parts=[['cacheRead','Cache read',hue('opus',66)],['cacheWrite','Cache write',hue('opus',54)],['input','Uncached',hue('opus',80)],['output','Output',hue('fable',38)]].map(([k,name,color])=>({name,color,cost:a[k],tokens:a.tokens[k],kind:'sub'}));
  const inputs=parts.slice(0,3),input={name:'Input',kind:'group',cost:inputs.reduce((s,e)=>s+e.cost,0),tokens:inputs.reduce((s,e)=>s+e.tokens,0)};
  const compacts=[{name:'Summary (est.)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',color:'#7fd3b0',cost:a.compactRebuild,kind:'sub',note:''}];
  const compact={name:'Compacting',kind:'group',cost:compactCost(a),note:`${num(a.compactions)} compactions`};
- $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{...parts[3],kind:'group output'},...(a.compactions?[compact,...compacts]:[])]})
+ $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{name:'Output',kind:'group',cost:parts[3].cost,tokens:parts[3].tokens},{...parts[3],kind:'sub'},...(a.compactions?[compact,...compacts]:[])]})
   +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,...v,color:modelColor(name)})));}
 function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
  const by={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};return [...m.values()].sort((a,b)=>by[state.sort](b)-by[state.sort](a));}
