@@ -75,7 +75,7 @@ test('collect counts each call once and splits its cost', async () => {
   assert.equal(tools['bash git status'].count, 1);
   assert.equal(tools['bash git status'].resultChars, 50);
   assert.equal(tools.read.resultChars, 3 + 6400);
-  assert.equal(tools['(text only)'].count, 3);
+  assert.equal(tools['(final reply)'].count, 3);
   const main = data.sessions.find(s => s.session === 's1');
   assert.equal(main.title, 'Fix login');
   assert.equal(main.calls, 3);

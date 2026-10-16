@@ -11,7 +11,7 @@ much work there was.
 | Cost / call and Avg context | Both rise together | Conversations carry more context. P1, P2 | `--metrics stats.ctx,stats.perCall --date DAY` |
 | Calls (with Active time) | Calls rise faster than active time, or one session takes most calls | More round trips per piece of work. P4 | `--metrics totals.calls,totals.activeMs` |
 | Top tools | One tool or command takes a large and growing share of cost | Repeated calls of the same kind; its examples show what. P4, P5 | `--tool NAME` |
-| `(text only)` share | Large share of cost with no tool | Long replies or long thinking in a long context. P1, P6 | `--tool "(text only)"` |
+| `(final reply)` share | Large share of cost in calls that use no tool (the reply that ends each turn) | Many turns back to the user, each reading a long context. P1, P2 | `--tool "(final reply)"` |
 | Cache hit rate | Drops against its own history | Something is rebuilding the cache. P3 | `--metrics stats.cacheHit` |
 | Cost by type: Cache write | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |

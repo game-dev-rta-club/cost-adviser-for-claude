@@ -68,7 +68,8 @@ stale when tools and settings change.
   `(read transcripts)`, `(run commands)`; anything else by its first uncommon
   import, e.g. `(uses PIL)`. New file types and libraries get their own row
   without a new rule.
-  Calls without a tool are "(text only)".
+  A call that uses no tool is "(final reply)": the reply that ends a turn,
+  written after reading the whole conversation.
 - **Subagent calls** are calls from subagent transcripts, as a share of all calls.
 - **Cache hit rate** is cache reads as a share of all input tokens.
 - **Ratios** (cost per hour, per call, average context, the shares) are left

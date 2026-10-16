@@ -73,8 +73,8 @@ test('cli: build writes one HTML with the data, reusing unchanged transcripts', 
 
 test('links describe one view, and the viewer only sends the built report', async () => {
   assert.equal(reportLink('http://127.0.0.1:7319/', {}), 'http://127.0.0.1:7319/');
-  assert.equal(reportLink('http://h/', {project: 'my app', tool: '(text only)', focus: 'tools', other: 'x'}),
-    'http://h/#project=my%20app&tool=%28text%20only%29&focus=tools');
+  assert.equal(reportLink('http://h/', {project: 'my app', tool: '(final reply)', focus: 'tools', other: 'x'}),
+    'http://h/#project=my%20app&tool=%28final%20reply%29&focus=tools');
   const home = await tempDir(), file = path.join(home, 'report.html');
   const server = createViewer(file);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
