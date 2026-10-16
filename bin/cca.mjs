@@ -35,14 +35,14 @@ Commands:
                          "source": "https://...", "link": {<link options>}}]}
   summary               Print this period against the one before: each day, cost by
                         model, tool use as a tree, top sessions, and each recorded
-                        change before vs after. --tool NAME adds that tool or group
-                        (e.g. "bash chill") by day, with the uses that cost most.
+                        change before vs after. --tool NAME prints only that tool or
+                        group (e.g. "bash chill") by day, with the uses that cost most.
   simulate              Replay the recent conversations as if a change had been in
                         place, and print the cost with and without it.
                         --compact-at <tokens>: compaction starts at this length.
                         --tool-results <share>: tool results keep this share of
-                        their size (0.7 = 30% shorter); add --tool NAME to shorten
-                        only that tool or group (e.g. "read" or "bash cat").
+                        their size (0.7 = 30% shorter); add --tool NAME, once per
+                        tool or group (e.g. "read", "bash cat"), to shorten only those.
                         Give one or both.
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
