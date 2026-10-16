@@ -43,4 +43,6 @@ a smaller model with a 30% cut rates 5·1·5 → 2.9; one step from 500k to 450k
 Below half the window, propose one small step at a time. Each run proposes
 the next step only when the last one, recorded with `cca mark add`, shows no
 more retries, rework or confusion after compaction; otherwise it proposes
-going back up a step.
+going back up a step. The risk builds up with every step, so a step keeps
+quality 3 however well the last one went: it stays on the list without looking
+urgent.
