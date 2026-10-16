@@ -21,10 +21,12 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 2. **Read.** Follow [reading.md](references/reading.md): find the signals,
    each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in
-   [principles.md](references/principles.md), with its source.
+   [principles.md](references/principles.md), with its source, and to the
+   sample proposals in [catalog.md](references/catalog.md).
 4. **Check past changes.** For each recorded change, judge it with
-   [measuring.md](references/measuring.md). A change in progress stays a
-   proposal, and its verdict goes in `news`.
+   [measuring.md](references/measuring.md); its verdict goes in the `news` of
+   the proposal it came from. The adviser keeps no stages: each run looks at
+   the numbers as they are.
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says
    nothing is serving the report, start `cca serve` in the background.
