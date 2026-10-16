@@ -73,9 +73,11 @@ test('the summary has the report views: each day, models, the tool tree and one 
   // A group is matched by whole words: "bash chillout" is not in "bash chill".
   assert.deepEqual(s.toolDetail.days.map(d => [d.day, d.cost, d.uses]), [['2026-10-15', 4, 4], ['2026-10-16', 3, 3]]);
   assert.equal(s.toolDetail.examples[0].label, 'reply');
-  const text = formatSummary(s);
-  assert.match(text, /By day/);
+  // With --tool only that tool is printed; the rest is the plain summary.
+  const text = formatSummary(s), full = formatSummary({...s, toolDetail: null});
   assert.match(text, /Tool "bash chill" by day/);
-  assert.match(text, /\$7\.00 .* bash chill \[2\]/);
+  assert.doesNotMatch(text, /Tool use as a tree/);
+  assert.match(full, /By day/);
+  assert.match(full, /\$7\.00 .* bash chill \[2\]/);
   assert.equal(treeLines(toolTree([]), {}).length, 0);
 });

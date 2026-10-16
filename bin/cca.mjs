@@ -76,12 +76,14 @@ function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
-      period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string'}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
+      period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'},
       'compact-at': {type: 'string'}, 'tool-results': {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
 }
+
+const localTime = ms => { const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${localDay(ms)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 
 function count(value, fallback, name, min = 1) {
   if (value === undefined) return fallback;
@@ -109,6 +111,9 @@ function openFile(file) {
 
 const [command, ...rest] = process.argv.slice(2);
 const {values, positionals} = options(rest);
+// Only simulate shortens several tools at once; elsewhere --tool names one.
+if (values.tool?.length > 1 && command !== 'simulate') fail('--tool takes one tool or group here.');
+if (command !== 'simulate') values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
 if (!command || command === 'help' || command === '--help' || command === '-h' || values.help) console.log(HELP);
@@ -146,7 +151,7 @@ else if (command === 'build') {
   const all = await collectCached({root, dataDir: home, days: days + 1});
   const examples = Object.fromEntries(Object.entries(all.examples).filter(([k]) => k.slice(0, 10) >= from));
   const daily = all.daily.filter(inWindow);
-  const data = {...all, window: {from, to, days}, calls: daily.reduce((n, r) => n + r.calls, 0),
+  const data = {...all, days, window: {from, to, days}, calls: daily.reduce((n, r) => n + r.calls, 0),
     daily, tools: all.tools.filter(inWindow), sessions: all.sessions.filter(inWindow), examples};
   const json = JSON.stringify(data) + '\n';
   if (values.out) { await fs.writeFile(values.out, json); console.error(`Wrote ${data.calls} calls, ${from} to ${to}, to ${values.out}`); }
@@ -165,8 +170,8 @@ else if (command === 'build') {
     const share = Number(values['tool-results']);
     if (!(share >= 0 && share <= 1)) fail('--tool-results must be a share from 0 to 1, e.g. 0.7 for 30% shorter.');
     change.toolResults = share;
-    if (values.tool) change.tool = values.tool;
-  } else if (values.tool) fail('--tool goes with --tool-results: the tool or group whose results get shorter.');
+    if (values.tool?.length) change.tool = values.tool;
+  } else if (values.tool?.length) fail('--tool goes with --tool-results: the tool or group whose results get shorter.');
   if (!Object.keys(change).length) fail('give a change to replay: --compact-at <tokens> and/or --tool-results <share>.');
   // The same days as the summary: today and the days before it, from midnight.
   const days = count(values.days, 7, 'days'), to = localDay(Date.now()), start = new Date(`${to}T00:00`);
@@ -177,10 +182,11 @@ else if (command === 'build') {
   const usd = v => `$${v.toLocaleString('en-US', {maximumFractionDigits: v < 100 ? 2 : 0})}`;
   if (values.json) console.log(JSON.stringify({window: {from, to, days}, project: values.project || null, change, ...r}, null, 2));
   else console.log([
-    `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations, ${from} to ${to} (${values.project || 'all projects'}).`,
+    `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations, ${from} to ${to}${r.lastCall ? ` (up to ${localTime(r.lastCall)})` : ''} (${values.project || 'all projects'}).`,
     r.compactedAt ? `The conversations compacted at about ${r.compactedAt.toLocaleString('en-US')} tokens on average (${r.compactions.recorded} compactions recorded).` : `No conversation compacted in these days.`,
-    `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `${change.tool ? `results of "${change.tool}"` : 'tool results'} keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
+    `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `${change.tool ? `results of ${change.tool.map(t => `"${t}"`).join(', ')}` : 'tool results'} keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
     `Replayed cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
+    ...(Math.abs(r.cut) < 0.01 ? ['Under 1% either way is within what the replay can tell apart: read it as no clear effect.'] : []),
     `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed} (the replay counts its own; ${r.compactions.recorded} were recorded)`,
     `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}): it leaves out cache rebuilds, such as a conversation reread after the cache expired, which the change does not affect.`,
     `It compares against the conversations as they ran. If the setting changed during these days, use --days to cover only the days since.`,

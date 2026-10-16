@@ -14,15 +14,15 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 1. **Refresh.** Run `cca build`, then `cca summary` (add `--project NAME`
    when asked). It has what the report shows: totals against the previous
    period, each day, cost by model, tool use as a tree, sessions and recorded
-   changes. To follow one tool or group over the days, add
-   `--tool "bash chill"`. Use `--json` when you need exact numbers. If `cca`
-   is missing, say so and stop. The summary ends with the options the user
-   declined and the proposals now shown (id, stars and action; `--json` has
-   every field, which step 5 needs). `cca collect --days 7` gives the raw rows
-   by day, project, tool and session for the same days, when the summary is
-   not enough. Today is still
-   going, so its numbers are partial, and the conversation running this review
-   is in the data too.
+   changes. `--tool "bash chill"` prints only that tool or group, day by day.
+   Use `--json` when you need exact numbers. If `cca` is missing, say so and
+   stop. The summary ends with the options the user declined and the
+   proposals now shown (id, stars and action; `--json` has every field, which
+   step 5 needs). `cca collect --days 7` gives the raw rows by day, project,
+   tool and session for the same days, when the summary is not enough. Today
+   is still going, so its numbers are partial and grow between commands; each
+   output says when it read the data.
+
    Then read the settings in effect: `~/.claude/settings.json`, and in each
    project's folder `.claude/settings.json` and `.claude/settings.local.json`,
    including settings per model and the `env` entries. The summary's sessions
@@ -59,10 +59,13 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 **Keep the list, change only what moved.** Use the same `id` for the same
 proposal every run. Leave a proposal as it is when its numbers and advice still
-hold, and a number holds unless it moved by more than about a tenth or changed
-the rating; small drift, such as from today being partial, is not a change. It
+hold. A number holds unless it moved by more than about a tenth (for a
+percentage under 10%, by more than about a point) or changed the rating; small
+drift, such as from today being partial, is not a change. Reasoning that the
+numbers no longer support is a change too. It
 then keeps its dates, and the report marks only what changed as New or
-Updated. Update its detail when the numbers moved, put what is worth noticing
+Updated. Copy the proposals from `cca summary --json`; `stars`, `since` and
+`updated` are worked out by `cca advise` and can stay or go. Update its detail when the numbers moved, put what is worth noticing
 in `news`, add a proposal for a new finding, and drop one that no longer
 applies. When the user has carried a proposal out, keep it until its effect is
 judged: say in the action that it is done, put what it changed in `news`, judge
@@ -91,7 +94,9 @@ one smaller. Proposals that trade quality for cost are still listed, so the
 user can weigh them.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
-session, focus, item); reading.md says which fits each signal. **Numbers the
+session, focus, item); reading.md says which fits each signal. Use
+`period: 7d` with today's date for the summary's 7 days, and move an older
+`week` link to it. **Numbers the
 linked view shows must match it**: the report shows one period at a time, so
 quote that period's numbers, not another window's. Numbers the view cannot
 show (before and after a change, one project's share) say where they come from.

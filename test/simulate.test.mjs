@@ -61,6 +61,9 @@ test('cli: simulate prints both costs and checks its options', async () => {
   assert.equal(json.calls, 30);
   assert.ok(json.cut > 0 && json.changed < json.base);
   assert.match((await sim(['--compact-at', '50000'])).stdout, /Replayed cost: \$[\d.,]+ → \$[\d.,]+, [\d.]+% (less|more)\nReplayed compactions: 0 → [1-9]/);
+  const two = JSON.parse((await sim(['--tool-results', '0.5', '--tool', 'read', '--tool', 'bash', '--json'])).stdout);
+  assert.deepEqual(two.change.tool, ['read', 'bash']);
+  await assert.rejects(run(process.execPath, [cli, 'summary', '--tool', 'read', '--tool', 'bash', '--transcripts', root], {env}), e => e.code === 2 && /one tool/.test(e.stderr));
   await assert.rejects(sim([]), e => e.code === 2 && /give a change/.test(e.stderr));
   await assert.rejects(sim(['--tool-results', '2']), e => e.code === 2 && /share from 0 to 1/.test(e.stderr));
   await assert.rejects(sim(['--compact-at', '10']), e => e.code === 2 && /--compact-at/.test(e.stderr));

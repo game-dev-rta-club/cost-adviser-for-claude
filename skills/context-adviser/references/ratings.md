@@ -58,12 +58,14 @@ user's recent conversations call by call as if the change had been in place:
 ```sh
 cca simulate --compact-at 500000      # compaction starts at 500,000 tokens
 cca simulate --tool-results 0.7       # tool results 30% shorter
-cca simulate --tool-results 0.7 --tool read   # only Read's results 30% shorter
+cca simulate --tool-results 0.7 --tool read --tool "bash cat"   # only these
 ```
 
-A proposal that shortens only some tools' results must name them with
-`--tool` (a group works too, e.g. `"bash cat"`); shortening every result
-overstates it.
+A proposal that shortens only some tools' results must name each of them with
+`--tool` in one run (a group works too, e.g. `"bash cat"`); shortening every
+result overstates it, and adding up separate runs misses how they interact
+through compaction. A result under 1% either way is within what the replay
+can tell apart: read it as no clear effect, savings 1 star.
 
 Add `--project NAME` for a proposal about one project, and `--days N` to change
 the window (7 days by default, the same days as the summary). The replay
