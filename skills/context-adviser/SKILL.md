@@ -32,8 +32,10 @@ notes (`cca advise`) and, when the user agrees, `cca mark add`.
     "finding": "What is happening here: the numbers, their share of cost, and what they suggest. A short paragraph.",
     "advice": "The principle, and why it fits these numbers. One or two sentences.",
     "options": [
-      {"title": "One way to apply it", "detail": "What it means in practice, and when it suits."},
-      {"title": "Another way", "detail": "How it differs, and when to pick it instead."}
+      {"title": "One way to apply it", "detail": "What it means in practice, and when it suits.",
+       "ratings": {"ease": "A", "safety": "A", "savings": "B"}},
+      {"title": "Another way", "detail": "How it differs, and when to pick it instead.",
+       "ratings": {"ease": "B", "safety": "A", "savings": "A"}}
     ],
     "source": "https://… (the principle's source)",
     "link": {"period": "week", "date": "2026-10-16", "tool": "bash grep"}
@@ -48,7 +50,9 @@ a time, so quote that period's numbers, not the summary's window.
 
 Give each note two or three `options`: different ways to apply the principle,
 each in its own entry, so the user can compare and choose. Say what each one
-suits; do not rank them unless the numbers favor one.
+suits. Rate each option with [ratings.md](references/ratings.md) and leave out
+any option rated C on an axis; prefer options that work once set up over ones
+the user must remember each time.
 
 Write the notes in the user's language. Give them room: a few sentences each is
 fine, and a blank line starts a new paragraph.

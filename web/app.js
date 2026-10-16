@@ -231,6 +231,9 @@ function applyView(q){
 
 // Notes an agent wrote about this data (cca advise). Each points at a view.
 const NOTES=Array.isArray(D.advice?.notes)?D.advice.notes:[];
+// An option's self-rating: A is best on every axis.
+const RATING_NAMES={ease:'Ease of use',safety:'Few side effects',savings:'Savings'};
+const ratingTags=r=>{const keys=Object.keys(RATING_NAMES).filter(k=>r?.[k]);return keys.length?`<div class="ratings">${keys.map(k=>`<span class="rank-${r[k]}">${RATING_NAMES[k]} <b>${r[k]}</b></span>`).join('')}</div>`:'';};
 const callout=document.createElement('aside');callout.className='note-callout';callout.hidden=true;document.body.append(callout);
 let activeNote=0;
 // The list shows only while a note is open (#note=N), so the plain page stays clean.
@@ -242,7 +245,7 @@ function bringIntoView(el){if(!el)return;const r=el.getBoundingClientRect();scro
 function showNote(n){const note=NOTES[n-1];if(!note)return;activeNote=n;
  const anchor=applyView(new URLSearchParams(note.link||{}));renderNotes();
  callout.innerHTML=`<header><b class="note-no">${n}</b><strong>${esc(note.title)}</strong><button type="button" data-note-close aria-label="Close note">✕</button></header>
-  ${note.finding?`<p>${esc(note.finding)}</p>`:''}${note.advice||note.options?.length?`<div class="note-advice"><span>Recommended</span>${note.advice?`<p>${esc(note.advice)}</p>`:''}${(note.options||[]).map((o,i)=>`<div class="note-option"><b>${String.fromCharCode(65+i)}</b><div><strong>${esc(o.title)}</strong>${o.detail?`<p>${esc(o.detail)}</p>`:''}</div></div>`).join('')}</div>`:''}
+  ${note.finding?`<p>${esc(note.finding)}</p>`:''}${note.advice||note.options?.length?`<div class="note-advice"><span>Recommended</span>${note.advice?`<p>${esc(note.advice)}</p>`:''}${(note.options||[]).map((o,i)=>`<div class="note-option"><b>${String.fromCharCode(65+i)}</b><div><strong>${esc(o.title)}</strong>${o.detail?`<p>${esc(o.detail)}</p>`:''}${ratingTags(o.ratings)}</div></div>`).join('')}</div>`:''}
   ${/^https?:\/\//.test(note.source||'')?`<p class="note-source"><span>Source</span><a href="${esc(note.source)}" target="_blank" rel="noopener">${esc(note.source)}</a></p>`:''}
   <footer>${n>1?`<a href="#note=${n-1}">← ${n-1}</a>`:'<span></span>'}<span>${n} / ${NOTES.length}</span>${n<NOTES.length?`<a href="#note=${n+1}">${n+1} →</a>`:'<span></span>'}</footer>`;
  callout.hidden=false;bringIntoView(anchor||$('#notes'));}
