@@ -46,9 +46,21 @@ much of it goes away (for example, half of a 26% command share is a 13% cut).
 Say both numbers in the detail. A 10% cut is already large. Even a small cut is
 worth proposing when the setup costs little: the overall rating weighs the two.
 
-Do not overrate making the context smaller. With automatic compaction, a
-conversation's context moves between about 20% and 100% of the window and
-settles near 60% on average, whatever is added on each call. Shorter text that
-hooks, skills or MCP tools add to every call barely changes that average; it
-touches only cache writes and compaction a little, usually well under 1% in
-all. Rate such proposals 1 for savings unless the numbers show otherwise.
+Do not overrate making the context smaller (shorter tool results, or less
+text that hooks, skills or MCP tools add). Cost follows the number of calls
+and the context each call reads, and the second is set by compaction:
+
+- In a conversation that compacts, the context moves between about 20% and
+  100% of the window and averages near 60%, whatever each call adds. Adding
+  less only delays compaction, so the saving is that share of cache writes and
+  compactions: almost nothing.
+- Only a conversation that ends before it compacts reads less on every later
+  call.
+
+So estimate the cut as `g × U`, where `g` is the share of context growth that
+goes away (the share of added context the change touches × how much of it
+goes) and `U` is the share of cost in conversations that never compact. For
+example, tool results that are 30% of the growth, cut by 30%, give g = 9%; with
+U = 28%, the cut is about 2.5%. A replay of a week of real conversations gave
+2.1% for this case, and 0.5% within the conversations that compact. Rate such
+proposals by this estimate, which is usually 1 or 2 stars.

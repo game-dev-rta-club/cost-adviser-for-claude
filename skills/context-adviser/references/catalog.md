@@ -11,8 +11,8 @@ current docs, and leave out what the user declined.
 | Proposal | You see | ease | safety | savings |
 |---|---|---|---|---|
 | Make one command do the work of a repeated series (a CLI that is polled, or a status check before every step) | One command group takes a large share in Tool Use, with many uses and short output | 3 | 5 | by cut |
-| Make a tool return less (limit flags, a summary instead of the full list, reading the part of a file needed) | A tool with a high result size per use; the same large file read again and again | 3 | 5 | by cut |
-| Shorten text the user's own hooks or skills add to every call, or add it only when it changed | The same added context in every call; a large fixed instruction in each conversation | 3 | 5 | 1 (see ratings.md) |
+| Make a tool return less (limit flags, a summary instead of the full list, reading the part of a file needed) | A tool with a high result size per use; the same large file read again and again | 3 | 5 | by cut (`g × U` in ratings.md; usually 1–2) |
+| Shorten text the user's own hooks or skills add to every call, or add it only when it changed | The same added context in every call; a large fixed instruction in each conversation | 3 | 5 | by cut (`g × U` in ratings.md; usually 1) |
 | Turn off MCP servers a project never uses | Tools from a server that never appear in Tool Use | 5 | 5 | 1 |
 
 ## Context length
@@ -35,4 +35,5 @@ current docs, and leave out what the user declined.
 Overall stars, for example: halving a command that takes 26% of cost (a 13%
 cut) rates 3·5·5 → 4.2; compacting at 500k when calls above it take 33% of
 cost (about a 10% cut) rates 5·4·5 → 4.6; shortening added text rates
-3·5·1 → 2.5; a smaller model with a 30% cut rates 5·1·5 → 2.9.
+3·5·1 → 2.5; trimming tool results by 30% (about a 2% cut) rates 3·5·2 → 3.1;
+a smaller model with a 30% cut rates 5·1·5 → 2.9.
