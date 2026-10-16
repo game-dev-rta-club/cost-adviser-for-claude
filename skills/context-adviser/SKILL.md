@@ -58,8 +58,8 @@ value, a line to add). Before naming a setting or feature, open its current
 docs page and check the name and accepted values; put that page in `source`.
 Never invent a setting. A value is a starting point: say what to watch to tune
 it. Rate each proposal 1–5 stars on each axis with
-[ratings.md](references/ratings.md); the overall stars are their average to
-one decimal place. Look first for waste: cost that buys
+[ratings.md](references/ratings.md); the overall stars are their geometric mean
+to one decimal place. Look first for waste: cost that buys
 nothing (repeated checks, oversized tool output, cache rebuilds, text the
 user's own hooks and skills add to every call), which keeps quality whole.
 Proposals that trade quality for cost are still listed, so the user can weigh them.

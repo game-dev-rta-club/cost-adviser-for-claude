@@ -241,7 +241,7 @@ const PROPOSALS=Array.isArray(D.advice?.proposals)?D.advice.proposals:[];
 const starText=n=>`<span class="meter" style="--v:${n/5*100}%"><i></i></span>`;
 const overallText=n=>`${starText(n)}<b class="score">${n.toFixed(1)}</b>`;
 const RATING_NAMES={ease:'Ease of use',safety:'Quality kept',savings:'Savings'};
-// Each axis has its own stars; the overall rating is their rounded average.
+// Each axis has its own stars; the overall rating is their rounded geometric mean.
 const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r?.[k]).map(k=>`<div><dt>${RATING_NAMES[k]}</dt><dd class="stars" role="img" aria-label="${r[k]} of 5">${starText(r[k])}</dd></div>`).join('')}</dl>`;
 // The latest run's changes are marked, so a reader sees what moved since last time.
 const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');

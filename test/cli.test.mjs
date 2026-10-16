@@ -104,12 +104,12 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   assert.throws(() => one({link: {evil: '1'}}), /not a link option/);
   assert.throws(() => checkAdvice({proposals: [{id: 'x', action: 'a', ratings: AB}, {id: 'x', action: 'b', ratings: AB}]}), /used twice/);
   const first = one({action: ' Use Sonnet ', detail: 'd', source: 'https://example.com', link: {tool: 'bash cat', date: ''}});
-  assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4.3, since: '2026-10-16', updated: '2026-10-16'});
-  // The overall rating is the average to one decimal place.
+  assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4.2, since: '2026-10-16', updated: '2026-10-16'});
+  // The overall rating is the geometric mean to one decimal place.
   assert.equal(one({ratings: {ease: 3, safety: 4, savings: 3}}).advice.proposals[0].stars, 3.3, 'to one decimal place');
-  assert.equal(one({ratings: {ease: 5, safety: 5, savings: 4}}).advice.proposals[0].stars, 4.7);
-  assert.equal(one({ratings: {ease: 3, safety: 5, savings: 4}}).advice.proposals[0].stars, 4);
-  assert.equal(one({ratings: {ease: 5, safety: 1, savings: 5}}).advice.proposals[0].stars, 3.7, 'quality does not cap it');
+  assert.equal(one({ratings: {ease: 5, safety: 5, savings: 4}}).advice.proposals[0].stars, 4.6);
+  assert.equal(one({ratings: {ease: 3, safety: 5, savings: 4}}).advice.proposals[0].stars, 3.9);
+  assert.equal(one({ratings: {ease: 5, safety: 1, savings: 5}}).advice.proposals[0].stars, 2.9, 'one weak axis pulls it down');
   // A later run: the same content keeps its dates, a change is marked, a gone id is listed.
   const prev = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', ratings: AB}, {id: 'gone', action: 'c', ratings: AB}]}, null, '2026-10-15').advice;
   const next = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', news: '82% → 80%', ratings: AB}, {id: 'new', action: 'd', ratings: AB}]}, prev, '2026-10-16');
@@ -124,7 +124,7 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
   assert.match(html, /"advice":\{"updatedAt":/);
   assert.equal(html.match(/<\/script>/g).length, 2);
-  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★4.3  /);
+  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★4.2  /);
   await fs.writeFile(file, '{"proposals": [{}]}');
   await assert.rejects(cca(['advise', file, '--transcripts', root], env), e => e.code === 2 && /id is required/.test(e.stderr));
   await cca(['advise', '--clear', '--transcripts', root], env);

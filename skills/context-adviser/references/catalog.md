@@ -28,10 +28,11 @@ current docs, and leave out what the user declined.
 | Proposal | You see | ease | safety | savings |
 |---|---|---|---|---|
 | A subagent on a lighter model for searching and reading | Search and read tools take a large share | 3 | 3 | by cut |
-| Lower effort by default (`"effortLevel": "medium"`) | Output takes a clear share of cost | 5 | 2 | by cut |
+| Lower effort for all work (`"effortLevel": "medium"`) | Output takes a clear share of cost | 5 | 1 | by cut |
+| Lower effort only for some tasks, chosen each time | Output takes a clear share, and some tasks are routine | 1 | 3 | by cut |
 | A smaller model by default (`"model": "sonnet"`) | One large model takes most of the cost | 5 | 1 | by cut |
 
 Overall stars, for example: halving a command that takes 26% of cost (a 13%
-cut) rates 3·5·4 → 4.0; compacting at 500k when calls above it take 33% of
-cost (about a 10% cut) rates 5·4·4 → 4.3; shortening added text rates
-3·5·1 → 3.0; a smaller model with a 30% cut rates 5·1·5 → 3.7.
+cut) rates 3·5·5 → 4.2; compacting at 500k when calls above it take 33% of
+cost (about a 10% cut) rates 5·4·5 → 4.6; shortening added text rates
+3·5·1 → 2.5; a smaller model with a 30% cut rates 5·1·5 → 2.9.
