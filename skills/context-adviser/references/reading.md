@@ -16,6 +16,7 @@ much work there was.
 | Cost by type: Cache write | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |
 | Subagent calls | Moves after a delegation change | Whether delegation happens at all; judge cost with P5 | `--metrics stats.subShare` |
+| Cost split: Compacting, Compactions | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics split.compact,split.compactions` |
 | Cost by model | The mix shifts | A mix change can explain a cost change by itself; rule it out first | `--focus cost-model` |
 
 Add `--project NAME` when the signal belongs to one project. The report shows
@@ -23,6 +24,11 @@ Profile, Tool Use and Sessions for one period at a time (the latest day unless
 told otherwise), so add `--period week --date DAY` to match the summary's
 week, or `--date DAY` for a single day. A link opens the report on that item
 and highlights it.
+
+Compacting is partly estimated: the summary request is not logged, so its
+cost is worked out from the conversation size before it (read from the cache)
+and the summary's length. The cache write right after it is measured. Say
+"about" when quoting it.
 
 A ratio missing from the summary means the period had too little use (under 10
 minutes or 10 calls). Say so instead of reading it as zero.

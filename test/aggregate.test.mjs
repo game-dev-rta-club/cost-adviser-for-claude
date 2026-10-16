@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {collect, createCache, localDay, projectOf} from '../lib/aggregate.mjs';
-import {callCost} from '../lib/prices.mjs';
+import {callCost, summaryCost} from '../lib/prices.mjs';
 import {toolKey} from '../lib/transcripts.mjs';
 import {assistant, result, tempDir, user, writeTranscript} from './helpers.mjs';
 
@@ -82,4 +82,30 @@ test('collect skips old calls and reuses unchanged transcripts', async () => {
   assert.equal(cache.size, 1);
   assert.equal((await collect({root, days: 7, now: NOW, cache})).calls, 1);
   assert.equal((await collect({root: `${root}/missing`, days: 7, now: NOW})).calls, 0);
+});
+
+test('compaction is split out: the estimated summary and the cache write after it', async () => {
+  const root = await tempDir();
+  await writeTranscript(root, 'p/s.jsonl', [
+    assistant({id: 'm1', at: at(0), cacheRead: 400000, output: 100, tools: [{id: 't1', name: 'Read'}]}),
+    {type: 'system', subtype: 'compact_boundary', timestamp: at(1), compactMetadata: {trigger: 'auto', preTokens: 400000, postTokens: 15000}},
+    {type: 'user', isCompactSummary: true, message: {role: 'user', content: 'x'.repeat(8000)}},
+    assistant({id: 'm2', at: at(2), model: '<synthetic>', output: 1}),
+    assistant({id: 'm3', at: at(3), cacheRead: 40000, cacheWrite: 30000, output: 50}),
+    assistant({id: 'm4', at: at(4), cacheRead: 70000, cacheWrite: 500, output: 50}),
+  ]);
+  const data = await collect({root, days: 30, now: NOW});
+  const [row] = data.daily;
+  const summary = summaryCost({model: 'claude-opus-5-5', preTokens: 400000, summaryChars: 8000});
+  const rebuild = callCost({model: 'claude-opus-5-5', cacheWrite: 30000}).total;
+  assert.ok(Math.abs(summary - (400000 * 5 * 0.1 + 2000 * 25) / 1e6) < 1e-9);
+  assert.equal(row.compactions, 1);
+  assert.ok(Math.abs(row.compactSummary - summary) < 1e-3);
+  assert.ok(Math.abs(row.compactRebuild - rebuild) < 1e-3);
+  // Input, output and compacting add up to the cost; nothing is counted twice.
+  const parts = row.cacheRead + row.cacheWrite + row.input + row.output + row.compactSummary + row.compactRebuild;
+  assert.ok(Math.abs(parts - row.cost) < 1e-3);
+  const tools = Object.fromEntries(data.tools.map(t => [t.tool, t]));
+  assert.ok(Math.abs(tools['(compacting)'].cost - summary - rebuild) < 1e-3);
+  assert.ok(Math.abs(data.tools.reduce((s, t) => s + t.cost, 0) - row.cost) < 1e-3);
 });

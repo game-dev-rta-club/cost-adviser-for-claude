@@ -20,7 +20,7 @@ changed since the last run are read again.
 
 | Command | What it does |
 |---|---|
-| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time, the cost profile, tools and sessions. |
+| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals, the cost split (input, output, compacting) and stats over time, the cost profile, tools and sessions. |
 | `cca summary [--days 7] [--project NAME] [--json]` | This period against the one before, top tools and sessions, and each recorded change before vs after. For a person or an agent. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
@@ -57,6 +57,11 @@ stale when tools and settings change.
   several times while it streams is counted once.
 - **Active time** adds the gaps between calls in one conversation, each capped
   at 5 minutes.
+- **Compacting** is not logged as a call. Its summary is estimated: the
+  conversation before it (`preTokens`) read at the cache price, plus the
+  summary's length / 4 as output. The cache write of the first call after it is
+  measured and counted as compacting, not input. Tool Use shows it as
+  `(compacting)`.
 - **Tool cost**: a call's cost is shared equally among the tools it asked for.
   Calls without a tool are "(text only)".
 - **Subagent calls** are calls from subagent transcripts, as a share of all calls.
