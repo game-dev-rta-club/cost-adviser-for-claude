@@ -89,3 +89,20 @@ test('cli: summary counts a copied request once', async () => {
   assert.equal(summary.projects[0].calls, 3);
   assert.ok('folder' in summary.projects[0]);
 });
+
+test('replay: --tool shortens only that tool\'s results', () => {
+  const calls = growing(20, 1000, 600).map(c => ({...c, tools: [{key: 'read', result: 300 * RESULT_CHARS_PER_TOKEN}, {key: 'bash grep', result: 300 * RESULT_CHARS_PER_TOKEN}]}));
+  const base = replay(calls, profile).cost, all = replay(calls, profile, {toolResults: 0}).cost;
+  const one = replay(calls, profile, {toolResults: 0, tool: 'read'}).cost, group = replay(calls, profile, {toolResults: 0, tool: 'bash'}).cost;
+  assert.ok(all < one && one < base);
+  assert.ok(Math.abs(one - group) < 1e-9, 'a group counts its commands');
+});
+
+test('cli: collect covers the same days as the summary', async () => {
+  const home = await tempDir(), root = await tempDir(), now = Date.now();
+  await writeTranscript(root, 'p/a.jsonl', [assistant({id: 'old', at: new Date(now - 9 * 86400000).toISOString(), output: 10}), assistant({id: 'new', at: new Date(now - 60000).toISOString(), output: 10})]);
+  const out = JSON.parse((await run(process.execPath, [cli, 'collect', '--days', '7', '--transcripts', root], {env: {...process.env, CCA_HOME: home}})).stdout);
+  assert.equal(out.window.days, 7);
+  assert.equal(out.calls, 1);
+  assert.ok(out.daily.every(r => r.day >= out.window.from));
+});

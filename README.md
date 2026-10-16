@@ -26,10 +26,10 @@ changed since the last run are read again.
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|3d\|7d\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
 | `cca advise proposals.json` / `cca advise --clear` | Replace the improvement proposals listed under the projects: overall stars (the geometric mean, to one decimal place, of 1–5 stars on upkeep, quality kept and savings; proposals under 3 stars are folded), the action in one line, and details that open in a card at the lower right while the related view is highlighted (`#proposal=ID` opens one directly). A proposal keeps its dates while its content stays the same, so only what changed is marked New or Updated. |
-| `cca simulate [--compact-at TOKENS] [--tool-results SHARE] [--days 7] [--project NAME] [--json]` | Replay the recent conversations call by call as if a change had been in place, and print the cost with and without it: compaction starting at another length, or tool results keeping a share of their size (0.7 = 30% shorter). An estimate, used to rate how much a proposal would save. |
+| `cca simulate [--compact-at TOKENS] [--tool-results SHARE [--tool NAME]] [--days 7] [--project NAME] [--json]` | Replay the recent conversations call by call as if a change had been in place, and print the cost with and without it: compaction starting at another length, or tool results keeping a share of their size (0.7 = 30% shorter), of every tool or only `--tool NAME`. An estimate, used to rate how much a proposal would save. |
 | `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
-| `cca collect [--days 30] [--out data.json]` | The collected data as JSON. |
+| `cca collect [--days 30] [--out data.json]` | The collected data as JSON, for the same days as the summary (counted back from today at midnight). |
 
 `--transcripts DIR` reads another transcript folder. Recorded changes, the
 report and a cache of read transcripts are kept in `~/.context-adviser-for-claude`

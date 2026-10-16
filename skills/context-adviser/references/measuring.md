@@ -14,7 +14,10 @@
    - a different mix of work or project (filter by project);
    - a different model or effort mix (Cost by model);
    - another change in the same period (the other changes the summary lists,
-     shown as ⭐ marks on the report).
+     shown as ⭐ marks on the report). When two changes start on the same
+     day, judge each by the number it targets (for example uses per active
+     hour of the combined command, or average context for a compaction
+     setting), and say that the totals mix both.
 5. **State the verdict plainly:** helped, no clear effect, or made it worse,
    with the numbers and the days behind it.
 

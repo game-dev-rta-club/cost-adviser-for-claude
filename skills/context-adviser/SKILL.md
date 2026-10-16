@@ -18,16 +18,19 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    `--tool "bash chill"`. Use `--json` when you need exact numbers. If `cca`
    is missing, say so and stop. The summary ends with the options the user
    declined and the proposals now shown (id, stars and action; `--json` has
-   every field, which step 5 needs). `cca collect` gives the raw rows by day,
-   project, tool and session when the summary is not enough. Today is still
+   every field, which step 5 needs). `cca collect --days 7` gives the raw rows
+   by day, project, tool and session for the same days, when the summary is
+   not enough. Today is still
    going, so its numbers are partial, and the conversation running this review
    is in the data too.
    Then read the settings in effect: `~/.claude/settings.json`, and in each
    project's folder `.claude/settings.json` and `.claude/settings.local.json`,
    including settings per model and the `env` entries. The summary's sessions
    show each project's folder. A proposal about a setting starts from its
-   current value. When you find the conversation running this review among the
-   sessions, say so rather than reading it as the user's work.
+   current value. The conversation running this review is in the data too.
+   When it is a subagent of a longer session, only the subagent's rows are the
+   review; the rest is the user's work. Say which session it is when it is
+   among the top sessions.
 2. **Read.** Follow [reading.md](references/reading.md): find the signals,
    each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in
@@ -56,7 +59,9 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 **Keep the list, change only what moved.** Use the same `id` for the same
 proposal every run. Leave a proposal as it is when its numbers and advice still
-hold: it then keeps its dates, and the report marks only what changed as New or
+hold, and a number holds unless it moved by more than about a tenth or changed
+the rating; small drift, such as from today being partial, is not a change. It
+then keeps its dates, and the report marks only what changed as New or
 Updated. Update its detail when the numbers moved, put what is worth noticing
 in `news`, add a proposal for a new finding, and drop one that no longer
 applies. When the user has carried a proposal out, keep it until its effect is
@@ -70,12 +75,13 @@ setting, file, skill or subagent to change and what to put there (a key and
 value, a line to add). Before naming a setting or feature, open its current
 docs page and check the name, the accepted values, which models it applies to
 and what overrides it (a choice made inside a session can override the
-settings file); put that page in `source`. Do not propose a setting that is
+settings file); put that page in `source`. When no docs page confirms a claim,
+leave it out or say it is not confirmed. Do not propose a setting that is
 already in place; when it is in place but the numbers show it is not taking
 effect, say that instead.
 Never invent a setting. A value is a starting point: say what to watch to tune
-it. Rate each proposal 1–5 stars on each axis with
-[ratings.md](references/ratings.md), starting from the closest sample in
+it. Rate each proposal 1–5 stars on each axis (upkeep is `ease`, quality kept is
+`safety`) with [ratings.md](references/ratings.md), starting from the closest sample in
 [catalog.md](references/catalog.md); the overall stars are their geometric
 mean to one decimal place. When a proposal changes the compaction length or
 the size of tool results, measure its savings with `cca simulate` rather than
@@ -89,6 +95,9 @@ session, focus, item); reading.md says which fits each signal. **Numbers the
 linked view shows must match it**: the report shows one period at a time, so
 quote that period's numbers, not another window's. Numbers the view cannot
 show (before and after a change, one project's share) say where they come from.
+For every number in the detail, name the command and days it came from (for
+example `cca summary --tool "bash cat"`, 10/11–10/17), so the next run can
+work it out the same way and tell a real move from a different method.
 
 Write the proposals in the user's language.
 

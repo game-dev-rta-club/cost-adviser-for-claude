@@ -13,7 +13,7 @@ much work there was.
 | Top tools | One tool or command takes a large and growing share of cost | Repeated calls of the same kind; its examples show what. P4, P5 | `--tool NAME` (a group works too, e.g. `--tool "bash chill"`) |
 | `(final reply)` share | Large share of cost in calls that use no tool (the reply that ends each turn) | Many turns back to the user, each reading a long context. P1, P2 | `--tool "(final reply)"` |
 | Cache hit rate | Drops against its own history | Something is rebuilding the cache. P3 | `--metrics stats.cacheHit` |
-| Cost by type: Cache write | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
+| Cache write (summary Totals, "of which cache write") | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |
 | Subagent calls | Moves after a delegation change | Whether delegation happens at all; judge cost with P5 | `--metrics stats.subShare` |
 | Compacting / active hour, and Cost by type: Compacting | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics stats.compactPerHour` or `--focus cost-type --item Compacting` |
