@@ -48,7 +48,7 @@ For a model with a one-million-token window, that is 500,000.
 
 **Ratings:** upkeep 5 stars, though it should be checked again when the model
 changes; quality 4 stars; savings 5 stars in the example week, where
-`cca simulate --compact-at 500000` (from one million) cut about 16%, even after
+`cca simulate --compact-at 500000` (from one million) cut about 12%, even after
 counting the extra compactions. **Overall: 4.6.**
 
 ## 5. Below half of the context window, lower the compaction length by one step
@@ -65,8 +65,11 @@ say plainly, when proposing it, that a lower compaction length may lower the
 quality of the work. The risk adds up with every step, so the quality rating
 stays at 3 stars however many steps have gone well.
 
+Do not propose it when a declined proposal's reason sets a lower limit at or
+above the current length (for example "about 500,000 is fine").
+
 **Ratings:** upkeep 5 stars; quality 3 stars; savings 3 stars in the example
-week, where one step from 500,000 to 450,000 cut about 4.7%. **Overall: 3.6.**
+week, where one step from 500,000 to 450,000 cut about 4.1%. **Overall: 3.6.**
 
 ## 6. Hand research to a subagent and keep only its result
 

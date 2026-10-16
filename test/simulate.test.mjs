@@ -83,5 +83,9 @@ test('cli: summary counts a copied request once', async () => {
   await write(root, 'p/a.jsonl', [msg({id: 'm1', at: at(1), output: 10}), msg({id: 'm2', at: at(2), output: 10})]);
   await write(root, 'p/b.jsonl', [msg({id: 'm1', at: at(1), output: 10}), msg({id: 'm2', at: at(2), output: 10}), msg({id: 'm3', at: at(3), output: 10})]);
   const out = await run(process.execPath, [cli, 'summary', '--json', '--transcripts', root], {env: {...process.env, CCA_HOME: home}});
-  assert.equal(JSON.parse(out.stdout).current.calls, 3);
+  const summary = JSON.parse(out.stdout);
+  assert.equal(summary.current.calls, 3);
+  assert.equal(summary.projects.length, 1);
+  assert.equal(summary.projects[0].calls, 3);
+  assert.ok('folder' in summary.projects[0]);
 });

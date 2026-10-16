@@ -22,9 +22,12 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    project, tool and session when the summary is not enough. Today is still
    going, so its numbers are partial, and the conversation running this review
    is in the data too.
-   Then read the settings in effect: `~/.claude/settings.json` and each
-   project's `.claude/settings.json`, including settings per model. A proposal
-   about a setting starts from its current value.
+   Then read the settings in effect: `~/.claude/settings.json`, and in each
+   project's folder `.claude/settings.json` and `.claude/settings.local.json`,
+   including settings per model and the `env` entries. The summary's sessions
+   show each project's folder. A proposal about a setting starts from its
+   current value. When you find the conversation running this review among the
+   sessions, say so rather than reading it as the user's work.
 2. **Read.** Follow [reading.md](references/reading.md): find the signals,
    each with its numbers, period and sample size.
 3. **Explain.** Match each signal to a principle in
@@ -47,7 +50,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
   "project": "Optional: the project it is for; leave it out when it is for all",
   "ratings": {"ease": 5, "safety": 4, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
-  "link": {"period": "week", "date": "2026-10-16", "focus": "cost-model"}
+  "link": {"period": "7d", "date": "2026-10-16", "focus": "cost-model"}
 }]}
 ```
 
