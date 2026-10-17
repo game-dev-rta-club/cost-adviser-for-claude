@@ -18,9 +18,9 @@ A command-line tool and an agent skill for Claude Code. `cca` turns the conversa
 
 ## How it works
 
-### 1. Type `/cost-adviser`
+### 1. Run the cost-adviser skill
 
-That is all it takes to get a diagnosis. Your agent refreshes the report, reads it, explains what it sees with basic principles, and updates the list of improvements. It replies with what changed and a link to the report.
+Ask your agent to use the skill, and it diagnoses your costs. It refreshes the report, reads it, explains what it sees with basic principles, and updates the list of improvements. It replies with what changed and a link to the report.
 
 ```text
 /cost-adviser
