@@ -320,5 +320,4 @@ function applyLink(){const q=new URLSearchParams(location.hash.slice(1));
  if(q.has('proposal'))return showProposal(q.get('proposal'));
  hideProposal();if(![...q.keys()].length)return;bringIntoView(applyView(q));}
 window.addEventListener('hashchange',applyLink);
-$('#meta').textContent=`As of ${new Date(D.generatedAt).toLocaleString('en-US')} · provisional list prices`;
 render();applyLink();
