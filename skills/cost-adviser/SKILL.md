@@ -87,10 +87,14 @@ proposal every run. Check each proposal now shown in this order:
    today). For a proposal about something a recorded change touched, use the
    full days since that change. A change touched it when the proposal's own
    number (its share of the cost) moved past the threshold in step 3 between
-   the full days before and the full days since. With fewer than 2 full days
+   the full days before and the full days since (read both from
+   `cca summary --full-days`, whose Around line has the same number of full
+   days on each side). With fewer than 2 full days
    since, keep the rating and say in
    `news` that it is waiting and from which day (adding or dropping that line
-   is an update). Rewrite a number that includes today with the full days'
+   is an update). A new proposal in that state is rated from the full days
+   before the change and marked waiting the same way. Rewrite a number that
+   includes today with the full days'
    number when the two would give different ratings.
 3. **Numbers.** A number holds unless it moved by more than about a tenth
    (for a percentage under 10%, by more than about a point) or changed the
@@ -118,8 +122,9 @@ gets the same number. Copy the proposals from `cca summary --json`; `stars`,
 **Each proposal is a problem the numbers show now and the fix for it.** Then
 look for further problems: go through the signals and every sample in
 catalog.md again, not only the proposals now shown, and add each one that
-fits. A fit whose part is under 1% of the cost on the full days it is rated from
-(step 2) is not a proposal; mention it in the reply instead. Drop a proposal that no longer
+fits. A fit whose share of the cost (the part the proposal would act on, not its
+savings) is under 1% on the full days it is rated from (step 2) is not a
+proposal; mention it in the reply instead. Drop a proposal that no longer
 applies. `cca advise` prints what was added, updated, kept and removed.
 
 **Each proposal is one concrete action that is enough on its own**: the

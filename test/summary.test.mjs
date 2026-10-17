@@ -45,7 +45,7 @@ test('summary compares windows, and each change before and after', () => {
   assert.match(text, /Cost \$20\.00 \(-50%\)/);
   assert.match(text, /Subagent calls 20% \(\+20\.0pt\)/);
   assert.match(text, /2026-10-14 Use subagents — 2 days each side \(after includes today, partial\); too early for a verdict, judge from 2026-10-16; before: 200 calls, 2\.0h active/);
-  assert.match(text, /Previous period: \$40\.00, 200 calls, 2\.0h active\n/);
+  assert.match(text, /Previous period \(2026-10-12 to 2026-10-13\): \$40\.00, 200 calls, 2\.0h active\n/);
   assert.match(text, /Compacting \$0\.00 0%, 0× \(–, partly estimated\)/);
   const withCompact = totals([{...row('2026-10-16', {cost: 10}), output: 1, cacheRead: 7, compactions: 2, compactSummary: 1.5, compactRebuild: 0.5}]);
   assert.deepEqual(withCompact.split, {input: 7, cacheRead: 7, cacheWrite: 0, output: 1, compacting: 2, compactions: 2});

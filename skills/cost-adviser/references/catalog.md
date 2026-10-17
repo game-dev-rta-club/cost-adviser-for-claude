@@ -11,7 +11,10 @@ against its current documentation before proposing it.
 
 **Propose it when** the same command, or the same check, is called many times
 and takes a large share of the cost: for example, a status check before every
-step, or asking again and again until something finishes.
+step, or asking again and again until something finishes. `cca summary --tool`
+shows its parts (a script's subcommands too, e.g. `bash node tool.mjs run`);
+when the repeated part cannot be named from them, mention the signal in the
+reply instead of proposing.
 
 **Ratings:** upkeep 3 stars, because the tool has to be changed to fit that
 workflow; quality 5 stars, because the same work is done with fewer calls;
