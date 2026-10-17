@@ -7,8 +7,8 @@ the geometric mean of the three: multiply the three numbers together, take the
 cube root, and round to one decimal place. `cca advise` works it out. Because
 the numbers are multiplied, one weak axis pulls the overall rating down even
 when the other two are high. A proposal that costs quality may still be listed
-so that the user can weigh it; the report shows ★5 and ★4 at first, and the
-user can turn on the others.
+so that the user can weigh it; the report shows ★3 and above at first, and the
+user can move a slider to see the rest.
 
 Rate by the descriptions below and by the sample proposals in
 [catalog.md](catalog.md), not by a general impression, so that the same

@@ -24,7 +24,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,starsOn:new Set([5,4]),shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,minStars:3,shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -190,7 +190,6 @@ function render(){renderProjects();renderProposals();renderChart();renderProfile
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
 document.addEventListener('click',e=>{const t=e.target;
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
- const sf=t.closest('[data-stars]');if(sf){const n=+sf.dataset.stars;state.starsOn.has(n)?state.starsOn.delete(n):state.starsOn.add(n);renderProposals();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
  const per=t.closest('[data-p]');if(per){state.period=per.dataset.p;state.key=null;resetLimits();document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b===per));render();return;}
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
@@ -249,20 +248,26 @@ const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r
 // The latest run's changes are marked, so a reader sees what moved since last time.
 const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');
 const mark=p=>p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:'';
-// Proposals are filtered by whole stars (4.6 counts as 4); 5 and 4 show at first.
-const bucket=p=>Math.max(1,Math.min(5,Math.floor(p.stars)));
+// A slider sets the lowest overall rating shown; ★3 and above at first.
 const titleOf=p=>p.title||p.action;
 const visibleProposals=()=>PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
 let activeProposal=null;
 // Each card opens its details in a card at the lower right (#proposal=ID), so
 // the list stays short and the view it is about is highlighted beside it.
-function renderProposals(){const all=visibleProposals(),list=all.filter(p=>state.starsOn.has(bucket(p))||p.id===activeProposal);
- const count=n=>all.filter(p=>bucket(p)===n).length;
- const filter=`<div class="star-filter" role="group" aria-label="Show proposals by stars">${[5,4,3,2,1].map(n=>`<button type="button" data-stars="${n}" aria-pressed="${state.starsOn.has(n)}"${count(n)?'':' class="is-empty"'}>★${n}<small>${count(n)}</small></button>`).join('')}</div>`;
- $('#proposals').innerHTML=all.length?`<h2>Improvements</h2>${filter}${list.length?list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
+function renderProposals(){const all=visibleProposals();
+ if(!all.length){$('#proposals').innerHTML='';return;}
+ $('#proposals').innerHTML=`<h2>Improvements</h2><div class="star-slider"><label for="min-stars">Show <b id="min-stars-label"></b></label>
+  <input id="min-stars" type="range" min="1" max="5" step="1" value="${state.minStars}" data-min-stars>
+  <div class="star-ticks" aria-hidden="true">${[1,2,3,4,5].map(n=>`<span>★${n}</span>`).join('')}</div></div><div id="proposal-list"></div>`;
+ renderProposalList();}
+function renderProposalList(){const all=visibleProposals(),list=all.filter(p=>p.stars>=state.minStars||p.id===activeProposal),hidden=all.length-list.length;
+ $('#min-stars-label').textContent=`★${state.minStars} and above · ${list.length} of ${all.length}`;
+ const best=all.filter(p=>!list.includes(p))[0];
+ $('#proposal-list').innerHTML=list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
   <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span>
   <strong>${esc(titleOf(p))}</strong>${p.summary?`<span class="proposal-summary">${esc(p.summary)}</span>`:''}${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
-  <span class="proposal-more">Details ›</span></a>`).join(''):'<p class="proposal-none">No proposals with these stars. Turn on more above.</p>'}`:'';}
+  <span class="proposal-more">Details ›</span></a>`).join('')+(hidden?`<p class="proposal-none">${list.length?`${hidden} more below ★${state.minStars}`:`None at ★${state.minStars} or above; the best is ${best.stars.toFixed(1)}`}. Move the slider left to see ${hidden===1?'it':'them'}.</p>`:'');}
+document.addEventListener('input',e=>{if(e.target.matches?.('[data-min-stars]')){state.minStars=+e.target.value;renderProposalList();}});
 const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
 // The card stays in a corner; the item it is about is scrolled into the upper
 // part of the window, so the card does not cover it.

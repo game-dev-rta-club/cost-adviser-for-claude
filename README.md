@@ -25,7 +25,7 @@ changed since the last run are read again.
 | `cca decline add "<option>" --reason "<why>"` / `remove` / `list` | Record an option the user decided against. The summary lists them, and the skill never proposes them again. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|3d\|7d\|week\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
-| `cca advise proposals.json` / `cca advise --clear` | Replace the improvement proposals listed under the projects: overall stars (the geometric mean, to one decimal place, of 1–5 stars on upkeep, quality kept and savings; buttons choose which stars show, ★5 and ★4 at first), a short title and two or three lines on the problem and its fix, and details that open in a card at the lower right while the related view is highlighted (`#proposal=ID` opens one directly). A proposal keeps its dates while its content stays the same, so only what changed is marked New or Updated. |
+| `cca advise proposals.json` / `cca advise --clear` | Replace the improvement proposals listed under the projects: overall stars (the geometric mean, to one decimal place, of 1–5 stars on upkeep, quality kept and savings; a slider sets the lowest rating shown, ★3 at first), a short title and two or three lines on the problem and its fix, and details that open in a card at the lower right while the related view is highlighted (`#proposal=ID` opens one directly). A proposal keeps its dates while its content stays the same, so only what changed is marked New or Updated. |
 | `cca simulate [--compact-at TOKENS] [--tool-results SHARE [--tool NAME]…] [--days 7] [--project NAME] [--json]` | Replay the recent conversations call by call as if a change had been in place, and print the cost with and without it: compaction starting at another length, or tool results keeping a share of their size (0.7 = 30% shorter), of every tool or only the tools given with `--tool` (repeat it for several). An estimate, used to rate how much a proposal would save. |
 | `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
@@ -59,9 +59,8 @@ Each proposal is rated from one to five stars on three axes: upkeep (how little
 attention it needs once it is in place), quality kept (how well the work keeps
 its quality), and savings (how much it is expected to cut your total cost,
 estimated from your recent conversations). The overall rating multiplies the
-three and takes the cube root, so one weak axis pulls it down. Buttons from ★5
-to ★1 above the list choose which whole stars show (4.6 counts as ★4); ★5 and
-★4 are on at first.
+three and takes the cube root, so one weak axis pulls it down. A slider above the
+list sets the lowest rating shown, ★3 and above at first.
 
 The references stay at the level of principles on purpose, so they do not go
 stale when tools and settings change.
