@@ -40,7 +40,8 @@ Commands:
                         change before vs after. --tool NAME prints only that tool or
                         group (e.g. "bash chill") by day, with the uses that cost most;
                         give --tool more than once to add several up.
-                        --full-days leaves out today, which is partial (7 days become 6).
+                        --full-days leaves out today, which is partial (7 days become 6);
+                        --since/--until <date> give any days (e.g. the days before a change).
   simulate              Replay the recent conversations as if a change had been in
                         place, and print the cost with and without it.
                         --compact-at <tokens>: compaction starts at this length.
@@ -83,7 +84,7 @@ function options(args) {
     return parseArgs({args, allowPositionals: true, options: {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
-      out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'},
+      out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'}, until: {type: 'string'},
       'compact-at': {type: 'string'}, 'tool-results': {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
@@ -120,7 +121,7 @@ const {values, positionals} = options(rest);
 // Only simulate shortens several tools at once; elsewhere --tool names one.
 if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail('--tool takes one tool or group here.');
 // Options another command takes are refused rather than quietly ignored.
-for (const [name, commands] of [['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
+for (const [name, commands] of [['until', ['summary']], ['since', ['summary', 'simulate']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
   if (values[name] !== undefined && !commands.includes(command)) fail(`--${name} is for ${commands.join('/')} only.`);
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
@@ -166,14 +167,24 @@ else if (command === 'build') {
   if (values.out) { await fs.writeFile(values.out, json); console.error(`Wrote ${data.calls} calls, ${from} to ${to}, to ${values.out}`); }
   else process.stdout.write(json);
 } else if (command === 'summary') {
-  const days = count(values.days, 7, 'days'), changes = await readChanges(home);
-  // Enough history for the previous window and for every recorded change.
-  const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
-  const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
+  // The window: --days back from today, or --since/--until for any days.
   // --full-days drops today and keeps the start: the same days as the
   // report's period, less the partial today (7 days become 6).
-  const full = !!values['full-days'], yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  if (full && days < 2) fail('--full-days needs --days 2 or more: it leaves out today.');
+  const isDay = d => /^\d{4}-\d{2}-\d{2}$/.test(d), todayDay = localDay(Date.now());
+  for (const k of ['since', 'until']) if (values[k] !== undefined && !isDay(values[k])) fail(`--${k} takes a date, YYYY-MM-DD.`);
+  if (values.since && values.days) fail('give --since or --days, not both.');
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const until = values.until || (values['full-days'] ? localDay(yesterday.getTime()) : todayDay);
+  if (until > todayDay) fail(`--until ${until} is after today.`);
+  const spanOf = (a, b) => Math.round((Date.parse(`${b}T00:00`) - Date.parse(`${a}T00:00`)) / 86400000) + 1;
+  const asked = count(values.days, 7, 'days');
+  if (values['full-days'] && !values.since && !values.until && asked < 2) fail('--full-days needs --days 2 or more: it leaves out today.');
+  const days = values.since ? spanOf(values.since, until) : values['full-days'] && !values.until ? asked - 1 : asked;
+  if (days < 1) fail(`--since ${values.since} is after ${until}.`);
+  const full = until < todayDay, changes = await readChanges(home);
+  // Enough history for the previous window and for every recorded change.
+  const data = await collectCached({root, dataDir: home, days: Math.max((spanOf(until, todayDay) - 1 + days) * 2, 30)});
+  const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
   // The hook commands set up for each event, so hook text can be traced to a tool.
   // Keyed by "project|event"; "(all)" is the user's own settings.
   const hookCommands = {}, places = [['(all)', path.join(os.homedir(), '.claude')]];
@@ -184,8 +195,8 @@ else if (command === 'build') {
     for (const [event, groups] of Object.entries(settings.hooks || {})) for (const g of [].concat(groups)) for (const h of g?.hooks || [])
       if (h?.command) (hookCommands[`${project}|${event}`] ||= []).push({file: path.join(dir, name).replace(os.homedir(), '~'), command: h.command});
   }
-  const summary = summarize(data, {hookCommands, days: full ? days - 1 : days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
-    fullDays: full, ...(full ? {today: localDay(yesterday.getTime())} : {})});
+  const summary = summarize(data, {hookCommands, days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
+    fullDays: full, today: until});
   if (summary.toolDetail?.unknown.length) fail(`no calls match --tool ${summary.toolDetail.unknown.map(t => `"${t}"`).join(', ')}: use a name from the summary's tree, such as "bash cat" or "bash cat (itself)".`);
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'simulate') {
