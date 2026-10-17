@@ -267,14 +267,13 @@ function renderProposals(){const all=visibleProposals();
   <input id="min-stars" type="range" min="1" max="5" step="1" dir="rtl" value="${state.minStars}" aria-label="Lowest rating shown" data-min-stars>
   <div class="star-scale star-counts" aria-hidden="true">${scale(n=>all.filter(p=>bucket(p)===n).length)}</div></div><div id="proposal-list"></div>`;
  renderProposalList();}
-function renderProposalList(){const all=visibleProposals(),list=all.filter(p=>p.stars>=state.minStars||p.id===activeProposal),hidden=all.length-list.length;
+function renderProposalList(){const all=visibleProposals(),list=all.filter(p=>p.stars>=state.minStars||p.id===activeProposal);
  const input=$('#min-stars');input.setAttribute('aria-valuetext',`${state.minStars===5?'★5':`★5 to ★${state.minStars}`}, ${list.length} of ${all.length} shown`);input.style.setProperty('--fill',`${(5-state.minStars)/4*100}%`);
  document.querySelectorAll('.star-scale span').forEach(s=>s.classList.toggle('is-on',+s.dataset.n>=state.minStars));
- const best=all.filter(p=>!list.includes(p))[0];
  $('#proposal-list').innerHTML=list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
   <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span>
   <strong>${esc(titleOf(p))}</strong>${p.summary?`<span class="proposal-summary">${esc(p.summary)}</span>`:''}${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
-  <span class="proposal-more">Details ›</span></a>`).join('')+(hidden?`<p class="proposal-none">${list.length?`${hidden} lower-rated hidden`:`None in ★5–★${state.minStars}; the best is ${best.stars.toFixed(1)}`}. Move the slider right to see ${hidden===1?'it':'them'}.</p>`:'');}
+  <span class="proposal-more">Details ›</span></a>`).join('')+(list.length?'':`<p class="proposal-none">None in ★5–★${state.minStars}.</p>`);}
 document.addEventListener('input',e=>{if(e.target.matches?.('[data-min-stars]')){state.minStars=+e.target.value;renderProposalList();}});
 const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
 // The card stays in a corner; the item it is about is scrolled into the upper
