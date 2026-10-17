@@ -1,9 +1,9 @@
 ---
-name: context-adviser
-description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, reads the numbers against basic principles, and updates the proposals listed under the projects, each with an overall star rating from three rated axes, the action to take and its details. Use for /context-adviser or a scheduled cost review.
+name: cost-adviser
+description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, reads the numbers against basic principles, and updates the proposals listed under the projects, each with an overall star rating from three rated axes, the action to take and its details. Use for /cost-adviser or a scheduled cost review.
 ---
 
-# Context Adviser
+# Cost Adviser
 
 Review Claude Code cost and keep the improvement proposals on the report up to
 date. The report lists them under the projects, best first, each with stars,

@@ -28,4 +28,4 @@ Measure from the transcripts after the fact; asking the agent to log as it
 works adds calls of its own.
 
 Source for the spread of calls per request: measured on our transcripts,
-2026-10 (context-adviser design notes).
+2026-10 (cost-adviser design notes).

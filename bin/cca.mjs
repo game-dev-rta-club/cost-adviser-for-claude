@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Context Adviser For Claude: measure what Claude Code conversations cost.
+// Cost Adviser For Claude: measure what Claude Code conversations cost.
 import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
 import {parseArgs} from 'node:util';
@@ -13,13 +13,13 @@ import {localDay, projectOf} from '../lib/aggregate.mjs';
 import {simulate} from '../lib/simulate.mjs';
 import {createViewer, DEFAULT_PORT, LINK_KEYS, reportLink, viewerRunning} from '../lib/viewer.mjs';
 
-const HELP = `Context Adviser For Claude
+const HELP = `Cost Adviser For Claude
 
 Usage: cca <command> [options]
 
 Commands:
   build                 Collect and write the Web view as one HTML file
-                        (~/.context-adviser-for-claude/report.html). --open opens it.
+                        (~/.cost-adviser-for-claude/report.html). --open opens it.
   serve                 Show the built report at http://127.0.0.1:7319 so links to it
                         can be clicked. It only sends the file; run build to update it.
   link [options]        Print a link that opens the report on one item and highlights it:
@@ -67,7 +67,7 @@ Options:
   --transcripts <dir>   Read transcripts here (default: $CLAUDE_CONFIG_DIR/projects or ~/.claude/projects).
 
 Recorded changes, the HTML and a cache of read transcripts are kept in
-$CCA_HOME (default ~/.context-adviser-for-claude). Only changed transcripts are read again.
+$CCA_HOME (default ~/.cost-adviser-for-claude). Only changed transcripts are read again.
 Prices are provisional list prices; see lib/prices.mjs.`;
 
 const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usage.`); process.exit(2); };

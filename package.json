@@ -1,5 +1,5 @@
 {
-  "name": "context-adviser-for-claude",
+  "name": "cost-adviser-for-claude",
   "version": "0.1.0",
   "description": "Measure what Claude Code conversations cost, and whether a change made them cheaper.",
   "type": "module",

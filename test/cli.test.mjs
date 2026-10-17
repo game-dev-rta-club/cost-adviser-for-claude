@@ -54,7 +54,7 @@ test('cli: build writes one HTML with the data, reusing unchanged transcripts', 
   const first = (await cca(['build', '--transcripts', root], env)).stdout;
   assert.match(first, /1 calls from 1 transcripts .*read 1 changed files, reused 0/);
   const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
-  assert.match(html, /<title>Context Adviser For Claude<\/title>/);
+  assert.match(html, /<title>Cost Adviser For Claude<\/title>/);
   assert.match(html, /window\.CCA=\{/);
   assert.doesNotMatch(html, /cca:data|cca:app|src="data\.js"/);
   // Text from transcripts can never close the data script early.
@@ -81,10 +81,10 @@ test('links describe one view, and the viewer only sends the built report', asyn
   const url = `http://127.0.0.1:${server.address().port}/`;
   try {
     assert.equal((await fetch(url)).status, 404);
-    await fs.writeFile(file, '<title>Context Adviser For Claude</title>');
+    await fs.writeFile(file, '<title>Cost Adviser For Claude</title>');
     const page = await fetch(url);
     assert.equal(page.status, 200);
-    assert.match(await page.text(), /Context Adviser/);
+    assert.match(await page.text(), /Cost Adviser/);
     assert.equal((await fetch(url + 'report.html')).status, 404);
     assert.equal((await fetch(url + '../cache.json')).status, 404);
     assert.equal((await fetch(url, {method: 'POST'})).status, 405);

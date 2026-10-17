@@ -1,4 +1,4 @@
-# Context Adviser For Claude
+# Cost Adviser For Claude
 
 Measure what Claude Code conversations cost, find where the cost goes, and check
 whether a change made things cheaper. It reads the transcripts Claude Code
@@ -12,7 +12,7 @@ cca build --open    # write the report and open it
 ```
 
 The report is one HTML file with the data inside
-(`~/.context-adviser-for-claude/report.html`), so it opens at once and needs
+(`~/.cost-adviser-for-claude/report.html`), so it opens at once and needs
 no server. Run `cca build` again to bring it up to date; only transcripts that
 changed since the last run are read again.
 
@@ -32,19 +32,19 @@ changed since the last run are read again.
 | `cca collect [--days 30] [--out data.json]` | The collected data as JSON, for the same days as the summary (counted back from today at midnight). |
 
 `--transcripts DIR` reads another transcript folder. Recorded changes, the
-report and a cache of read transcripts are kept in `~/.context-adviser-for-claude`
+report and a cache of read transcripts are kept in `~/.cost-adviser-for-claude`
 (set `CCA_HOME` to move it). Deleting `cache.json` only costs one full read.
 
-## The /context-adviser skill
+## The /cost-adviser skill
 
-`skills/context-adviser` lets an agent run the review: it refreshes the report,
+`skills/cost-adviser` lets an agent run the review: it refreshes the report,
 reads the summary, explains what it sees with basic principles, and keeps the
 list of improvement proposals on the report up to date, each rated and with
 how to measure it. Run it whenever you like; each run looks at the numbers as
 they are.
 
 ```sh
-ln -s "$PWD/skills/context-adviser" ~/.claude/skills/context-adviser
+ln -s "$PWD/skills/cost-adviser" ~/.claude/skills/cost-adviser
 ```
 
 - `references/reading.md`: where to look in the results.
