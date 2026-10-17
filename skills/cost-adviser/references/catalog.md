@@ -22,7 +22,7 @@ show under another:
 
 ## A. Fewer calls
 
-## 1. Combine a command that is called many times into fewer calls
+### 1. Combine a command that is called many times into fewer calls
 
 **Propose it when** the same command, or the same check, is called many times
 and takes a large share of the cost: for example, a status check before every
@@ -36,7 +36,7 @@ workflow; quality 5 stars, because the same work is done with fewer calls;
 savings 5 stars in the example week, where halving a command that took 26% of
 the cost cut 13%. **Overall: 4.2.**
 
-## 2. Give the agent one call that shows what now takes several lookups
+### 2. Give the agent one call that shows what now takes several lookups
 
 **Propose it when** reading and searching take a large share of the cost
 (`cca summary --tool read --tool "bash grep" --tool "bash cat (itself)" …`
@@ -53,9 +53,9 @@ cuts about 4%. **Overall: 3.6.**
 
 ## B. Less read per call, on average
 
-### Keep the conversation small
+**Keep the conversation small**
 
-## 3. Make tool results smaller
+### 3. Make tool results smaller
 
 **Propose it when** a tool returns large results each time, or the same large
 file is read again and again. Ways to do it include a limit on the number of
@@ -67,7 +67,7 @@ week, where `cca simulate --tool-results 0.7` (results 30% shorter) cut 2.1%
 (see "Making the context smaller saves little" in ratings.md).
 **Overall: 3.6.**
 
-## 4. Shorten the text the user's own hooks or skills add to every call
+### 4. Shorten the text the user's own hooks or skills add to every call
 
 **Propose it when** the same text is added to every call, or a large fixed
 instruction is loaded in every conversation. Adding the text only when it has
@@ -78,7 +78,7 @@ CLAUDE.md loads is not in it.
 **Ratings:** upkeep 3 stars; quality 5 stars; savings 1 star, usually under 1%
 for the reason in "Making the context smaller saves little". **Overall: 2.5.**
 
-## 5. Start compaction at half of the context window
+### 5. Start compaction at half of the context window
 
 **Propose it when** calls that read more than half of the context window take a
 clear share of the cost. The setting is `autoCompactWindow`; set it to half of
@@ -90,7 +90,7 @@ changes; quality 4 stars; savings 5 stars in the example week, where
 `cca simulate --compact-at 500000` (from one million) cut about 12%, even after
 counting the extra compactions. **Overall: 4.6.**
 
-## 6. Below half of the context window, lower the compaction length by one step
+### 6. Below half of the context window, lower the compaction length by one step
 
 **Propose it when** the compaction length is already at half of the context
 window or lower (read `autoCompactWindow` in the user's settings). One step is one twentieth of the context window: for a
@@ -110,9 +110,9 @@ above the current length (for example "about 500,000 is fine").
 **Ratings:** upkeep 5 stars; quality 3 stars; savings 3 stars in the example
 week, where one step from 500,000 to 450,000 cut about 4.1%. **Overall: 3.6.**
 
-### Move tool use to an agent with little context
+**Move tool use to an agent with little context**
 
-## 7. Hand self-contained runs of tool calls to a fresh agent
+### 7. Hand self-contained runs of tool calls to a fresh agent
 
 **Propose it when** the main conversation is long and does runs of many tool
 calls in a row between its replies. `cca simulate --delegate 5-19` replays it
@@ -134,7 +134,7 @@ conversation knows; savings on half of the replayed cut, since not every run
 can be handed over: 4 stars in the example week, where the replay cut 9.6%.
 **Overall: 3.3.**
 
-## 8. Hand research to a subagent and keep only its result
+### 8. Hand research to a subagent and keep only its result
 
 **Propose it when** search and read tools take a large share, and most of what
 they return is never used later in the conversation. The subagent uses the
@@ -146,7 +146,7 @@ main conversation; savings 2 stars, estimated at about 1.5%, because this makes
 the context smaller and the subagent's own calls cost money too.
 **Overall: 3.2.**
 
-## 9. Hand research to a subagent on a lighter model
+### 9. Hand research to a subagent on a lighter model
 
 **Propose it when** search and read tools take a large share of the cost.
 
@@ -156,7 +156,7 @@ share, from the lower price per call. **Overall: 3.6.**
 
 ## C. A lower price
 
-## 10. Use a smaller model by default
+### 10. Use a smaller model by default
 
 **Propose it when** one large model takes most of the cost. It works well for
 some users, so it is worth showing as a choice to consider.
@@ -167,7 +167,7 @@ model can cost half as much per token or less, so moving most calls cuts a
 large share.
 **Overall: 2.9.**
 
-## 11. Lower the effort level for all work
+### 11. Lower the effort level for all work
 
 **Propose it when** output, which includes the model's thinking, takes a clear
 share of the cost.
@@ -176,7 +176,7 @@ share of the cost.
 thinking; savings 3 stars, estimated at a little under half of output's share
 of the cost (about 4% in an example week where output was 9%). **Overall: 2.5.**
 
-## 12. Work on a lighter model and consult a stronger one at decision points
+### 12. Work on a lighter model and consult a stronger one at decision points
 
 **Propose it when** one large model takes most of the cost and most turns are
 routine. The advisor tool lets the main model call a stronger one before it
@@ -191,7 +191,7 @@ model outright, because of the consultations. **Overall: 3.4.**
 
 ## D. The cache kept
 
-## 13. Compact before a long break instead of letting the cache expire
+### 13. Compact before a long break instead of letting the cache expire
 
 **Propose it when** the summary's "Cache write after the cache expired" takes
 a clear share of the cost (the `expired` column by day), and the "cache
