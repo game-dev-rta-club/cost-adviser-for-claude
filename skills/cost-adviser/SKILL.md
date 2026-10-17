@@ -30,8 +30,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    project shows each project's folder; `(temp)` gathers temporary folders and
    has no settings of its own. Settings files are not all that is in effect:
    a session can be started with its own model or effort (launch flags, such
-   as `--model` and `--effort` in `ps -axo pid,lstart,command`, or `/model`
-   inside it), and those win. A proposal about a setting starts from its
+   as `--model` and `--effort`; `ps -axo command | grep -oE -- '--(model|effort)[= ][^ ]+' | sort | uniq -c`
+   counts them across running sessions; or `/model` inside it), and those win. A proposal about a setting starts from its
    current value. The conversation running this review is in the data too.
    When it is a subagent of a longer session, only the subagent's rows are the
    review (marked subagent, with a session of the form `<parent>/agent-…`);
@@ -66,7 +66,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
   "summary": "Two or three lines, up to 200 characters: the problem the numbers show now and the fix. The list shows only the title and this; the rest opens on a click.",
   "action": "Exactly what to do, in one line, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
   "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
-  "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Keep it as it is on a kept proposal; replace or drop it when the proposal is updated.",
+  "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and the date (the day, or the summary's read-at time; not a guessed time). Keep it as it is on a kept proposal; replace or drop it when the proposal is updated.",
   "project": "Optional: the project it is for; leave it out when it is for all",
   "ratings": {"ease": 5, "safety": 4, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
@@ -78,8 +78,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 proposal every run. Check each proposal now shown in this order:
 
 1. **Method.** Each number names the command it came from. When that is a
-   way the references rule out (adding up `cca collect` rows by hand when a
-   summary view shows the number, a replay that includes today or crosses a
+   way the references rule out (any number worked out by hand, added up or
+   subtracted, when one `cca summary --tool …` command shows it, a replay that includes today or crosses a
    compaction change, a command cca now refuses), measure it again the
    allowed way. That is an update. When the summary says the prices or the
    way cca reads calls changed, measure every number again too; there, only
@@ -88,8 +88,10 @@ proposal every run. Check each proposal now shown in this order:
    no summary view shows (one session's tool use, result sizes); name the
    fields used.
 2. **Days.** The rating comes from full days (`--full-days` leaves out
-   today). For a proposal about something a recorded change touched, use the
-   full days since that change. A change touched it when it is about the same tool, setting
+   today). For a proposal about something a change touched, use the full
+   days since that change. A change here is a recorded one, or one the
+   summary shows in Context jumps or Mix shifts. Quoting a change's Shares
+   line does not by itself make a proposal touched. A change touched it when it is about the same tool, setting
    or project (a change to a tool also touches the text its hooks add; Text
    added by hooks shows the command that sets each up). Only once there are
    2 full days on each side does a move in the proposal's own number (its
@@ -113,7 +115,8 @@ proposal every run. Check each proposal now shown in this order:
    (for a percentage under 10%, by more than about a point) or changed the
    rating; small drift is not a change.
 4. **Facts and reasoning.** Each claim from the docs in a detail names its
-   page. Open `source` and every page the detail names once per run
+   page. Open `source` and every docs page the detail names once per run (the
+   principles' sources need not be opened again)
    (for the Claude Code version, take the one the running sessions show in
    `ps`) and correct a fact that is now wrong (a version, a setting's value, a
    price, a claim about which session or example costs most, read again from
