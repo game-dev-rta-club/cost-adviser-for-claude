@@ -38,14 +38,14 @@ Commands:
                         change before vs after. --tool NAME prints only that tool or
                         group (e.g. "bash chill") by day, with the uses that cost most;
                         give --tool more than once to add several up.
-                        --full-days ends at yesterday (today is partial).
+                        --full-days leaves out today, which is partial (7 days become 6).
   simulate              Replay the recent conversations as if a change had been in
                         place, and print the cost with and without it.
                         --compact-at <tokens>: compaction starts at this length.
                         --tool-results <share>: tool results keep this share of
                         their size (0.7 = 30% shorter); add --tool NAME, once per
                         tool or group (e.g. "read", "bash cat"), to shorten only those.
-                        Give one or both. --full-days ends at yesterday (today is partial);
+                        Give one or both. --full-days leaves out today (7 days become 6);
                         --since <date> starts at that day instead of --days.
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
@@ -164,9 +164,11 @@ else if (command === 'build') {
   // Enough history for the previous window and for every recorded change.
   const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
   const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
-  // --full-days ends at yesterday, so a partial today moves nothing.
+  // --full-days drops today and keeps the start: the same days as the
+  // report's period, less the partial today (7 days become 6).
   const full = !!values['full-days'], yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
+  if (full && days < 2) fail('--full-days needs --days 2 or more: it leaves out today.');
+  const summary = summarize(data, {days: full ? days - 1 : days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
     fullDays: full, ...(full ? {today: localDay(yesterday.getTime())} : {})});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'simulate') {
@@ -187,7 +189,10 @@ else if (command === 'build') {
   if (values.since && !/^\d{4}-\d{2}-\d{2}$/.test(values.since)) fail('--since takes a date, YYYY-MM-DD.');
   const to = localDay(end.getTime()), start = values.since ? new Date(`${values.since}T00:00`) : new Date(end);
   if (start > end) fail(`--since ${values.since} is after ${to}${full ? ' (--full-days ends at yesterday)' : ''}.`);
-  const days = values.since ? Math.round((new Date(`${to}T00:00`) - start) / 86400000) + 1 : count(values.days, 7, 'days');
+  // --full-days keeps the start and leaves out today (7 days become 6).
+  const asked = count(values.days, 7, 'days');
+  if (full && !values.since && asked < 2) fail('--full-days needs --days 2 or more: it leaves out today.');
+  const days = values.since ? Math.round((new Date(`${to}T00:00`) - start) / 86400000) + 1 : full ? asked - 1 : asked;
   if (!values.since) start.setDate(start.getDate() - (days - 1));
   const from = localDay(start.getTime());
   const transcripts = (await readTranscriptsCached({root, dataDir: home, days: days + (full ? 1 : 0), since: start.getTime()}))

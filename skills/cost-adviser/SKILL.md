@@ -73,36 +73,43 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 ```
 
 **Keep the list, change only what moved.** Use the same `id` for the same
-proposal every run. Leave a proposal that is still to do as it is when its
-numbers and advice still hold. A fact other than a number that is now wrong
-(a version, a setting's value) is corrected, and a number measured in a way
-the references rule out is measured again; either counts as an update. The
-rating comes from full days (`cca summary --full-days` ends at yesterday):
-for a proposal about something a recorded change touched, the full days
-since that change, with the same rule as replays in ratings.md (under 2 full
-days, keep the rating and say it is waiting). When a quoted number includes
-today and the full days alone would give a different rating, rewrite the
-detail with the full days' number. A proposal that adds up several commands
-quotes one `cca summary --tool A --tool B …`, which adds them up, so the next
-run gets the same number. Judge a window that includes today on its full days; today only
-confirms. A number holds unless it moved by more than about a tenth (for a
-percentage under 10%, by more than about a point) or changed the rating; small
-drift, such as from today being partial, is not a change. Reasoning that the
-numbers no longer support is a change too. It
-then keeps its dates, and the report marks only what changed as New or
-Updated. Copy the proposals from `cca summary --json`; `stars`, `since` and
-`updated` are worked out by `cca advise` and can stay or go. Update its detail when the numbers moved, put what is worth noticing
-in `news`, add a proposal for a new finding, and drop one that no longer
-applies. **Each proposal is a problem the numbers show now and the fix for
-it.** When the user has carried a fix out, judge it in step 4 from the
-recorded change (offer `cca mark add` if its start was not recorded). On the
-next run after a fix is carried out, never keep it as "keep doing this": if
-the problem is gone, drop the proposal; if it remains, rewrite it as the next
-step for it (for example, a command still takes a large share after its first cut);
-do not list a fix as if it were still to do. Then look for further problems:
-go through the signals and every sample in catalog.md again, not only the
-proposals now shown, and add each one that fits. `cca advise` prints what was added, updated, kept and
-removed.
+proposal every run. Check each proposal now shown in this order:
+
+1. **Method.** Each number names the command it came from. When that is a
+   way the references rule out (adding up `cca collect` rows by hand, a
+   replay that includes today or crosses a compaction change), measure it
+   again the allowed way. That is an update.
+2. **Days.** The rating comes from full days (`--full-days` leaves out
+   today). For a proposal about something a recorded change touched, use the
+   full days since that change; with fewer than 2, keep the rating and say in
+   `news` that it is waiting and from which day (adding or dropping that line
+   is an update). Rewrite a number that includes today with the full days'
+   number when the two would give different ratings.
+3. **Numbers.** A number holds unless it moved by more than about a tenth
+   (for a percentage under 10%, by more than about a point) or changed the
+   rating; small drift is not a change.
+4. **Facts and reasoning.** Correct a fact other than a number that is now
+   wrong (a version, a setting's value), and rewrite reasoning the numbers no
+   longer support. Each is an update.
+5. **Done.** When the user has carried the fix out, judge it in step 4 from
+   the recorded change (offer `cca mark add` if its start was not recorded).
+   Never keep it as "keep doing this": drop it if the problem is gone,
+   otherwise rewrite it as the next step (for example, a command still takes
+   a large share after its first cut).
+
+A proposal that passes all five stays exactly as it is, `news` included; it
+keeps its dates, and the report marks only what changed as New or Updated.
+An updated proposal says in `news` what changed. A proposal that adds up
+several commands quotes one `cca summary --tool A --tool B …`, so the next run
+gets the same number. Copy the proposals from `cca summary --json`; `stars`,
+`since` and `updated` are worked out by `cca advise` and can stay or go.
+
+**Each proposal is a problem the numbers show now and the fix for it.** Then
+look for further problems: go through the signals and every sample in
+catalog.md again, not only the proposals now shown, and add each one that
+fits. A fit whose part is under 1% of the cost on the full days is not a
+proposal; mention it in the reply instead. Drop a proposal that no longer
+applies. `cca advise` prints what was added, updated, kept and removed.
 
 **Each proposal is one concrete action that is enough on its own**: the
 setting, file, skill or subagent to change and what to put there (a key and

@@ -66,12 +66,11 @@ A proposal that shortens only some tools' results must name each of them with
 result overstates it, and adding up separate runs misses how they interact
 through compaction. A result under 1% either way is within what the replay
 can tell apart: read it as no clear effect, savings 1 star. Rate from full
-days: add `--full-days`, which ends the replay at yesterday, since a partial
-today moves the result as the day fills. Use the 7 days, except when the
+days: add `--full-days`, which leaves out today (the 7 days become 6), since a
+partial today moves the result as the day fills. Use the 7 days, except when the
 compaction length changed inside them (simulate warns when the largest
 context jumped): it shapes every replay, so then every replay covers only the
-full days since the change (`--since DATE --full-days`; with `--full-days`,
-`--days N` would count back from yesterday and cross the change). When that leaves fewer than 2 full days, keep the savings
+full days since the change (`--since DATE --full-days`). When that leaves fewer than 2 full days, keep the savings
 rating the proposal has, say in `news` that it is waiting for more days, and
 rate it again once there are 2. A short window under 2% reads as no clear
 effect. Shorter results
