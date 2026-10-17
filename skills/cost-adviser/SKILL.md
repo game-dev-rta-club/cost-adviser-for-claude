@@ -76,8 +76,8 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
   with it.
 - When the user has carried a fix out, drop it if the problem is gone, or turn
   it into the next step. Never keep "keep doing this".
-- When the summary says cca's prices or counting changed, measure again; that
-  alone does not make an update.
+- When the summary says cca's prices or counting changed, measure again and
+  correct the numbers that moved: a correction, not news.
 - Write in the language the proposals are in, unless the user asks otherwise.
 
 ```json

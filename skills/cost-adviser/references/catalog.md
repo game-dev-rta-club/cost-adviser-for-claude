@@ -198,7 +198,9 @@ After the cache expires, the next call writes the whole conversation again; a
 compaction while the cache is still warm reads it at the cache price and
 writes only the summary. In a terminal session on the one-hour cache, Claude
 Code compacts an idle long conversation shortly before the cache expires
-(check that `idleCompaction` is not set to `false`). Elsewhere, `/compact` at
+(check that `idleCompaction` is not set to `false`); the summary's "1-hour
+cache" share says which cache is in use, and the docs say which sessions
+compact when idle. Elsewhere, `/compact` at
 a natural break before stepping away does the same, and so does starting a new
 conversation instead of resuming a long one whose context is no longer needed.
 
