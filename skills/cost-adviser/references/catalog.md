@@ -121,7 +121,8 @@ starts small and hands back a short report. The replay is the most it can
 save: it assumes every such run can be handed over.
 
 The action: a subagent in `~/.claude/agents/` (or the project's
-`.claude/agents/`) whose `description` says what to hand it (one fix with its
+`.claude/agents/`), with `model: inherit` to keep the same model, whose
+`description` says what to hand it (one fix with its
 test, one check, one lookup) and whose body says what a brief must hold: the
 goal, the files to read, the constraints and decisions already made, how to
 check the work, and what to report. A `SubagentStop` hook can run the check,
