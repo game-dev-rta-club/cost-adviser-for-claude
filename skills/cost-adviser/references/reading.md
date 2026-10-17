@@ -29,6 +29,10 @@ or `--date DAY` for a single day. A link opens the report on that item
 and highlights it. Calls by action is a tree (each call's cost goes to the
 tools it asked for, its final reply, or compacting): commands that share leading words add
 up (bash › chill › connection › reply), so compare groups as well as leaves.
+A group can hold work the proposal does not touch: `bash cat` has `bash cat (write)`
+for files written with `cat >`, and `bash python3` has edits and writes. Quote
+the leaves the proposal acts on; `--tool "bash cat (itself)"` is the group's own
+uses alone, and `--tool` refuses a name no call has.
 Sessions lists each project and its sessions; picking one narrows Calls by
 action to it, which shows what one project or one conversation spent on.
 

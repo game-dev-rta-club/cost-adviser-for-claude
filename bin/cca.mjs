@@ -2,6 +2,8 @@
 // Cost Adviser For Claude: measure what Claude Code conversations cost.
 import {execFile} from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import {parseArgs} from 'node:util';
 import {checkAdvice, clearAdvice, readAdvice, saveAdvice} from '../lib/advice.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
@@ -172,8 +174,19 @@ else if (command === 'build') {
   // report's period, less the partial today (7 days become 6).
   const full = !!values['full-days'], yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
   if (full && days < 2) fail('--full-days needs --days 2 or more: it leaves out today.');
-  const summary = summarize(data, {days: full ? days - 1 : days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
+  // The hook commands set up for each event, so hook text can be traced to a tool.
+  // Keyed by "project|event"; "(all)" is the user's own settings.
+  const hookCommands = {}, places = [['(all)', path.join(os.homedir(), '.claude')]];
+  for (const [project, folder] of new Map(data.sessions.filter(s => s.folder).map(s => [s.project, s.folder]))) places.push([project, path.join(folder, '.claude')]);
+  for (const [project, dir] of places) for (const name of ['settings.json', 'settings.local.json']) {
+    let settings;
+    try { settings = JSON.parse(await fs.readFile(path.join(dir, name), 'utf8')); } catch { continue; }
+    for (const [event, groups] of Object.entries(settings.hooks || {})) for (const g of [].concat(groups)) for (const h of g?.hooks || [])
+      if (h?.command) (hookCommands[`${project}|${event}`] ||= []).push({file: path.join(dir, name).replace(os.homedir(), '~'), command: h.command});
+  }
+  const summary = summarize(data, {hookCommands, days: full ? days - 1 : days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
     fullDays: full, ...(full ? {today: localDay(yesterday.getTime())} : {})});
+  if (summary.toolDetail?.unknown.length) fail(`no calls match --tool ${summary.toolDetail.unknown.map(t => `"${t}"`).join(', ')}: use a name from the summary's tree, such as "bash cat" or "bash cat (itself)".`);
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'simulate') {
   const change = {};

@@ -89,7 +89,8 @@ proposal every run. Check each proposal now shown in this order:
 2. **Days.** The rating comes from full days (`--full-days` leaves out
    today). For a proposal about something a recorded change touched, use the
    full days since that change. A change touched it when it is about the same tool, setting
-   or project; or, once there are 2 full days on each side, when the
+   or project (a change to a tool also touches the text its hooks add; Text
+   added by hooks shows the command that sets each up); or, once there are 2 full days on each side, when the
    proposal's own number (its share of the cost) moved past the threshold in
    step 3 between the full days before and the full days since (read both from
    `cca summary --full-days`: a tool's Around line in `--tool`, and the

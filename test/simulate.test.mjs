@@ -64,7 +64,9 @@ test('cli: simulate prints both costs and checks its options', async () => {
   const two = JSON.parse((await sim(['--tool-results', '0.5', '--tool', 'read', '--tool', 'bash', '--json'])).stdout);
   assert.deepEqual(two.change.tool, ['read', 'bash']);
   // summary adds several tools up; other commands take one.
-  assert.match((await run(process.execPath, [cli, 'summary', '--tool', 'read', '--tool', 'bash', '--transcripts', root], {env})).stdout, /Action "read" \+ "bash" by day/);
+  assert.match((await run(process.execPath, [cli, 'summary', '--tool', 'read', '--tool', 'read (itself)', '--transcripts', root], {env})).stdout, /Action "read" \+ "read \(itself\)" by day/);
+  // A name no call has is an error, not $0.
+  await assert.rejects(run(process.execPath, [cli, 'summary', '--tool', 'bash', '--transcripts', root], {env}), e => e.code === 2 && /no calls match --tool "bash"/.test(e.stderr));
   await assert.rejects(run(process.execPath, [cli, 'link', '--tool', 'read', '--tool', 'bash'], {env}), e => e.code === 2 && /one tool/.test(e.stderr));
   await assert.rejects(sim([]), e => e.code === 2 && /give a change/.test(e.stderr));
   await assert.rejects(sim(['--tool-results', '2']), e => e.code === 2 && /share from 0 to 1/.test(e.stderr));
