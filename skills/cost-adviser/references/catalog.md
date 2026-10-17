@@ -126,8 +126,8 @@ The action: a subagent in `~/.claude/agents/` (or the project's
 test, one check, one lookup) and whose body says what a brief must hold: the
 goal, the files to read, the constraints and decisions already made, how to
 check the work, and what to report. A `SubagentStop` hook can run the check,
-so the main conversation does not read the work again. Or an existing
-multi-agent setup the user picks; never invent one.
+so the main conversation does not read the work again. Or an open-source
+multi-agent setup that fits, found by searching (SKILL.md, "One action").
 
 **Ratings:** upkeep 3 stars, because what to hand over depends on the kind of
 task; quality 3 stars, because a brief can miss what only the main

@@ -51,7 +51,10 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
   put there. Check it against the current docs and name the page for each
   claim; a claim stays unless a page says otherwise. Never invent a setting,
   and do not propose one already in place (say so if it is in place but not
-  taking effect).
+  taking effect). When the fix is a tool, a skill or an agent setup, search
+  for open-source ones first: people who refine them over time do better than
+  a new one written for this proposal. Name the one that fits, with its link
+  and how actively it is kept up; write a new one only when none fits.
 - **Within what the user decided.** Never propose a declined option or a close
   variant; stay within the reason given ("about 500k is fine"). When the
   numbers show the user chose something on purpose, ask before proposing to

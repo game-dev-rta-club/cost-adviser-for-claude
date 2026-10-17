@@ -106,4 +106,6 @@ narrow rules for every case makes it worse, because the rules start to
 contradict each other and crowd out the goal. When a run goes wrong, first
 cut words and make the goal clearer. Move a mechanical step into `cca` (a
 check, a warning, a number it can print), so the instructions need not say it.
-Add a rule only when that is not enough.
+Add a rule only when that is not enough. Before building something into
+`cca` or the skill, search for an open-source tool or skill that already does
+it.
