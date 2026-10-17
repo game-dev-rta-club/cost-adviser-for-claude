@@ -124,7 +124,9 @@ test('advice: proposals are checked, keep their dates while unchanged, and show 
   await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);
   const file = path.join(home, 'proposals.json');
   await fs.writeFile(file, JSON.stringify({proposals: [{id: 'x', title: 'T', summary: 'S', action: '</script><b>x', ratings: AB}]}));
-  assert.match((await cca(['advise', file, '--transcripts', root], env)).stdout, /Saved 1 proposals\.\n  added: x/);
+  const saved = (await cca(['advise', file, '--transcripts', root, '--port', '7400'], env)).stdout;
+  assert.match(saved, /Saved 1 proposals\.\n  added: x/);
+  assert.match(saved, /★4\.2 T \[new\]\n    http:\/\/127\.0\.0\.1:7400\/#proposal=x\n/);
   const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
   assert.match(html, /"advice":\{"updatedAt":/);
   assert.equal(html.match(/<\/script>/g).length, 2);

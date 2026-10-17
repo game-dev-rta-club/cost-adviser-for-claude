@@ -30,8 +30,9 @@ Commands:
                         --focus totals|stats|profile|cost-type|cost-model|tools|sessions
                         --item ROW (a row of cost-type or cost-model)
   advise <file.json>    Replace the improvement proposals listed under the projects
-                        (the report is rebuilt). A proposal keeps its dates while
-                        its content stays the same. --clear removes them.
+                        (the report is rebuilt) and print a link to each one.
+                        A proposal keeps its dates while its content stays the
+                        same. --clear removes them. --port: the port in the links.
                         {"proposals": [{"id", "title", "summary", "action", "detail", "news", "project",
                          "ratings": {"ease","safety","savings": 1-5 stars},
                          "source": "https://...", "link": {<link options>}}]}
@@ -166,10 +167,16 @@ else if (command === 'build') {
       await saveAdvice(home, advice);
       console.log(`Saved ${advice.proposals.length} proposals.`);
       for (const [k, ids] of Object.entries(changes)) if (ids.length) console.log(`  ${k}: ${ids.join(', ')}`);
+      // Each proposal with its own link, best first, for the reply to the user.
+      const port = count(values.port, DEFAULT_PORT, 'port'), mark = id => changes.added.includes(id) ? 'new' : changes.updated.includes(id) ? 'updated' : 'kept';
+      console.log('Links (one per proposal, for the reply):');
+      for (const p of [...advice.proposals].sort((a, b) => b.stars - a.stars))
+        console.log(`  ★${p.stars.toFixed(1)} ${p.title}${p.project ? ` (${p.project})` : ''} [${mark(p.id)}]\n    http://127.0.0.1:${port}/#proposal=${encodeURIComponent(p.id)}`);
     }
   } catch (error) { fail(error.message); }
   await build(30);
-  if (!values.clear) console.log(`Open: http://127.0.0.1:${DEFAULT_PORT}/${await viewerRunning(DEFAULT_PORT) ? '' : '  (start "cca serve" first)'}`);
+  const port = count(values.port, DEFAULT_PORT, 'port');
+  if (!values.clear && !(await viewerRunning(port))) console.log(`Nothing is serving the report on port ${port}: start "cca serve${port === DEFAULT_PORT ? '' : ` --port ${port}`}" so the links open.`);
 } else if (command === 'collect') {
   // The same days as the summary: today and the days before it, from midnight.
   const days = count(values.days, 30, 'days'), to = localDay(Date.now()), start = new Date(`${to}T00:00`);

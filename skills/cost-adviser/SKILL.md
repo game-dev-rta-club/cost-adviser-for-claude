@@ -5,11 +5,13 @@ description: Review what Claude Code conversations cost and keep a list of impro
 
 # Cost Adviser
 
-**The goal:** help the user spend less on Claude Code without losing quality.
-Keep a short list of proposals on the report. Each is a problem the numbers
-show now and one concrete fix, rated so the user can weigh it. Keep the list
-steady: from one run to the next it changes only where the numbers or the
-facts did, so that a change on the report means something.
+**The goal:** tell the user, in your reply, what to change so Claude Code
+costs less without losing quality. Each proposal is a problem the numbers show
+now and one concrete fix, rated so the user can weigh it. The report keeps the
+details, so each proposal in the reply links to its own page there and the
+user can read it in one click. Keep the list steady: from one run to the next
+it changes only where the numbers or the facts did, so that a change means
+something.
 
 The only writes are the proposals (`cca advise`) and, when the user agrees,
 `cca mark add` and `cca decline add`.
@@ -37,11 +39,22 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
    recorded ones, and those the summary spots (Context jumps, Mix shifts). The
    summary says when a verdict is due. Offer `cca mark add` for one that is not
    recorded.
-4. **Update the list** and save it with `cca advise FILE` (below). Start
-   `cca serve` in the background if it says nothing is serving the report.
-5. **Reply briefly** in the user's language: what changed in the list, each
-   change's verdict or the day it is due, the report link
-   (`http://127.0.0.1:7319/`), and what to watch next.
+4. **Update the list** and save it with `cca advise FILE` (below). It prints
+   each proposal's link. Start `cca serve` in the background if it says
+   nothing is serving the report.
+5. **Tell the user** in their language, briefly. List the proposals best
+   first, each as a numbered item: its title, project and stars, then a
+   sentence or two on the problem, the fix and the expected saving, and its
+   link. The reasons and steps are behind the link; leave them there. For
+   example:
+
+   > 1. **Print the inbox when wait ends** (chill-agent, ★3.6): inbox, reply
+   >    and wait take 10% of the cost. If wait printed what arrived, about
+   >    2.5% less.
+   >    http://127.0.0.1:7319/#proposal=chill-wait-prints-inbox
+
+   Then, a line each: what changed since the last run, each change's verdict
+   or the day it is due, and what to watch next.
 
 ## A good proposal
 
