@@ -186,7 +186,8 @@ else if (command === 'build') {
     r.compactedAt ? `The conversations compacted at about ${r.compactedAt.toLocaleString('en-US')} tokens on average (${r.compactions.recorded} compactions recorded).` : `No conversation compacted in these days.`,
     `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `${change.tool ? `results of ${change.tool.map(t => `"${t}"`).join(', ')}` : 'tool results'} keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
     `Replayed cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
-    ...(Math.abs(r.cut) < 0.01 ? ['Under 1% either way is within what the replay can tell apart: read it as no clear effect.'] : []),
+    ...(Math.abs(r.cut) < 0.01 ? ['Under 1% either way is within what the replay can tell apart: read it as no clear effect.']
+      : r.cut < 0 && change.toolResults !== undefined && !change.compactAt ? ['Shorter results cannot cost more; this comes from where conversations stood between compactions when they ended. Read it as no clear effect.'] : []),
     `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed} (the replay counts its own; ${r.compactions.recorded} were recorded)`,
     `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}): it leaves out cache rebuilds, such as a conversation reread after the cache expired, which the change does not affect.`,
     `It compares against the conversations as they ran. If the setting changed during these days, use --days to cover only the days since.`,

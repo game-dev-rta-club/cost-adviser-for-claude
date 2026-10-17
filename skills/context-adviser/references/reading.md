@@ -3,7 +3,9 @@
 Cost = cost per call × number of calls. Start by asking which of the two moved.
 P1–P6 are the principles in [principles.md](principles.md).
 Compare a number with the previous period or with its own history, not with a
-fixed target; use the ratios (per hour, per call) because totals follow how
+fixed target. When the previous period had little use (the summary leaves out
+its ratios, or the totals change by several times), compare day by day within
+the window instead; use the ratios (per hour, per call) because totals follow how
 much work there was.
 
 | Look at | A signal when | Points to | Link (`cca link …`) |

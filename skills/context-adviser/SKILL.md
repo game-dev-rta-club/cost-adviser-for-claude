@@ -60,8 +60,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 ```
 
 **Keep the list, change only what moved.** Use the same `id` for the same
-proposal every run. Leave a proposal as it is when its numbers and advice still
-hold. A number holds unless it moved by more than about a tenth (for a
+proposal every run. Leave a proposal that is still to do as it is when its
+numbers and advice still hold. A number holds unless it moved by more than about a tenth (for a
 percentage under 10%, by more than about a point) or changed the rating; small
 drift, such as from today being partial, is not a change. Reasoning that the
 numbers no longer support is a change too. It
@@ -71,9 +71,10 @@ Updated. Copy the proposals from `cca summary --json`; `stars`, `since` and
 in `news`, add a proposal for a new finding, and drop one that no longer
 applies. **Each proposal is a problem the numbers show now and the fix for
 it.** When the user has carried a fix out, judge it in step 4 from the
-recorded change (offer `cca mark add` if its start was not recorded). If the
-problem is gone, drop the proposal. If it remains, propose the next step for
-it (for example, a command still takes a large share after its first cut);
+recorded change (offer `cca mark add` if its start was not recorded). On the
+next run after a fix is carried out, never keep it as "keep doing this": if
+the problem is gone, drop the proposal; if it remains, rewrite it as the next
+step for it (for example, a command still takes a large share after its first cut);
 do not list a fix as if it were still to do. Then look for further problems:
 go through the signals and every sample in catalog.md again, not only the
 proposals now shown, and add each one that fits. `cca advise` prints what was added, updated, kept and

@@ -8,8 +8,11 @@
 3. **Wait for enough data.** Work varies a lot: in our own records one request
    took 2 calls and another 133. One or two days rarely decide anything. Give
    a verdict only when both sides have several days and pass the summary's
-   thresholds; otherwise say "too early" and when to look again. Today is
-   partial; leave it out of a side when it is the only day there.
+   thresholds; otherwise say "too early" and when to look again: the day
+   after both sides have at least two full days. Today is partial; the
+   summary says when a side includes it, and a side that is only today does
+   not count. `cca summary --tool NAME` shows the tool before and after each
+   recorded change (uses per active hour, share of tool cost) and its parts.
 4. **Rule out other explanations** before crediting the change:
    - a different mix of work or project (filter by project);
    - a different model or effort mix (Cost by model);

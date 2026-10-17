@@ -44,7 +44,7 @@ test('summary compares windows, and each change before and after', () => {
   const text = formatSummary(s);
   assert.match(text, /Cost \$20\.00 \(-50%\)/);
   assert.match(text, /Subagent calls 20% \(\+20\.0pt\)/);
-  assert.match(text, /2026-10-14 Use subagents — 2 days each side; before: 200 calls, 2\.0h active/);
+  assert.match(text, /2026-10-14 Use subagents — 2 days each side \(after includes today, partial\); before: 200 calls, 2\.0h active/);
   assert.match(text, /Previous period: \$40\.00, 200 calls, 2\.0h active\n/);
   assert.match(text, /Compacting \$0\.00 0%, 0× \(–, partly estimated\)/);
   const withCompact = totals([{...row('2026-10-16', {cost: 10}), output: 1, cacheRead: 7, compactions: 2, compactSummary: 1.5, compactRebuild: 0.5}]);
@@ -75,6 +75,7 @@ test('the summary has the report views: each day, models, the tool tree and one 
   assert.equal(s.toolDetail.examples[0].label, 'reply');
   // With --tool only that tool is printed; the rest is the plain summary.
   const text = formatSummary(s), full = formatSummary({...s, toolDetail: null});
+  assert.ok(s.toolDetail.parts.length >= 1 && s.toolDetail.parts.every(x => x.id.startsWith('bash chill')), 'its parts one level down');
   assert.match(text, /Tool "bash chill" by day/);
   assert.doesNotMatch(text, /Tool use as a tree/);
   assert.match(full, /By day/);
