@@ -265,12 +265,10 @@ function renderProposals(){const all=visibleProposals();
  $('#proposals').innerHTML=`<h2>Improvements</h2><div class="star-slider">
   <div class="star-scale" aria-hidden="true">${scale(n=>`★${n}`)}</div>
   <input id="min-stars" type="range" min="1" max="5" step="1" dir="rtl" value="${state.minStars}" aria-label="Lowest rating shown" data-min-stars>
-  <div class="star-scale star-counts" aria-hidden="true">${scale(n=>all.filter(p=>bucket(p)===n).length)}</div>
-  <p class="star-status" id="min-stars-label"></p></div><div id="proposal-list"></div>`;
+  <div class="star-scale star-counts" aria-hidden="true">${scale(n=>all.filter(p=>bucket(p)===n).length)}</div></div><div id="proposal-list"></div>`;
  renderProposalList();}
 function renderProposalList(){const all=visibleProposals(),list=all.filter(p=>p.stars>=state.minStars||p.id===activeProposal),hidden=all.length-list.length;
- $('#min-stars-label').textContent=`${state.minStars===5?'★5':`★5–★${state.minStars}`} · ${list.length} of ${all.length} shown`;
- const input=$('#min-stars');input.style.setProperty('--fill',`${(5-state.minStars)/4*100}%`);
+ const input=$('#min-stars');input.setAttribute('aria-valuetext',`${state.minStars===5?'★5':`★5 to ★${state.minStars}`}, ${list.length} of ${all.length} shown`);input.style.setProperty('--fill',`${(5-state.minStars)/4*100}%`);
  document.querySelectorAll('.star-scale span').forEach(s=>s.classList.toggle('is-on',+s.dataset.n>=state.minStars));
  const best=all.filter(p=>!list.includes(p))[0];
  $('#proposal-list').innerHTML=list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
