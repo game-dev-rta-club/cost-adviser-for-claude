@@ -203,8 +203,14 @@ function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>
  $('#sessions-note').textContent=`${list.length} project${list.length===1?'':'s'} · ${m.size} sessions`;
  $('#sessions').innerHTML=out.join('')||'<tr><td colspan="4" class="empty">No data.</td></tr>';
  moreButtons('#sessions-more',shown.length,list.length,5);}
-function pickScope(kind,id,label){state.scope=state.scope?.kind===kind&&state.scope.id===id?null:{kind,id,label};state.tool=null;state.toolLimit=10;renderSessions();renderTools();}
-function render(){renderProjects();renderProposals();renderChart();renderProfile();renderTools();renderSessions();}
+// Narrowing changes how long Calls by action is. The clicked row stays where it
+// was on screen, and the section keeps its height so the page does not shrink
+// under the reader (reserved space, as for layout shift); a full render resets it.
+function rescope(sel){const before=$(sel)?.getBoundingClientRect().top,sec=$('#tools-section');
+ sec.style.minHeight=`${sec.offsetHeight}px`;state.tool=null;state.toolLimit=10;renderSessions();renderTools();
+ const el=$(sel);if(el&&before!=null)scrollBy(0,el.getBoundingClientRect().top-before);}
+function pickScope(kind,id,label){state.scope=state.scope?.kind===kind&&state.scope.id===id?null:{kind,id,label};rescope(`[data-scope-${kind}="${CSS.escape(id)}"]`);}
+function render(){$('#tools-section').style.minHeight='';renderProjects();renderProposals();renderChart();renderProfile();renderTools();renderSessions();}
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;state.scope=null;state.sessMore.clear();};
 document.addEventListener('click',e=>{const t=e.target;
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
@@ -215,8 +221,8 @@ document.addEventListener('click',e=>{const t=e.target;
  const s=t.closest('[data-sort]');if(s){state.sort=s.dataset.sort;document.querySelectorAll('[data-sort]').forEach(b=>b.setAttribute('aria-pressed',b===s));renderTools();return;}
  const st=t.closest('[data-sess-toggle]');if(st){const id=st.dataset.sessToggle;state.sessOpen.set(id,!(state.sessOpen.get(id)??false));renderSessions();return;}
  const sm=t.closest('[data-sess-more]');if(sm){state.sessMore.add(sm.dataset.sessMore);renderSessions();return;}
- const sa=t.closest('[data-scope-all]');if(sa){state.scope=null;state.tool=null;renderSessions();renderTools();return;}
- const cs=t.closest('[data-clear-scope]');if(cs){e.preventDefault();state.scope=null;renderSessions();renderTools();return;}
+ const sa=t.closest('[data-scope-all]');if(sa){state.scope=null;rescope('[data-scope-all]');return;}
+ const cs=t.closest('[data-clear-scope]');if(cs){e.preventDefault();state.scope=null;rescope('#tools-section summary');return;}
  const sp=t.closest('[data-scope-project]');if(sp){const id=sp.dataset.scopeProject;state.sessOpen.set(id,true);pickScope('project',id,id);return;}
  const sx=t.closest('[data-scope-session]');if(sx){const id=sx.dataset.scopeSession;pickScope('session',id,titles[id]||id.slice(0,8));return;}
  const ss=t.closest('[data-ssort]');if(ss){state.ssort=ss.dataset.ssort;document.querySelectorAll('[data-ssort]').forEach(b=>b.setAttribute('aria-pressed',b===ss));renderSessions();return;}
