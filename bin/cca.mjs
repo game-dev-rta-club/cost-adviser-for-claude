@@ -36,7 +36,9 @@ Commands:
   summary               Print this period against the one before: each day, cost by
                         model, calls by action as a tree, top sessions, and each recorded
                         change before vs after. --tool NAME prints only that tool or
-                        group (e.g. "bash chill") by day, with the uses that cost most.
+                        group (e.g. "bash chill") by day, with the uses that cost most;
+                        give --tool more than once to add several up.
+                        --full-days ends at yesterday (today is partial).
   simulate              Replay the recent conversations as if a change had been in
                         place, and print the cost with and without it.
                         --compact-at <tokens>: compaction starts at this length.
@@ -113,8 +115,8 @@ function openFile(file) {
 const [command, ...rest] = process.argv.slice(2);
 const {values, positionals} = options(rest);
 // Only simulate shortens several tools at once; elsewhere --tool names one.
-if (values.tool?.length > 1 && command !== 'simulate') fail('--tool takes one tool or group here.');
-if (command !== 'simulate') values.tool = values.tool?.[0];
+if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail('--tool takes one tool or group here.');
+if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
 if (!command || command === 'help' || command === '--help' || command === '-h' || values.help) console.log(HELP);
@@ -162,7 +164,10 @@ else if (command === 'build') {
   // Enough history for the previous window and for every recorded change.
   const data = await collectCached({root, dataDir: home, days: Math.max(days * 2, 30)});
   const [declined, advice] = await Promise.all([readDeclined(home), readAdvice(home)]);
-  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool || null, declined, advice});
+  // --full-days ends at yesterday, so a partial today moves nothing.
+  const full = !!values['full-days'], yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const summary = summarize(data, {days, project: values.project || null, changes, tool: values.tool?.length ? values.tool : null, declined, advice,
+    fullDays: full, ...(full ? {today: localDay(yesterday.getTime())} : {})});
   console.log(values.json ? JSON.stringify(summary, null, 2) : formatSummary(summary));
 } else if (command === 'simulate') {
   const change = {};

@@ -14,7 +14,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 1. **Refresh.** Run `cca build`, then `cca summary` (add `--project NAME`
    when asked). It has what the report shows: totals against the previous
    period, each day, cost by model, calls by action as a tree, sessions and recorded
-   changes. `--tool "bash chill"` prints only that tool or group, day by day.
+   changes. `--tool "bash chill"` prints only that tool or group, day by day
+   (give `--tool` more than once to add several up).
    Use `--json` when you need exact numbers. If `cca` is missing, say so and
    stop. The summary ends with the options the user declined and the
    proposals now shown (id, stars and action; `--json` has every field, which
@@ -45,7 +46,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    (step 6), not in the proposals. Look for changes nobody recorded too:
    the summary's Context jumps (a new compaction length, even on a day with
    another recorded change), or a shift in the model or effort mix. Name its
-   first day and offer `cca mark add`; for a gradual shift, the first day is
+   first day and offer `cca mark add` (again on each run until the user
+   records it; one line is enough); for a gradual shift, the first day is
    the first one where the new value is over half of the day (for example,
    high effort over half of the cost). When two changes share a first day,
    the totals mix both: judge each by its own number (uses for a tool,
@@ -75,9 +77,14 @@ proposal every run. Leave a proposal that is still to do as it is when its
 numbers and advice still hold. A fact other than a number that is now wrong
 (a version, a setting's value) is corrected, and a number measured in a way
 the references rule out is measured again; either counts as an update. The
-rating comes from full days: when a quoted number includes today and the full
-days alone would give a different rating, rewrite the detail with the full
-days' number. Judge a window that includes today on its full days; today only
+rating comes from full days (`cca summary --full-days` ends at yesterday):
+for a proposal about something a recorded change touched, the full days
+since that change, with the same rule as replays in ratings.md (under 2 full
+days, keep the rating and say it is waiting). When a quoted number includes
+today and the full days alone would give a different rating, rewrite the
+detail with the full days' number. A proposal that adds up several commands
+quotes one `cca summary --tool A --tool B …`, which adds them up, so the next
+run gets the same number. Judge a window that includes today on its full days; today only
 confirms. A number holds unless it moved by more than about a tenth (for a
 percentage under 10%, by more than about a point) or changed the rating; small
 drift, such as from today being partial, is not a change. Reasoning that the

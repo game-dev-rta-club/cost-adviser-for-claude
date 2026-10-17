@@ -30,7 +30,7 @@ test('summary compares windows, and each change before and after', () => {
     {day: '2026-10-15', project: 'app', session: 's1', title: 'Fix', sub: false, calls: 5, cost: 4, activeMs: 60000},
   ]};
   const s = summarize(data, {days: 2, project: 'app', today: '2026-10-15', changes: [{date: '2026-10-14', label: 'Use subagents'}, {date: '2026-01-01', label: 'Too old'}]});
-  assert.deepEqual(s.window, {from: '2026-10-14', to: '2026-10-15', days: 2});
+  assert.deepEqual(s.window, {from: '2026-10-14', to: '2026-10-15', days: 2, fullDays: false});
   assert.equal(s.current.cost, 20);
   assert.equal(s.previous.cost, 40);
   assert.equal(s.change.cost, -0.5);
