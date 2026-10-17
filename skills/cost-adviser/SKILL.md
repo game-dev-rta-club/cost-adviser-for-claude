@@ -26,12 +26,14 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    Then read the settings in effect: `~/.claude/settings.json`, and in each
    project's folder `.claude/settings.json` and `.claude/settings.local.json`,
    including settings per model and the `env` entries. The summary's Cost by
-   project shows each project's folder. Settings files are not all that is in effect:
+   project shows each project's folder; `(temp)` gathers temporary folders and
+   has no settings of its own. Settings files are not all that is in effect:
    a session can be started with its own model or effort (launch flags, such
    as `--model` and `--effort` in `ps`, or `/model` inside it), and those win. A proposal about a setting starts from its
    current value. The conversation running this review is in the data too.
    When it is a subagent of a longer session, only the subagent's rows are the
-   review; the rest is the user's work. Say which session it is when it is
+   review (marked subagent, with a session of the form `<parent>/agent-…`);
+   the rest is the user's work. Say which session it is when it is
    among the top sessions.
 2. **Read.** Follow [reading.md](references/reading.md): find the signals,
    each with its numbers, period and sample size.
@@ -71,7 +73,11 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 **Keep the list, change only what moved.** Use the same `id` for the same
 proposal every run. Leave a proposal that is still to do as it is when its
 numbers and advice still hold. A fact other than a number that is now wrong
-(a version, a setting's value) is corrected, and that counts as an update. Judge a window that includes today on its full days; today only
+(a version, a setting's value) is corrected, and a number measured in a way
+the references rule out is measured again; either counts as an update. The
+rating comes from full days: when a quoted number includes today and the full
+days alone would give a different rating, rewrite the detail with the full
+days' number. Judge a window that includes today on its full days; today only
 confirms. A number holds unless it moved by more than about a tenth (for a
 percentage under 10%, by more than about a point) or changed the rating; small
 drift, such as from today being partial, is not a change. Reasoning that the

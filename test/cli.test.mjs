@@ -148,3 +148,17 @@ test('declined options are kept, shown in the summary, and can be allowed again'
   await assert.rejects(cca(['decline', 'remove', 'nope'], env), e => e.code === 2 && /no declined option/.test(e.stderr));
   assert.doesNotMatch((await cca(['summary', '--transcripts', root], env)).stdout, /Declined options/);
 });
+
+test('cli: simulate --since starts at a day, and --full-days ends at yesterday', async () => {
+  const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
+  const now = new Date(), day = n => { const d = new Date(now); d.setDate(d.getDate() + n); return d; };
+  await writeTranscript(root, 'p/s.jsonl', [-3, -1, 0].map(n => assistant({id: `m${n}`, at: day(n).toISOString(), cacheRead: 1000, output: 10, cwd: '/w/demo'})));
+  const sim = async args => JSON.parse((await cca(['simulate', '--tool-results', '0.5', '--json', '--transcripts', root, ...args], env)).stdout);
+  const since = day(-1).toLocaleDateString('sv-SE');
+  assert.equal((await sim(['--since', since])).calls, 2);
+  const full = await sim(['--since', since, '--full-days']);
+  assert.equal(full.calls, 1);
+  assert.equal(full.window.from, since);
+  assert.equal(full.window.to, since);
+  await assert.rejects(cca(['simulate', '--tool-results', '0.5', '--since', since, '--days', '2', '--transcripts', root], env), /--since or --days/);
+});

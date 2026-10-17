@@ -43,7 +43,8 @@ Commands:
                         --tool-results <share>: tool results keep this share of
                         their size (0.7 = 30% shorter); add --tool NAME, once per
                         tool or group (e.g. "read", "bash cat"), to shorten only those.
-                        Give one or both. --full-days ends at yesterday (today is partial).
+                        Give one or both. --full-days ends at yesterday (today is partial);
+                        --since <date> starts at that day instead of --days.
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
   mark add <date> <label>     Record the day a change went in (YYYY-MM-DD).
@@ -77,7 +78,7 @@ function options(args) {
     return parseArgs({args, allowPositionals: true, options: {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
-      out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'},
+      out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'},
       'compact-at': {type: 'string'}, 'tool-results': {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
@@ -177,13 +178,24 @@ else if (command === 'build') {
   // --full-days ends at yesterday, so a partial today cannot move the result.
   const full = !!values['full-days'], midnight = new Date(`${localDay(Date.now())}T00:00`), end = new Date(midnight);
   if (full) end.setDate(end.getDate() - 1);
-  const days = count(values.days, 7, 'days'), to = localDay(end.getTime()), start = new Date(end);
-  start.setDate(start.getDate() - (days - 1));
+  if (values.since && values.days) fail('give --since or --days, not both.');
+  if (values.since && !/^\d{4}-\d{2}-\d{2}$/.test(values.since)) fail('--since takes a date, YYYY-MM-DD.');
+  const to = localDay(end.getTime()), start = values.since ? new Date(`${values.since}T00:00`) : new Date(end);
+  if (start > end) fail(`--since ${values.since} is after ${to}${full ? ' (--full-days ends at yesterday)' : ''}.`);
+  const days = values.since ? Math.round((new Date(`${to}T00:00`) - start) / 86400000) + 1 : count(values.days, 7, 'days');
+  if (!values.since) start.setDate(start.getDate() - (days - 1));
   const from = localDay(start.getTime());
   const transcripts = (await readTranscriptsCached({root, dataDir: home, days: days + (full ? 1 : 0), since: start.getTime()}))
     .filter(t => !values.project || projectOf(t.cwd) === values.project)
     .map(t => full ? {...t, calls: t.calls.filter(c => c.ts < midnight.getTime())} : t);
   const r = simulate(transcripts, change);
+  // A sharp move in the largest context inside the window means the
+  // compaction length likely changed; the replay then mixes two settings.
+  const largest = {};
+  for (const t of transcripts) for (const c of t.calls) { const d = localDay(c.ts), x = largest[d] ||= {calls: 0, max: 0}; x.calls++; x.max = Math.max(x.max, c.input + c.cacheWrite + c.cacheRead); }
+  const jumps = Object.keys(largest).sort().map((d, i, a) => i && largest[a[i - 1]].calls >= 10 && largest[d].calls >= 10
+    && (largest[d].max / largest[a[i - 1]].max < 0.7 || largest[d].max / largest[a[i - 1]].max > 1.4) ? {day: d, from: largest[a[i - 1]].max, to: largest[d].max} : null).filter(Boolean);
+  r.contextJumps = jumps;
   const usd = v => `$${v.toLocaleString('en-US', {maximumFractionDigits: v < 100 ? 2 : 0})}`;
   if (values.json) console.log(JSON.stringify({window: {from, to, days}, project: values.project || null, change, ...r}, null, 2));
   else console.log([
@@ -195,8 +207,9 @@ else if (command === 'build') {
       : r.cut < 0 && change.toolResults !== undefined && !change.compactAt ? ['Shorter results cannot cost more; this comes from where conversations stood between compactions when they ended. Read it as no clear effect.'] : []),
     `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed} (the replay counts its own; ${r.compactions.recorded} were recorded)`,
     `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}): it leaves out cache rebuilds, such as a conversation reread after the cache expired, which the change does not affect.`,
-    `It compares against the conversations as they ran. If the setting changed during these days, use --days to cover only the days since.`,
+    `It compares against the conversations as they ran. If the setting changed during these days, use --since <date> to cover only the days since.`,
     ...(full ? [] : ['These days include today, which is partial; add --full-days to replay full days only.']),
+    ...jumps.map(j => `Warning: the largest context moved from ${Math.round(j.from / 1000)}k to ${Math.round(j.to / 1000)}k on ${j.day}, inside these days, so the compaction length likely changed and this replay mixes both lengths. To replay only the days since: --since ${j.day}${full ? ' --full-days' : ''}.`),
   ].join('\n'));
 } else if (command === 'mark') {
   const [action, date, ...words] = positionals, label = words.join(' ');
