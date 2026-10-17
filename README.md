@@ -16,27 +16,45 @@
 
 A command-line tool and an agent skill for Claude Code. `cca` turns the conversation records Claude Code already keeps on your machine into a report. The `cost-adviser` skill reads that report with your agent and keeps a short list of improvements, each rated so you can weigh it. Nothing is sent anywhere.
 
-![The report: cost, active time and calls for each day, with a marker on the day a change went in, and the rated improvements beside it.](assets/report.png)
+## How it works
 
-## Find where the cost goes
+### 1. Type `/cost-adviser`
 
-Every tool call makes the model read the whole conversation again. So cost is the **number of calls × what each call reads × the price per token**, plus the cache written again after it expires.
+That is all it takes to get a diagnosis. Your agent refreshes the report, reads it, explains what it sees with basic principles, and updates the list of improvements. It replies with what changed and a link to the report.
 
-The report splits the cost along each of these: by day, model, project and conversation, and as a tree of what each call did (`bash › git › status`, `read`, a skill's own commands). The largest cost is usually a few repeated steps in long conversations, not the size of any one result.
+```text
+/cost-adviser
+```
 
-## Get improvements you can weigh
+Every tool call makes the model read the whole conversation again. So cost is the **number of calls × what each call reads × the price per token**, plus the cache written again after it expires. The report below breaks the cost down along each of these.
 
-Ask your agent for a review. It measures, explains what it sees with basic principles, and updates the list on the report. Each improvement says what to change and why, with the numbers and the command that reproduces them.
+### 2. Check performance in Summary
 
-![An improvement's details: its stars, what to do, and why, with the numbers behind it.](assets/proposal.png)
+Cost, active time and calls for each day, with ratios such as cost per active hour and cost per call. A marker shows the day you recorded a change, so you can see whether it worked.
 
-- **Rated on three axes:** upkeep, quality kept and savings, from one to five stars. One weak axis pulls the overall rating down.
+![Summary: bars for cost, active time and calls on each day from 10/6 to 10/17, and below them cost per active hour, cost per call and the share of subagent calls. A marker labelled "Fewer chill calls" sits on 10/16, the day that change went in.](assets/summary.jpg)
+
+### 3. Analyze it in Profile
+
+Where the money goes for the chosen days: cache reads, cache writes, output and compacting, then each model and effort level. Here, reading the conversation again from the cache is 60% of the cost, and output only 14%.
+
+![Profile for 10/11–17: $1,587.51 over 15,472 calls and 117 active hours. Cost by type: cache reads 60%, cache writes 25%, output 14%, compacting 1%. Cost by model: Opus 5.5 at high effort 75%, at medium 25%.](assets/profile.jpg)
+
+### 4. See the costly commands in Calls by action
+
+Every tool call as a tree, ranked by cost. Commands that share their first words add up (`bash › chill › connection › wait`), so one repeated step stands out even when each use is cheap.
+
+![Calls by action for the same days: bash 74% of the cost, with a workflow tool's commands (chill) 16%, Python scripts 11%, grep 7% and sed 6% below it; then final replies 12%, MCP tools 5%, read 2% and write 2%.](assets/calls.jpg)
+
+### 5. Get improvements in Improvements
+
+The skill keeps a short list of improvements, each rated one to five stars on upkeep, quality kept and savings. Open one to see what to do, why, the numbers behind it, and how to tell whether it worked.
+
+![Improvements: a list of rated proposals with a star slider, and one proposal opened beside it, "Hand runs of tool calls to a subagent", 3.0 stars, with what to do, the measurements and replay behind it, and its three ratings.](assets/improvements.jpg)
+
 - **Four angles:** fewer calls, less read per call (a smaller conversation, or tool use handed to an agent with little context), a lower price, and the cache kept.
 - **A steady list:** an improvement changes only when its numbers or facts do, so a change on the report means something.
-
-## Check whether a change worked
-
-Record the day you changed something; the report marks it, and the summary compares the days before it with the days since. Before changing anything, `cca simulate` replays your recent conversations as if the change had been in place: an earlier compaction, shorter tool results, or work handed to a fresh agent.
+- **Measured before you change anything:** `cca simulate` replays your recent conversations as if a change had been in place, such as an earlier compaction, shorter tool results, or work handed to a fresh agent.
 
 ## Install and use
 
