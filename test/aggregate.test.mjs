@@ -71,7 +71,10 @@ test('collect counts each call once and splits its cost', async () => {
     callCost({model: 'claude-haiku-5-5', input: 100, output: 50})].reduce((s, c) => s + c.total, 0);
   assert.ok(Math.abs(row.cost - expected) < 1e-3);
   assert.deepEqual(Object.keys(row.byModelEffort).sort(), ['haiku-5-5 · (subagent)', 'opus-5-5 · high']);
-  const tools = Object.fromEntries(data.tools.map(t => [t.tool, t]));
+  // Rows are kept per session; add them up per tool.
+  const tools = {};
+  for (const t of data.tools) { const a = tools[t.tool] ||= {count: 0, resultChars: 0, sessions: new Set()}; a.count += t.count; a.resultChars += t.resultChars; a.sessions.add(t.session); }
+  assert.equal(tools['(final reply)'].sessions.size, 2, 'the main conversation and its subagent');
   assert.equal(tools['bash git status'].count, 1);
   assert.equal(tools['bash git status'].resultChars, 50);
   assert.equal(tools.read.resultChars, 3 + 6400);

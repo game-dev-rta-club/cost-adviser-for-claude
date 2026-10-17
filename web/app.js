@@ -24,7 +24,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,minStars:3,shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,minStars:3,scope:null,sessOpen:new Map(),sessMore:new Set(),shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -141,7 +141,10 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{name:'Output',kind:'group',cost:parts[3].cost,tokens:parts[3].tokens},{...parts[3],kind:'sub'},...(a.compactions?[compact,...compacts]:[])]})
   +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,label:modelLabel(name),...v,color:modelColor(name)})));
  fitLabels();}
-function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
+// A project or session picked in Sessions narrows Calls by action to it.
+const inScope=r=>!state.scope||(state.scope.kind==='project'?r.project===state.scope.id:r.session===state.scope.id);
+function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&inScope(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
+ for(const t of m.values())t.keys=[...new Set(t.keys)];
  const by={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};return [...m.values()].sort((a,b)=>by[state.sort](b)-by[state.sort](a));}
 // Calls by action: each call's cost goes to what it did (the tools it asked for,
 // the final reply, or compacting). It is a tree, like a profiler: uses that share leading words add up
@@ -171,10 +174,10 @@ function moreButtons(id,shown,total,step){$(id).innerHTML=`${shown<total?`<butto
 const CHILD_LIMIT=8;
 function findNode(id){let node=toolTree();for(const tk of tokens(id)){node=node.children.get(tk.text);if(!node)return null;}return node;}
 function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),shown=top.slice(0,state.toolLimit),out=[];
- $('#tools-note').textContent=`${toolRows().length} actions · ${usd(total)}`;
+ $('#tools-note').innerHTML=`${toolRows().length} actions · ${usd(total)}${state.scope?` <button type="button" class="scope-chip" data-clear-scope title="Show all">${esc(state.scope.label)} ✕</button>`:''}`;
  const row=(n,rank)=>{const share=total?n.cost/total:0,list=kids(n),leaf=!list.length,open=!leaf&&isOpen(n),sel=state.tool===n.id;
   out.push(`<tr class="tool ${sel?'is-focus':''} ${leaf?'is-leaf':''}" data-tool="${esc(n.id)}"><td class="num">${rank||''}</td><td class="tool-name" style="padding-left:${8+(n.depth-1)*18}px"><span class="caret">${leaf?'':open?'▾':'▸'}</span>${esc(n.text)}</td><td class="num"><span class="share"><i style="width:${Math.max(2,share*90)}px"></i>${usd(n.cost)} <small>${Math.round(share*100)}%</small></span></td><td class="num">${num(n.count)}</td></tr>`);
-  if(leaf&&sel){const ex=n.keys.flatMap(k=>D.examples[k]||[]).sort((a,b)=>b.result-a.result).slice(0,6);
+  if(leaf&&sel){const ex=[...new Set(n.keys)].flatMap(k=>D.examples[k]||[]).filter(e=>state.scope?.kind!=='session'||e.session===state.scope.id).sort((a,b)=>b.result-a.result).slice(0,6);
    out.push(`<tr class="detail"><td colspan="4"><div class="ex">${ex.length?ex.map(e=>`<div><code>${esc(e.label)}</code><small>${usd(e.cost)}</small><small>${when(e.at)} · ${esc(titles[e.session]||'')} · ${esc(e.session.slice(0,8))}</small><small>result ${tok(e.result/4)} · context ${tok(e.ctx)}</small></div>`).join(''):'<p class="empty">No examples.</p>'}</div></td></tr>`);}
   if(!open)return;const all=state.moreTree.has(n.id)||state.filter,part=all?list:list.slice(0,CHILD_LIMIT);
   for(const c of part)row(c);
@@ -182,13 +185,25 @@ function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),show
  shown.forEach((n,i)=>row(n,i+1));
  $('#tools').innerHTML=out.join('')||'<tr><td colspan="4" class="empty">No data.</td></tr>';
  moreButtons('#tools-more',shown.length,top.length,10);}
+// Sessions as a tree: each project, then its sessions. Picking a row narrows
+// Calls by action to it; the caret only opens or closes a project.
+const SESSION_CHILDREN=5,cut=(t,n)=>t.length>n?t.slice(0,n-1)+'…':t;
 function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>inProject(s)&&inPeriod(s))){const t=m.get(s.session)||{...s,calls:0,cost:0,activeMs:0};t.calls+=s.calls;t.cost+=s.cost;t.activeMs+=s.activeMs;t.first=Math.min(t.first,s.first);t.last=Math.max(t.last,s.last);m.set(s.session,t);}
- const rows=[...m.values()].sort((a,b)=>b[state.ssort]-a[state.ssort]),shown=rows.slice(0,state.sessionLimit);
- $('#sessions-note').textContent=`${rows.length} sessions`;
- $('#sessions').innerHTML=shown.map(s=>`<tr data-session="${esc(s.session)}"><td>${esc(s.title)}${s.sub?' <small>(subagent)</small>':''}<br><small style="color:var(--muted)">${esc(s.session.slice(0,8))}</small></td><td>${esc(s.project)}</td><td class="num">${num(s.calls)}</td><td class="num">${usd(s.cost)}</td><td class="num">${hrs(s.activeMs)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No data.</td></tr>';
- moreButtons('#sessions-more',shown.length,rows.length,5);}
+ const by=(a,b)=>b[state.ssort]-a[state.ssort],groups=new Map();
+ for(const s of m.values()){const g=groups.get(s.project)||{project:s.project,calls:0,cost:0,activeMs:0,sessions:[]};g.calls+=s.calls;g.cost+=s.cost;g.activeMs+=s.activeMs;g.sessions.push(s);groups.set(s.project,g);}
+ const list=[...groups.values()].sort(by),shown=list.slice(0,state.sessionLimit),picked=(kind,id)=>state.scope?.kind===kind&&state.scope.id===id,out=[];
+ const open=(g,i)=>state.sessOpen.has(g.project)?state.sessOpen.get(g.project):i===0||list.length===1||picked('project',g.project)||g.sessions.some(s=>picked('session',s.session));
+ shown.forEach((g,i)=>{const o=open(g,i);
+  out.push(`<tr class="tool sess-project${picked('project',g.project)?' is-focus':''}" data-scope-project="${esc(g.project)}"><td class="tool-name"><span class="caret" data-sess-toggle="${esc(g.project)}">${o?'▾':'▸'}</span><b>${esc(g.project)}</b> <small>${g.sessions.length} session${g.sessions.length===1?'':'s'}</small></td><td class="num">${num(g.calls)}</td><td class="num">${usd(g.cost)}</td><td class="num">${hrs(g.activeMs)}</td></tr>`);
+  if(!o)return;const ss=g.sessions.sort(by),part=state.sessMore.has(g.project)?ss:ss.slice(0,SESSION_CHILDREN);
+  for(const s of part)out.push(`<tr class="tool${picked('session',s.session)?' is-focus':''}" data-session="${esc(s.session)}" data-scope-session="${esc(s.session)}"><td class="tool-name" style="padding-left:34px" title="${esc(s.title)}">${esc(cut(s.title,56))}${s.sub?' <small>(subagent)</small>':''} <small class="sess-id">${esc(s.session.slice(0,8))}</small></td><td class="num">${num(s.calls)}</td><td class="num">${usd(s.cost)}</td><td class="num">${hrs(s.activeMs)}</td></tr>`);
+  if(part.length<ss.length){const rest=ss.slice(part.length);out.push(`<tr class="tool-more"><td colspan="4" style="padding-left:34px"><button class="link" data-sess-more="${esc(g.project)}">${rest.length} more · ${usd(rest.reduce((t,s)=>t+s.cost,0))}</button></td></tr>`);}});
+ $('#sessions-note').textContent=`${list.length} project${list.length===1?'':'s'} · ${m.size} sessions`;
+ $('#sessions').innerHTML=out.join('')||'<tr><td colspan="4" class="empty">No data.</td></tr>';
+ moreButtons('#sessions-more',shown.length,list.length,5);}
+function pickScope(kind,id,label){state.scope=state.scope?.kind===kind&&state.scope.id===id?null:{kind,id,label};state.tool=null;state.toolLimit=10;renderSessions();renderTools();}
 function render(){renderProjects();renderProposals();renderChart();renderProfile();renderTools();renderSessions();}
-const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
+const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;state.scope=null;state.sessMore.clear();};
 document.addEventListener('click',e=>{const t=e.target;
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
@@ -196,6 +211,11 @@ document.addEventListener('click',e=>{const t=e.target;
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
  const m=t.closest('[data-metric]');if(m){const set=state.shown[m.dataset.chart],id=m.dataset.metric;if(set.has(id)&&set.size>1)set.delete(id);else set.add(id);saveShown();renderChart();return;}
  const s=t.closest('[data-sort]');if(s){state.sort=s.dataset.sort;document.querySelectorAll('[data-sort]').forEach(b=>b.setAttribute('aria-pressed',b===s));renderTools();return;}
+ const st=t.closest('[data-sess-toggle]');if(st){const id=st.dataset.sessToggle,row=st.closest('tr'),now=row.nextElementSibling?.dataset.session!==undefined;state.sessOpen.set(id,!now);renderSessions();return;}
+ const sm=t.closest('[data-sess-more]');if(sm){state.sessMore.add(sm.dataset.sessMore);renderSessions();return;}
+ const cs=t.closest('[data-clear-scope]');if(cs){e.preventDefault();state.scope=null;renderSessions();renderTools();return;}
+ const sp=t.closest('[data-scope-project]');if(sp){const id=sp.dataset.scopeProject;state.sessOpen.set(id,true);pickScope('project',id,id);return;}
+ const sx=t.closest('[data-scope-session]');if(sx){const id=sx.dataset.scopeSession;pickScope('session',id,titles[id]||id.slice(0,8));return;}
  const ss=t.closest('[data-ssort]');if(ss){state.ssort=ss.dataset.ssort;document.querySelectorAll('[data-ssort]').forEach(b=>b.setAttribute('aria-pressed',b===ss));renderSessions();return;}
  const more=t.closest('[data-more]');if(more){const k=more.dataset.more==='#tools-more'?'toolLimit':'sessionLimit';state[k]+=+more.dataset.step;more.dataset.more==='#tools-more'?renderTools():renderSessions();return;}
  const less=t.closest('[data-less]');if(less){const k=less.dataset.less==='#tools-more'?'toolLimit':'sessionLimit';state[k]=+less.dataset.step;less.dataset.less==='#tools-more'?renderTools():renderSessions();return;}
@@ -223,7 +243,7 @@ function applyView(q){
  state.toggled.clear();state.moreTree.clear();
  if(q.has('tool')){state.tool=q.get('tool');revealTool(state.tool);const n=findNode(state.tool);if(n?.children.size)state.toggled.set(n.id,true);}
  render();
- if(q.has('session')){const id=q.get('session');if(![...document.querySelectorAll('#sessions tr')].some(r=>r.dataset.session?.startsWith(id))){state.sessionLimit=1000;renderSessions();}}
+ if(q.has('session')){const id=q.get('session'),s=D.sessions.find(x=>x.session.startsWith(id));if(s){state.sessOpen.set(s.project,true);state.sessMore.add(s.project);state.sessionLimit=1000;renderSessions();}}
  const targets=[];
  for(const [c,m] of metrics){targets.push($(`.metrics [data-chart="${c}"][data-metric="${m}"]`));showGrid(c,m);}
  if(q.has('date'))targets.push(...document.querySelectorAll(`.group[data-key="${state.key}"] .band`));

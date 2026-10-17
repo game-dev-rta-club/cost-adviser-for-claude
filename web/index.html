@@ -14,14 +14,15 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 system-ui,-app
 header{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
 header h1{margin:0;font-size:17px}header h1 small{font-weight:400;font-size:12px;color:var(--muted);margin-left:4px}header p{margin:0;color:var(--muted);font-size:12px}
 .layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;max-width:1280px;margin:0 auto;padding:16px}
-nav{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
+nav{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;display:grid;gap:16px}
+.island{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
 nav h2{margin:6px 8px 6px;font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
 nav button{display:flex;justify-content:space-between;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 nav button:hover{background:var(--accent-soft)}nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:650}
 nav button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
 nav .indent{padding-left:22px}
 nav .more-projects{color:var(--accent);font-size:12.5px}
-.proposals:empty{display:none}.proposals{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:8px}
+.proposals:empty{display:none}.proposals{display:grid;gap:8px;padding:8px 10px 10px}
 .proposal{display:grid;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;line-height:1.55;color:inherit;text-decoration:none}
 .proposal:hover{border-color:#ea5f2c}.proposal.is-active{border-color:#ea5f2c;background:rgba(234,95,44,.07);box-shadow:inset 3px 0 0 #ea5f2c}
 .stars{color:#e8a200;font-size:13px;letter-spacing:1px}.stars em{font-style:normal;letter-spacing:0;margin-left:4px;padding:0 6px;border-radius:999px;background:#ea5f2c;color:#fff;font-size:10.5px;font-weight:700;vertical-align:1px}
@@ -77,7 +78,7 @@ th{font-size:11.5px;font-weight:600;color:var(--muted);text-align:left;padding:6
 th button{all:unset;cursor:pointer;border-bottom:1px dashed var(--muted)}th button:hover{color:var(--accent)}th button[aria-pressed="true"]{color:var(--accent);border-bottom-style:solid}th button[aria-pressed="true"]::after{content:" ▼";font-size:9px}
 td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tr.tool{cursor:pointer}.tool-name{white-space:nowrap}.caret{display:inline-block;width:16px;color:var(--muted);font-size:13px}tr.tool-more td{padding-top:2px;padding-bottom:6px}tr.tool-more .link{font-size:12px}tr.tool:hover{background:var(--accent-soft)}tr.tool.is-focus{background:var(--sel)}
+tr.tool{cursor:pointer}.sess-project small,.sess-id{color:var(--muted);font-weight:400;font-size:11.5px}.scope-chip{margin-left:6px;padding:1px 8px;border:1px solid var(--accent);border-radius:999px;background:var(--accent-soft);color:var(--accent);font:inherit;font-size:11.5px;cursor:pointer}.tool-name{white-space:nowrap}.caret{display:inline-block;width:16px;color:var(--muted);font-size:13px}tr.tool-more td{padding-top:2px;padding-bottom:6px}tr.tool-more .link{font-size:12px}tr.tool:hover{background:var(--accent-soft)}tr.tool.is-focus{background:var(--sel)}
 .share{display:flex;align-items:center;gap:6px;justify-content:flex-end}.share i{display:block;height:6px;border-radius:3px;background:#ea5f2c}
 tr.detail td{background:var(--bg);padding:10px 12px}
 .ex{display:grid;gap:6px}.ex div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
@@ -117,7 +118,7 @@ details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px
 <body>
 <header><h1>Context Adviser For Claude</h1><p id="meta"></p></header>
 <div class="layout">
- <nav aria-label="Projects"><h2>Projects</h2><div id="projects"></div><div id="proposals" class="proposals"></div></nav>
+ <nav aria-label="Projects and improvements"><div class="island"><h2>Projects</h2><div id="projects"></div></div><div id="proposals" class="island proposals"></div></nav>
  <main>
   <section><h2>Summary <span class="tabs" id="period"><button data-p="day" aria-pressed="true">Day</button><button data-p="3d" aria-pressed="false">3 days</button><button data-p="7d" aria-pressed="false">7 days</button><button data-p="month" aria-pressed="false">Month</button></span></h2>
    <h3 class="chart-title">Totals</h3>
@@ -129,13 +130,13 @@ details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px
   <section id="profile"><h2 id="profile-title">Profile</h2>
    <div class="overview"><div class="headline"><span>Cost</span><b id="cost"></b></div><dl id="stats"></dl></div>
    <div id="breakdowns"></div></section>
+  <details class="block" id="sessions-section" open><summary><h2>Sessions <small id="sessions-note"></small></h2></summary>
+   <div class="scroll"><table><thead><tr><th>Project · session</th><th class="num"><button data-ssort="calls">Calls</button></th><th class="num"><button data-ssort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-ssort="activeMs">Active time</button></th></tr></thead><tbody id="sessions"></tbody></table></div>
+   <div class="more" id="sessions-more"></div></details>
   <details class="block" id="tools-section" open><summary><h2>Calls by action <small id="tools-note"></small></h2></summary>
    <div class="toolbar"><input id="tool-filter" type="search" placeholder="Filter (e.g. bash chill)" aria-label="Filter actions"></div>
    <div class="scroll"><table><thead><tr><th>#</th><th>Action</th><th class="num"><button data-sort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-sort="count">Uses</button></th></tr></thead><tbody id="tools"></tbody></table></div>
    <div class="more" id="tools-more"></div></details>
-  <details class="block" id="sessions-section" open><summary><h2>Sessions <small id="sessions-note"></small></h2></summary>
-   <div class="scroll"><table><thead><tr><th>Session</th><th>Project</th><th class="num"><button data-ssort="calls">Calls</button></th><th class="num"><button data-ssort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-ssort="activeMs">Active time</button></th></tr></thead><tbody id="sessions"></tbody></table></div>
-   <div class="more" id="sessions-more"></div></details>
  </main>
 </div>
 <!--cca:data-->
