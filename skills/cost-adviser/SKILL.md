@@ -40,10 +40,12 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    sample proposals in [catalog.md](references/catalog.md).
 4. **Check past changes.** For each recorded change, judge it with
    [measuring.md](references/measuring.md); its verdict goes in the reply
-   (step 6), not in the proposals. Look for changes nobody recorded too: a
-   jump in the largest context in By day (a new compaction length), or a
-   shift in the model or effort mix. Name its first day and offer
-   `cca mark add`. The adviser keeps no stages: each run looks
+   (step 6), not in the proposals. Look for changes nobody recorded too:
+   the summary's Context jumps (a new compaction length, even on a day with
+   another recorded change), or a shift in the model or effort mix. Name its
+   first day and offer `cca mark add`. When two changes share a first day,
+   the totals mix both: judge each by its own number (uses for a tool,
+   average context for the compaction length). The adviser keeps no stages: each run looks
    at the numbers as they are.
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says

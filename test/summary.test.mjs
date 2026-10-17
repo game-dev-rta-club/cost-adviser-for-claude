@@ -81,4 +81,6 @@ test('the summary has the report views: each day, models, the tool tree and one 
   assert.match(full, /By day/);
   assert.match(full, /\$7\.00 .* bash chill \[2\]/);
   assert.equal(treeLines(toolTree([]), {}).length, 0);
+  const own = treeLines(toolTree([{tool: 'bash chill', cost: 1, count: 2}, {tool: 'bash chill goal', cost: 3, count: 1}]));
+  assert.deepEqual(own.map(t => [t.id, t.cost]), [['bash', 4], ['bash chill', 4], ['bash chill goal', 3], ['bash chill (itself)', 1]], 'a group\'s own uses are listed so children add up');
 });
