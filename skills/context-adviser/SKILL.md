@@ -102,8 +102,7 @@ user can weigh them.
 
 `link` takes the `cca link` options (project, period, date, metrics, tool,
 session, focus, item); reading.md says which fits each signal. Use
-`period: 7d` with today's date for the summary's 7 days, and move an older
-`week` link to it. **Numbers the
+`period: 7d` with today's date for the summary's 7 days. **Numbers the
 linked view shows must match it**: the report shows one period at a time, so
 quote that period's numbers, not another window's. Numbers the view cannot
 show (before and after a change, one project's share) say where they come from.

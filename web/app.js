@@ -14,11 +14,11 @@ const addDays=(day,n)=>{const d=new Date(day+'T00:00');d.setDate(d.getDate()+n);
 // period is always whole; the key is its first day.
 const LAST_DAY=ymd(new Date(D.generatedAt));
 // 3d and 7d are blocks of days counted back from the build day, so 7d matches
-// the summary's 7 days; a week is a calendar week from Monday.
+// the summary's 7 days.
 const ROLLING={'3d':3,'7d':7};
 function periodKey(day,p){if(p==='day')return day;
- if(ROLLING[p]){const n=ROLLING[p],back=Math.round((new Date(LAST_DAY+'T00:00')-new Date(day+'T00:00'))/86400000);return addDays(LAST_DAY,-(Math.floor(back/n)*n+n-1));}if(p==='month')return day.slice(0,7);const d=new Date(day+'T00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-const periodLabel=(k,p)=>ROLLING[p]?(e=>`${md(k)}–${e.slice(5,7)===k.slice(5,7)?+e.slice(8):md(e)}`)(addDays(k,ROLLING[p]-1)):p==='day'?md(k):p==='week'?`Wk ${md(k)}`:new Date(k+'-01T00:00').toLocaleString('en-US',{month:'short'});
+ if(ROLLING[p]){const n=ROLLING[p],back=Math.round((new Date(LAST_DAY+'T00:00')-new Date(day+'T00:00'))/86400000);return addDays(LAST_DAY,-(Math.floor(back/n)*n+n-1));}return day.slice(0,7);}
+const periodLabel=(k,p)=>ROLLING[p]?(e=>`${md(k)}–${e.slice(5,7)===k.slice(5,7)?+e.slice(8):md(e)}`)(addDays(k,ROLLING[p]-1)):p==='day'?md(k):new Date(k+'-01T00:00').toLocaleString('en-US',{month:'short'});
 // Chart on/off is kept per browser so the page reopens the same way.
 const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCall','subShare']};
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
@@ -212,7 +212,9 @@ const FOCUS={totals:'#chart-totals',stats:'#chart-stats',profile:'#profile','cos
 function applyView(q){
  document.querySelectorAll('.focus-glow').forEach(el=>el.classList.remove('focus-glow'));
  // Each link describes the whole view, so anything it leaves out goes back to the default.
- state.project=q.get('project')||'all';state.period=['day','3d','7d','week','month'].includes(q.get('period'))?q.get('period'):'day';
+ state.project=q.get('project')||'all';
+ // Links from before the week tab was dropped open the 7 days instead.
+ const period=q.get('period')==='week'?'7d':q.get('period');state.period=['day','3d','7d','month'].includes(period)?period:'day';
  document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===state.period));
  state.key=q.has('date')?periodKey(q.get('date'),state.period):null;resetLimits();state.filter='';$('#tool-filter').value='';
  const metrics=(q.get('metrics')||'').split(',').map(m=>m.split('.')).filter(([c,m])=>CHARTS[c]?.[m]);
