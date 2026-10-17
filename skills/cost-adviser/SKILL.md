@@ -93,9 +93,10 @@ proposal every run. Check each proposal now shown in this order:
    both have the same number of full days on each side). With fewer than 2 full days
    since, keep the rating and say in
    `news` that it is waiting and from which day (adding or dropping that line
-   is an update). A new proposal in that state needs the problem on the full days since
-   too: when its share there is under the floor below (1%), the change has
-   already dealt with it, so mention it in the reply instead. Otherwise rate
+   is an update). Any proposal in that state, new or shown before, needs the problem on
+   the full days since too: when its share there is under the floor below
+   (1%), the change has already dealt with it, so drop it and mention it in
+   the reply. Otherwise rate
    it from the full days before the change and mark it waiting the same way. Rewrite a number that
    includes today with the full days'
    number when the two would give different ratings.
@@ -103,7 +104,8 @@ proposal every run. Check each proposal now shown in this order:
    (for a percentage under 10%, by more than about a point) or changed the
    rating; small drift is not a change.
 4. **Facts and reasoning.** Open each proposal's `source` page once per run
-   and correct a fact that is now wrong (a version, a setting's value, a
+   (for the Claude Code version, take the one the running sessions show in
+   `ps`) and correct a fact that is now wrong (a version, a setting's value, a
    price, a claim about which session or example costs most, read again from
    Examples); rewrite reasoning the numbers no longer support. Each is an
    update. Dollar figures come from cca, whose prices are the list prices

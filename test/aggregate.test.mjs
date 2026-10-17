@@ -34,6 +34,10 @@ test('tool keys group similar uses', () => {
   assert.equal(bash('node tools/agent-play.mjs sequence --steps 3'), 'bash node agent-play.mjs sequence');
   assert.equal(bash('node tools/agent-play.mjs ./level.json'), 'bash node agent-play.mjs');
   assert.equal(bash('python3 tool.py export out.csv'), 'bash python3 tool.py export');
+  // Other tools with subcommands keep them; common commands do not.
+  assert.equal(bash('uloop compile --project x'), 'bash uloop compile');
+  assert.equal(bash('grep foo file.txt'), 'bash grep');
+  assert.equal(bash('cca summary --tool read'), 'bash cca summary');
   assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
   assert.equal(toolKey({name: 'mcp__Claude_Browser__navigate'}), 'mcp Browser.navigate');
   assert.equal(toolKey({name: 'Read'}), 'read');
