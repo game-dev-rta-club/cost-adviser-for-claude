@@ -28,7 +28,7 @@ test('tool keys group similar uses', () => {
   assert.equal(bash("'/a/runtime/chill' connection reply --event 4"), 'bash chill connection reply');
   // Text in a heredoc is not a command.
   assert.equal(bash("python3 - <<'EOF'\nprint('runtime/chill connection inbox')\nEOF"), 'bash python3 (other)');
-  assert.equal(bash("cat > a.json <<EOF\n{\"run\": \"chill goal show\"}\nEOF\necho done"), 'bash cat');
+  assert.equal(bash("cat > a.json <<EOF\n{\"run\": \"chill goal show\"}\nEOF\necho done"), 'bash cat (write)');
   assert.equal(bash("head -2 out.txt; '/a/runtime/chill' connection inbox"), 'bash chill connection inbox');
   // A script's subcommand is kept; paths and flags are not.
   assert.equal(bash('node tools/agent-play.mjs sequence --steps 3'), 'bash node agent-play.mjs sequence');
@@ -38,6 +38,9 @@ test('tool keys group similar uses', () => {
   assert.equal(bash('uloop compile --project x'), 'bash uloop compile');
   assert.equal(bash('grep foo file.txt'), 'bash grep');
   assert.equal(bash('cca summary --tool read'), 'bash cca summary');
+  assert.equal(bash("cat > notes.md <<'EOF'\nhi\nEOF"), 'bash cat (write)');
+  assert.equal(bash('cat a.txt 2>/dev/null'), 'bash cat');
+  assert.equal(bash('tee out.log'), 'bash tee (write)');
   assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
   assert.equal(toolKey({name: 'mcp__Claude_Browser__navigate'}), 'mcp Browser.navigate');
   assert.equal(toolKey({name: 'Read'}), 'read');

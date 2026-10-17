@@ -56,7 +56,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says
    nothing is serving the report, start `cca serve` in the background.
-   It refuses a title over 40 characters or a summary over 200.
+   It refuses a title over 40 characters, a summary over 200 or news over 300.
 
 ```json
 {"proposals": [{
@@ -79,15 +79,19 @@ proposal every run. Check each proposal now shown in this order:
 1. **Method.** Each number names the command it came from. When that is a
    way the references rule out (adding up `cca collect` rows by hand when a
    summary view shows the number, a replay that includes today or crosses a
-   compaction change, a command cca now refuses, dollar figures from before
-   the summary says the prices changed), measure it again the allowed way. That is an update. `cca collect` is the source only for what
+   compaction change, a command cca now refuses), measure it again the
+   allowed way. That is an update. When the summary says the prices or the
+   way cca reads calls changed, measure every number again too; there, only
+   numbers that moved past step 3 make it an update. `cca collect` is the
+   source only for what
    no summary view shows (one session's tool use, result sizes); name the
    fields used.
 2. **Days.** The rating comes from full days (`--full-days` leaves out
    today). For a proposal about something a recorded change touched, use the
-   full days since that change. A change touched it when the proposal's own
-   number (its share of the cost) moved past the threshold in step 3 between
-   the full days before and the full days since (read both from
+   full days since that change. A change touched it when it is about the same tool, setting
+   or project; or, once there are 2 full days on each side, when the
+   proposal's own number (its share of the cost) moved past the threshold in
+   step 3 between the full days before and the full days since (read both from
    `cca summary --full-days`: a tool's Around line in `--tool`, and the
    Shares line under each recorded change for output, hook text and models;
    both have the same number of full days on each side). With fewer than 2 full days
@@ -97,7 +101,8 @@ proposal every run. Check each proposal now shown in this order:
    the full days since too: when its share there is under the floor below
    (1%), the change has already dealt with it, so drop it and mention it in
    the reply. Otherwise rate
-   it from the full days before the change and mark it waiting the same way. Rewrite a number that
+   it from all the full days in the window before the change and mark it
+   waiting the same way. Rewrite a number that
    includes today with the full days'
    number when the two would give different ratings.
 3. **Numbers.** A number holds unless it moved by more than about a tenth
@@ -137,7 +142,9 @@ applies. `cca advise` prints what was added, updated, kept and removed.
 **Each proposal is one concrete action that is enough on its own**: the
 setting, file, skill or subagent to change and what to put there (a key and
 value, a line to add). Before naming a setting or feature, open its current
-docs page (the settings reference is long: ask for the one key) and check the name, the accepted values, which models it applies to
+docs page (the settings reference is long: ask for the one key, and read on
+with WebFetch's `offset` until it is found; if it is not, say the claim is
+not confirmed) and check the name, the accepted values, which models it applies to
 and what overrides it (a choice made inside a session can override the
 settings file); put that page in `source`. When no docs page confirms a claim,
 leave it out or say it is not confirmed. Do not propose a setting that is
