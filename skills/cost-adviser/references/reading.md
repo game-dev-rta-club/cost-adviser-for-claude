@@ -16,6 +16,8 @@ much work there was.
 | `(final reply)` share | Large share of cost in calls that use no tool (the reply that ends each turn) | Many turns back to the user, each reading a long context. P1, P2 | `--tool "(final reply)"` |
 | Cache hit rate | Drops against its own history | Something is rebuilding the cache. P3 | `--metrics stats.cacheHit` |
 | Cache write (summary Totals, "of which cache write") | Grows as a share | Same as above: rebuilds after breaks or changes mid-conversation. P3 | `--focus cost-type --item "Cache write"` |
+| Cache write after the cache expired (Totals, and `expired` by day) | A clear share of cost | Long conversations picked up after a break, each written again in full. P3 | `--focus cost-type --item "Cache write"` |
+| Runs of tool calls in a long main conversation (`cca simulate --delegate 5-19`) | The replay cuts a clear share | Work a fresh agent could do in a short context. P5 | `--metrics stats.subShare` |
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |
 | Subagent calls | Moves after a delegation change | Whether delegation happens at all; judge cost with P5 | `--metrics stats.subShare` |
 | Compacting / active hour, and Cost by type: Compacting | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics stats.compactPerHour` or `--focus cost-type --item Compacting` |
@@ -57,7 +59,6 @@ observation, not as a proposal. Setting keys are on the settings reference
 page (https://code.claude.com/docs/en/settings-reference); it is long, so look for the
 key by name.
 
-A large cache-write share that stays level has no sample in the catalog. Look at
-the "cache rebuilt" examples in `--tool` (calls after the cache expired) and
-mention it in the reply; propose something only when the numbers show what
-causes it.
+For cache writes, look at the "cache rebuilt" examples in `--tool` (calls after
+the cache expired) before proposing: a break before them points to catalog
+sample 13; a change mid-conversation (model, tools) points to P3.

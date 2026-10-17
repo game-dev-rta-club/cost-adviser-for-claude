@@ -51,14 +51,15 @@ their recent numbers.
 - **2 stars:** 1% to 2%.
 - **1 star:** Under 1%, or no clear link to the numbers.
 
-When the proposal changes the compaction length or the size of tool results,
-measure the cut with `cca simulate` instead of estimating it. It replays the
+When the proposal changes the compaction length, the size of tool results or
+hands work to a fresh agent, measure the cut with `cca simulate` instead of estimating it. It replays the
 user's recent conversations call by call as if the change had been in place:
 
 ```sh
 cca simulate --compact-at 500000      # compaction starts at 500,000 tokens
 cca simulate --tool-results 0.7       # tool results 30% shorter
 cca simulate --tool-results 0.7 --tool read --tool "bash cat"   # only these
+cca simulate --delegate 5-19          # runs of 5 to 19 tool calls go to a fresh agent
 ```
 
 Name each tool a proposal shortens with `--tool` in one run; shortening every

@@ -49,7 +49,7 @@ test('summary compares windows, and each change before and after', () => {
   assert.match(text, /Shares before → after: output \d+\.\d% → \d+\.\d%, hook text 0\.0% → 0\.0%/);
   assert.match(text, /Compacting \$0\.00 0\.0%, 0× \(–, partly estimated\)/);
   const withCompact = totals([{...row('2026-10-16', {cost: 10}), output: 1, cacheRead: 7, compactions: 2, compactSummary: 1.5, compactRebuild: 0.5}]);
-  assert.deepEqual(withCompact.split, {input: 7, cacheRead: 7, cacheWrite: 0, output: 1, compacting: 2, compactions: 2});
+  assert.deepEqual(withCompact.split, {input: 7, cacheRead: 7, cacheWrite: 0, cacheExpired: 0, output: 1, compacting: 2, compactions: 2});
 });
 
 test('the summary has the report views: each day, models, the tool tree and one tool by day', () => {

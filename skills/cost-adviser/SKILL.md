@@ -28,9 +28,10 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
 2. **Find the problems.** Read the signals with
    [reading.md](references/reading.md), explain each with a principle in
    [principles.md](references/principles.md), and match it to a sample in
-   [catalog.md](references/catalog.md). Look first for fewer calls: every call
-   reads the whole conversation again, so cutting repeated calls saves far
-   more than making each one smaller.
+   [catalog.md](references/catalog.md). Go through its five angles: fewer
+   calls, smaller calls, calls in a fresh agent, a lower price, the cache
+   kept. Fewer calls usually saves the most, since every call reads the whole
+   conversation again.
 3. **Judge past changes** with [measuring.md](references/measuring.md): the
    recorded ones, and those the summary spots (Context jumps, Mix shifts). The
    summary says when a verdict is due. Offer `cca mark add` for one that is not
@@ -57,7 +58,7 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
 - **Rated** 1–5 on upkeep (`ease`), quality kept (`safety`) and savings with
   [ratings.md](references/ratings.md), starting from the closest catalog
   sample. Measure savings with `cca simulate` when the proposal changes the
-  compaction length or the size of tool results.
+  compaction length, the size of tool results or hands work to a fresh agent.
 - **Reproducible.** Quote full-day numbers, each with the cca command and
   days it came from, preferably one command rather than arithmetic by hand,
   so the next run can measure it the same way and today's partial numbers do

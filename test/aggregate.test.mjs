@@ -145,6 +145,18 @@ test('compaction is split out: the estimated summary and the cache write after i
   assert.ok(Math.abs(data.tools.reduce((s, t) => s + t.cost, 0) - row.cost) < 1e-3);
 });
 
+test('a cache write after the cache expired is counted apart; a new conversation\'s start and a compaction are not', async () => {
+  const root = await tempDir();
+  await writeTranscript(root, 'p/s.jsonl', [
+    assistant({id: 'm1', at: at(0), cacheRead: 30000, cacheWrite: 10000, output: 10}),
+    assistant({id: 'm2', at: at(1), cacheRead: 40000, cacheWrite: 2000, output: 10}),
+    // Back after a long break: the whole conversation is written again.
+    assistant({id: 'm3', at: at(90), cacheWrite: 42000, output: 10}),
+  ]);
+  const [row] = (await collect({root, days: 30, now: NOW})).daily;
+  assert.ok(Math.abs(row.cacheExpired - callCost({model: 'claude-opus-5-5', cacheWrite: 42000}).total) < 1e-3);
+});
+
 test('hook text is counted once and costs a write, then a read per later call until compaction', async () => {
   const root = await tempDir();
   const hook = (uuid, minute) => ({type: 'attachment', uuid, timestamp: at(minute), attachment: {type: 'hook_additional_context', content: ['x'.repeat(2750)], hookEvent: 'PostToolUse'}});

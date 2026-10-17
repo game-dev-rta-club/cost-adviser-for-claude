@@ -71,6 +71,9 @@ test('cli: simulate prints both costs and checks its options', async () => {
   await assert.rejects(sim([]), e => e.code === 2 && /give a change/.test(e.stderr));
   await assert.rejects(sim(['--tool-results', '2']), e => e.code === 2 && /share from 0 to 1/.test(e.stderr));
   await assert.rejects(sim(['--compact-at', '10']), e => e.code === 2 && /--compact-at/.test(e.stderr));
+  await assert.rejects(sim(['--delegate', '9-5']), e => e.code === 2 && /--delegate takes/.test(e.stderr));
+  assert.match((await sim(['--delegate', '5'])).stdout, /runs of 5 or more tool calls in a row[^\n]*\nHanded over: 1 runs, 30 calls/);
+  await assert.rejects(run(process.execPath, [cli, 'summary', '--delegate', '5', '--transcripts', root], {env}), e => e.code === 2 && /--delegate is for simulate only/.test(e.stderr));
 });
 
 test('a request copied into a resumed conversation is counted once', async () => {
@@ -112,4 +115,23 @@ test('cli: collect covers the same days as the summary', async () => {
   assert.equal(out.window.days, 7);
   assert.equal(out.calls, 1);
   assert.ok(out.daily.every(r => r.day >= out.window.from));
+});
+
+test('replay: --delegate hands runs of tool calls in a long conversation to a fresh agent', () => {
+  // A long conversation: runs of 6 tool calls, each ended by a reply.
+  const calls = growing(70, 2000, 1500).map((c, i) => ({...c, cacheRead: 300000 + c.cacheRead, tools: i % 7 === 6 ? [] : c.tools}));
+  const fresh = {start: 40000, cached: 30000, report: 500};
+  const base = replay(calls, {...profile, fresh});
+  const handed = replay(calls, {...profile, fresh}, {delegate: {min: 5, max: 9}});
+  assert.equal(handed.runs, 10);
+  assert.equal(handed.delegated, 60);
+  assert.ok(handed.cost < base.cost * 0.6, 'calls in a fresh agent read far less');
+  // Runs outside the range stay in the conversation.
+  const none = replay(calls, {...profile, fresh}, {delegate: {min: 7, max: Infinity}});
+  assert.equal(none.runs, 0);
+  assert.equal(none.cost, base.cost);
+  // A subagent does not hand its work on.
+  const r = simulate([{calls, sub: true}], {delegate: {min: 5, max: 9}});
+  assert.equal(r.delegated.runs, 0);
+  assert.equal(r.cut, 0);
 });

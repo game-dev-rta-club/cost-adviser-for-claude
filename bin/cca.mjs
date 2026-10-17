@@ -48,7 +48,10 @@ Commands:
                         --tool-results <share>: tool results keep this share of
                         their size (0.7 = 30% shorter); add --tool NAME, once per
                         tool or group (e.g. "read", "bash cat"), to shorten only those.
-                        Give one or both. --full-days leaves out today (7 days become 6);
+                        --delegate <min>[-<max>]: each run of that many tool calls
+                        in a row in a main conversation goes to a fresh agent
+                        (5-9 = runs of 5 to 9 calls; 5 = 5 or more).
+                        Give one or more. --full-days leaves out today (7 days become 6);
                         --since <date> starts at that day instead of --days.
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
@@ -85,7 +88,7 @@ function options(args) {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'}, until: {type: 'string'},
-      'compact-at': {type: 'string'}, 'tool-results': {type: 'string'},
+      'compact-at': {type: 'string'}, 'tool-results': {type: 'string'}, delegate: {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
 }
@@ -121,7 +124,7 @@ const {values, positionals} = options(rest);
 // Only simulate shortens several tools at once; elsewhere --tool names one.
 if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail('--tool takes one tool or group here.');
 // Options another command takes are refused rather than quietly ignored.
-for (const [name, commands] of [['until', ['summary']], ['since', ['summary', 'simulate']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
+for (const [name, commands] of [['until', ['summary']], ['delegate', ['simulate']], ['compact-at', ['simulate']], ['tool-results', ['simulate']], ['since', ['summary', 'simulate']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
   if (values[name] !== undefined && !commands.includes(command)) fail(`--${name} is for ${commands.join('/')} only.`);
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
@@ -208,7 +211,12 @@ else if (command === 'build') {
     change.toolResults = share;
     if (values.tool?.length) change.tool = values.tool;
   } else if (values.tool?.length) fail('--tool goes with --tool-results: the tool or group whose results get shorter.');
-  if (!Object.keys(change).length) fail('give a change to replay: --compact-at <tokens> and/or --tool-results <share>.');
+  if (values.delegate !== undefined) {
+    const m = values.delegate.match(/^(\d+)(?:-(\d+))?$/), min = m && Number(m[1]), max = m && (m[2] ? Number(m[2]) : Infinity);
+    if (!m || min < 1 || max < min) fail('--delegate takes a number of tool calls in a row, e.g. 5-9 (5 to 9) or 5 (5 or more).');
+    change.delegate = {min, max};
+  }
+  if (!Object.keys(change).length) fail('give a change to replay: --compact-at <tokens>, --tool-results <share> and/or --delegate <min>[-<max>].');
   // The same days as the summary: today and the days before it, from midnight.
   // --full-days ends at yesterday, so a partial today cannot move the result.
   const full = !!values['full-days'], midnight = new Date(`${localDay(Date.now())}T00:00`), end = new Date(midnight);
@@ -239,7 +247,9 @@ else if (command === 'build') {
   else console.log([
     `Replayed ${r.calls.toLocaleString('en-US')} calls in ${r.conversations} conversations, ${from} to ${to}${r.lastCall ? ` (up to ${localTime(r.lastCall)})` : ''} (${values.project || 'all projects'}).`,
     r.compactedAt ? `The conversations compacted at about ${r.compactedAt.toLocaleString('en-US')} tokens on average (${r.compactions.recorded} compactions recorded).` : `No conversation compacted in these days.`,
-    `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `${change.tool ? `results of ${change.tool.map(t => `"${t}"`).join(', ')}` : 'tool results'} keep ${Math.round(change.toolResults * 100)}% of their size`].filter(Boolean).join('; ')}`,
+    `Change: ${[change.compactAt && `compaction starts at ${change.compactAt.toLocaleString('en-US')} tokens`, change.toolResults !== undefined && `${change.tool ? `results of ${change.tool.map(t => `"${t}"`).join(', ')}` : 'tool results'} keep ${Math.round(change.toolResults * 100)}% of their size`,
+      change.delegate && `runs of ${change.delegate.max === Infinity ? `${change.delegate.min} or more` : `${change.delegate.min} to ${change.delegate.max}`} tool calls in a row in a main conversation go to a fresh agent`].filter(Boolean).join('; ')}`,
+    ...(r.delegated ? [`Handed over: ${r.delegated.runs.toLocaleString('en-US')} runs, ${r.delegated.calls.toLocaleString('en-US')} calls. A fresh agent starts at about ${r.delegated.fresh.start.toLocaleString('en-US')} tokens (${r.delegated.fresh.cached.toLocaleString('en-US')} of them already cached) and its report adds about ${r.delegated.fresh.report.toLocaleString('en-US')} (${r.delegated.fresh.measured ? "these days' subagents, on average" : 'usual sizes: no subagents in these days'}). This is the most it can save: it counts the brief and the report, but assumes every such run can be handed over and is done in the same calls.`] : []),
     `Replayed cost: ${usd(r.base)} → ${usd(r.changed)}, ${Math.abs(r.cut * 100).toFixed(1)}% ${r.cut >= 0 ? 'less' : 'more'}`,
     ...(Math.abs(r.cut) < 0.01 ? ['Under 1% either way is within what the replay can tell apart: read it as no clear effect.']
       : r.cut < 0 && change.toolResults !== undefined && !change.compactAt ? ['Shorter results cannot cost more; this comes from where conversations stood between compactions when they ended. Read it as no clear effect.'] : []),
