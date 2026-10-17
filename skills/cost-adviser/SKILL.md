@@ -1,6 +1,6 @@
 ---
 name: cost-adviser
-description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, reads the numbers against basic principles, and updates the proposals listed under the projects, each with an overall star rating from three rated axes, the action to take and its details. Use for /cost-adviser or a scheduled cost review.
+description: Review what Claude Code conversations cost and keep a list of improvement proposals on the report. Runs the cca CLI, takes the numbers as clues, checks what happened in the conversations behind them, explains it with basic principles, and updates the proposals listed under the projects, each with an overall star rating from three rated axes, the action to take and its details. Use for /cost-adviser or a scheduled cost review.
 ---
 
 # Cost Adviser
@@ -27,7 +27,15 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
    `ps -axo command | grep -oE -- 'claude-code/[0-9.]+|--(model|effort|autocompact)[= ][^ ]+' | sort | uniq -c`
    (with the Claude Code version that is running).
    This review is in the data too, as a subagent of the session running it.
-2. **Find the problems.** Read the signals with
+2. **See what happened.** The numbers are clues: they show where the money
+   goes, not why. For the ones that stand out, open the conversations behind
+   them and see what actually went on: what was asked, what the agent did,
+   where the calls piled up or the cache was written again. Do not stop at the
+   numbers; what you see there is where the broader proposals come from. How
+   you look is up to you. The records are the `.jsonl` files under
+   `~/.claude/projects/` (a session's subagents in its `subagents/` folder);
+   the summary gives each session's id.
+3. **Find the problems.** Read the signals with
    [reading.md](references/reading.md), explain each with a principle in
    [principles.md](references/principles.md), and match it to a sample in
    [catalog.md](references/catalog.md). Go through its four angles: fewer
@@ -35,14 +43,14 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
    agent with little context), a lower price, the cache kept. Fewer calls
    usually saves the most, since every call reads the whole conversation
    again.
-3. **Judge past changes** with [measuring.md](references/measuring.md): the
+4. **Judge past changes** with [measuring.md](references/measuring.md): the
    recorded ones, and those the summary spots (Context jumps, Mix shifts). The
    summary says when a verdict is due. Offer `cca mark add` for one that is not
    recorded.
-4. **Update the list** and save it with `cca advise FILE` (below). It prints
+5. **Update the list** and save it with `cca advise FILE` (below). It prints
    each proposal's link. Start `cca serve` in the background if it says
    nothing is serving the report.
-5. **Tell the user** in their language, briefly. List the proposals best
+6. **Tell the user** in their language, briefly. List the proposals best
    first, each as a numbered item: its title, project and stars, then a
    sentence or two on the problem, the fix and the expected saving, and its
    link. The reasons and steps are behind the link; leave them there. For
@@ -76,6 +84,8 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
   [ratings.md](references/ratings.md), starting from the closest catalog
   sample. Measure savings with `cca simulate` when the proposal changes the
   compaction length, the size of tool results or hands work to a fresh agent.
+- **Its cause seen in the records**, in a sentence: what happened, in which
+  session.
 - **Reproducible.** Quote full-day numbers, each with the cca command and
   days it came from, preferably one command rather than arithmetic by hand,
   so the next run can measure it the same way and today's partial numbers do
