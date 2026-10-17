@@ -80,6 +80,19 @@ $CCA_HOME (default ~/.cost-adviser-for-claude). Only changed transcripts are rea
 Prices are list prices per model from the pricing page; "cca summary" prints the
 date they were read, and --json lists them. Costs are estimates from them.`;
 
+// One command's part of the help: its lines under Commands, and the options
+// that name it or no command at all.
+function commandHelp(command) {
+  const [, commands, rest] = HELP.split(/\nCommands:\n|\nOptions:\n/), [options] = rest.split('\n\n');
+  const blocks = text => text.split('\n').reduce((list, line) => (/^  \S/.test(line) ? list.push([line]) : list.at(-1)?.push(line), list), []).map(b => b.join('\n'));
+  const names = blocks(commands).map(b => b.trim().split(/\s/)[0]);
+  const mine = blocks(commands).filter(b => b.trim().split(/\s/)[0] === command);
+  if (!mine.length) return HELP;
+  const named = b => names.filter(n => new RegExp(`(^|[\\s/])${n}([/:\\s]|$)`).test(b.replace(/^\s*--\S+( <[^>]+>)?/, '')));
+  const opts = blocks(options).filter(b => { const n = named(b); return !n.length || n.includes(command); });
+  return [`Usage: cca ${command} [options]`, '', ...mine, ...(opts.length ? ['', 'Options:', ...opts] : []), '', 'Run "cca help" for every command.'].join('\n');
+}
+
 const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usage.`); process.exit(2); };
 
 function options(args) {
@@ -129,7 +142,8 @@ for (const [name, commands] of [['until', ['summary']], ['delegate', ['simulate'
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
-if (!command || command === 'help' || command === '--help' || command === '-h' || values.help) console.log(HELP);
+if (!command || command === 'help' || command === '--help' || command === '-h') console.log(HELP);
+else if (values.help) console.log(commandHelp(command));
 else if (command === 'build') {
   const report = await build(count(values.days, 30, 'days'), values.out);
   if (values.open) openFile(report.file);

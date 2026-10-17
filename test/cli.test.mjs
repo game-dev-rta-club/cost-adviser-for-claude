@@ -162,3 +162,13 @@ test('cli: simulate --since starts at a day, and --full-days ends at yesterday',
   assert.equal(full.window.to, since);
   await assert.rejects(cca(['simulate', '--tool-results', '0.5', '--since', since, '--days', '2', '--transcripts', root], env), /--since or --days/);
 });
+
+test('cli: a command\'s --help prints only that command and its options', async () => {
+  const {execFile} = await import('node:child_process'), {promisify} = await import('node:util');
+  const cli = new URL('../bin/cca.mjs', import.meta.url).pathname;
+  const {stdout} = await promisify(execFile)(process.execPath, [cli, 'simulate', '--help']);
+  assert.match(stdout, /^Usage: cca simulate/);
+  assert.match(stdout, /--delegate/);
+  assert.match(stdout, /--project <name>/);
+  assert.doesNotMatch(stdout, /mark add|--reason/);
+});
