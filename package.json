@@ -19,6 +19,9 @@
     "test": "node --test test/*.test.mjs",
     "check": "node --check bin/cca.mjs && node --test test/*.test.mjs"
   },
-  "license": "UNLICENSED",
-  "private": true
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/game-dev-rta-club/cost-adviser-for-claude.git"
+  }
 }
