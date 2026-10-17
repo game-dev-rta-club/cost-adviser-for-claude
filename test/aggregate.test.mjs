@@ -113,7 +113,7 @@ test('compaction is split out: the estimated summary and the cache write after i
   const [row] = data.daily;
   const summary = summaryCost({model: 'claude-opus-5-5', preTokens: 400000, summaryChars: 8000});
   const rebuild = callCost({model: 'claude-opus-5-5', cacheWrite: 30000}).total;
-  assert.ok(Math.abs(summary - (400000 * 5 * 0.1 + 2000 * 25) / 1e6) < 1e-9);
+  assert.ok(Math.abs(summary - (400000 * 4 * 0.05 + 2000 * 20) / 1e6) < 1e-9);
   assert.equal(row.compactions, 1);
   assert.ok(Math.abs(row.compactSummary - summary) < 1e-3);
   assert.ok(Math.abs(row.compactRebuild - rebuild) < 1e-3);
@@ -146,5 +146,20 @@ test('hook text is counted once and costs a write, then a read per later call un
   assert.equal(h.count, 1);
   assert.equal(h.chars, 2750);
   // 1000 tokens: written once on m2, read on m3, gone after the compaction.
-  assert.ok(Math.abs(h.cost - (1000 * 5 * 1.25 + 1000 * 5 * 0.1) / 1e6) < 1e-4);
+  assert.ok(Math.abs(h.cost - (1000 * 4 * 1.25 + 1000 * 4 * 0.05) / 1e6) < 1e-4);
+});
+
+test('prices follow the pricing page: per model, 1-hour cache writes, fast mode and long Haiku prompts', () => {
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  // Opus 5.5: $4 in, $20 out, cache hits 0.05x; a 1-hour write is 2x input.
+  assert.ok(near(callCost({model: 'claude-opus-5-5', input: 1e6, cacheRead: 1e6, output: 1e6}).total, 4 + 0.2 + 20));
+  assert.ok(near(callCost({model: 'claude-opus-5-5', cacheWrite: 1e6, cacheWrite1h: 1e6}).total, 8));
+  assert.ok(near(callCost({model: 'claude-opus-5-5', cacheWrite: 1e6}).total, 5));
+  assert.ok(near(callCost({model: 'claude-opus-5-5', output: 1e6, speed: 'fast'}).total, 40));
+  // A newer version is not priced as its family.
+  assert.ok(near(callCost({model: 'claude-sonnet-5-5', input: 1e6, cacheRead: 1e6}).total, 2 + 0.1));
+  assert.ok(near(callCost({model: 'claude-sonnet-4-6', input: 1e6, cacheRead: 1e6}).total, 3 + 0.3));
+  assert.ok(near(callCost({model: 'claude-opus-4-1-20250805', output: 1e6}).total, 75));
+  assert.ok(near(callCost({model: 'claude-haiku-5-5', input: 1e5}).total, 0.01));
+  assert.ok(near(callCost({model: 'claude-haiku-5-5', input: 2e5}).total, 0.1));
 });

@@ -67,7 +67,7 @@ stale when tools and settings change.
 
 ## How numbers are counted
 
-- **Cost** uses provisional list prices per model family (`lib/prices.mjs`).
+- **Cost** uses list prices per model from the [pricing page](https://platform.claude.com/docs/en/about-claude/pricing), as read on the date in `lib/prices.mjs`: cache hits, 5-minute and 1-hour cache writes, fast mode and long Haiku prompts each at their own price.
   Cache reads cost 0.1× input and cache writes 1.25× input. A message written
   several times while it streams is counted once.
 - **Active time** adds the gaps between calls in one conversation, each capped

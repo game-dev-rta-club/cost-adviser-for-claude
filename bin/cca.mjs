@@ -71,7 +71,8 @@ Options:
 
 Recorded changes, the HTML and a cache of read transcripts are kept in
 $CCA_HOME (default ~/.cost-adviser-for-claude). Only changed transcripts are read again.
-Prices are provisional list prices; see lib/prices.mjs.`;
+Prices are list prices per model from the pricing page, read on the date in
+lib/prices.mjs; the summary prints that date. Costs are estimates from them.`;
 
 const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usage.`); process.exit(2); };
 

@@ -76,21 +76,29 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 proposal every run. Check each proposal now shown in this order:
 
 1. **Method.** Each number names the command it came from. When that is a
-   way the references rule out (adding up `cca collect` rows by hand, a
-   replay that includes today or crosses a compaction change), measure it
-   again the allowed way. That is an update.
+   way the references rule out (adding up `cca collect` rows by hand when a
+   summary view shows the number, a replay that includes today or crosses a
+   compaction change, a command cca now refuses), measure it again the
+   allowed way. That is an update. `cca collect` is the source only for what
+   no summary view shows (one session's tool use, result sizes); name the
+   fields used.
 2. **Days.** The rating comes from full days (`--full-days` leaves out
    today). For a proposal about something a recorded change touched, use the
-   full days since that change; with fewer than 2, keep the rating and say in
+   full days since that change (also when it is unclear whether the change
+   touched it); with fewer than 2, keep the rating and say in
    `news` that it is waiting and from which day (adding or dropping that line
    is an update). Rewrite a number that includes today with the full days'
    number when the two would give different ratings.
 3. **Numbers.** A number holds unless it moved by more than about a tenth
    (for a percentage under 10%, by more than about a point) or changed the
    rating; small drift is not a change.
-4. **Facts and reasoning.** Correct a fact other than a number that is now
-   wrong (a version, a setting's value), and rewrite reasoning the numbers no
-   longer support. Each is an update.
+4. **Facts and reasoning.** Open each proposal's `source` page once per run
+   and correct a fact that is now wrong (a version, a setting's value, a
+   price); rewrite reasoning the numbers no longer support. Each is an
+   update. Dollar figures come from cca, whose prices are the list prices
+   read on the date the summary prints; when the pricing page differs, rate
+   from cca's numbers and say so in the reply, rather than re-pricing by
+   hand.
 5. **Done.** When the user has carried the fix out, judge it in step 4 from
    the recorded change (offer `cca mark add` if its start was not recorded).
    Never keep it as "keep doing this": drop it if the problem is gone,

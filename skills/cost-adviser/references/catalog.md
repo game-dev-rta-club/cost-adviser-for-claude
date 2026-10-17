@@ -99,7 +99,9 @@ share, from the lower price per call. **Overall: 3.6.**
 some users, so it is worth showing as a choice to consider.
 
 **Ratings:** upkeep 5 stars; quality 1 star, because everyday work loses
-quality; savings 5 stars, estimated at about 30% from the lower price per call.
+quality; savings 5 stars, from the lower price per call: on the pricing page a smaller
+model can cost half as much per token or less, so moving most calls cuts a
+large share.
 **Overall: 2.9.**
 
 ## 9. Lower the effort level for all work
@@ -108,5 +110,5 @@ quality; savings 5 stars, estimated at about 30% from the lower price per call.
 share of the cost.
 
 **Ratings:** upkeep 5 stars; quality 1 star, because all work gets less
-thinking; savings 3 stars, estimated at about 4% in the example week, where
-output was 9% of the cost. **Overall: 2.5.**
+thinking; savings 3 stars, estimated at a little under half of output's share
+of the cost (about 4% in an example week where output was 9%). **Overall: 2.5.**
