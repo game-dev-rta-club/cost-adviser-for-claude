@@ -97,3 +97,13 @@ stale when tools and settings change.
 ```sh
 npm run check
 ```
+
+### Changing the skill
+
+Keep `skills/cost-adviser` short. It works best when it states the goal and
+what a good result looks like, and leaves the judgment to the agent; a list of
+narrow rules for every case makes it worse, because the rules start to
+contradict each other and crowd out the goal. When a run goes wrong, first
+cut words and make the goal clearer. Move a mechanical step into `cca` (a
+check, a warning, a number it can print), so the instructions need not say it.
+Add a rule only when that is not enough.

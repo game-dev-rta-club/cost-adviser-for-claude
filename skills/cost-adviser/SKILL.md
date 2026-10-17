@@ -5,208 +5,100 @@ description: Review what Claude Code conversations cost and keep a list of impro
 
 # Cost Adviser
 
-Review Claude Code cost and keep the improvement proposals on the report up to
-date. The report lists them under the projects, best first, each with stars,
-the action in one line and the details. The only writes are the report, the
-proposals (`cca advise`), and, when the user agrees, `cca mark add` and
-`cca decline add`.
+**The goal:** help the user spend less on Claude Code without losing quality.
+Keep a short list of proposals on the report. Each is a problem the numbers
+show now and one concrete fix, rated so the user can weigh it. Keep the list
+steady: from one run to the next it changes only where the numbers or the
+facts did, so that a change on the report means something.
 
-1. **Refresh.** Run `cca build`, then `cca summary` (add `--project NAME`
-   when asked). It has what the report shows: totals against the previous
-   period, each day, cost by model, calls by action as a tree, sessions and recorded
-   changes. `--tool "bash chill"` prints only that tool or group, day by day
-   (give `--tool` more than once to add several up).
-   Use `--json` when you need exact numbers. If `cca` is missing, say so and
-   stop. The summary ends with the options the user declined and the
-   proposals now shown (id, stars and action; `--json` has every field, which
-   step 5 needs). `cca collect --days 7` gives the raw rows by day, project,
-   tool and session for the same days, when the summary is not enough. Today
-   is still going, so its numbers are partial and grow between commands; each
-   output says when it read the data.
+The only writes are the proposals (`cca advise`) and, when the user agrees,
+`cca mark add` and `cca decline add`.
 
-   Then read the settings in effect: `~/.claude/settings.json`, and in each
-   project's folder `.claude/settings.json` and `.claude/settings.local.json`,
-   including settings per model and the `env` entries. The summary's Cost by
-   project shows each project's folder; `(temp)` gathers temporary folders and
-   has no settings of its own. Settings files are not all that is in effect:
-   a session can be started with its own model or effort (launch flags, such
-   as `--model` and `--effort`; `ps -axo command | grep -oE -- '--(model|effort)[= ][^ ]+' | sort | uniq -c`
-   counts them across running sessions; or `/model` inside it), and those win. A proposal about a setting starts from its
-   current value. The conversation running this review is in the data too.
-   When it is a subagent of a longer session, only the subagent's rows are the
-   review (marked subagent, with a session of the form `<parent>/agent-…`);
-   the rest is the user's work. Say which session it is when it is
-   among the top sessions.
-2. **Read.** Follow [reading.md](references/reading.md): find the signals,
-   each with its numbers, period and sample size.
-3. **Explain.** Match each signal to a principle in
-   [principles.md](references/principles.md), with its source, and to the
-   sample proposals in [catalog.md](references/catalog.md).
-4. **Check past changes.** For each recorded change, judge it with
-   [measuring.md](references/measuring.md); its verdict goes in the reply
-   (step 6), not in the proposals. Look for changes nobody recorded too:
-   the summary's Context jumps (a new compaction length, even on a day with
-   another recorded change) and Mix shifts (a model or effort over half of a
-   day). Name its
-   first day and offer `cca mark add` (again on each run until the user
-   records it; one line is enough); for a gradual shift, the first day is
-   the one Mix shifts names. When two changes share a first day,
-   the totals mix both: judge each by its own number (uses for a tool,
-   average context for the compaction length). The adviser keeps no stages: each run looks
-   at the numbers as they are.
-5. **Update the proposals.** Start from the proposals now shown and write the
-   whole list again to a JSON file, then run `cca advise FILE`. If it says
-   nothing is serving the report, start `cca serve` in the background.
-   It refuses a title over 40 characters, a summary over 200 or news over 300.
+## Steps
+
+1. **Look.** Run `cca build`, then `cca summary`. Its options narrow the view:
+   `--full-days` (leave out today, which is partial), `--tool NAME` (one tool
+   or group from the tree; repeat to add several), `--since`/`--until`,
+   `--project`, `--json`. Read the settings in effect: `~/.claude/settings.json`
+   and each project's `.claude/settings.json` and `.claude/settings.local.json`.
+   Launch flags win over them; count those of the running sessions with
+   `ps -axo command | grep -oE -- '--(model|effort)[= ][^ ]+' | sort | uniq -c`.
+   This review is in the data too, as a subagent of the session running it.
+2. **Find the problems.** Read the signals with
+   [reading.md](references/reading.md), explain each with a principle in
+   [principles.md](references/principles.md), and match it to a sample in
+   [catalog.md](references/catalog.md). Look first for fewer calls: every call
+   reads the whole conversation again, so cutting repeated calls saves far
+   more than making each one smaller.
+3. **Judge past changes** with [measuring.md](references/measuring.md): the
+   recorded ones, and those the summary spots (Context jumps, Mix shifts). The
+   summary says when a verdict is due. Offer `cca mark add` for one that is not
+   recorded.
+4. **Update the list** and save it with `cca advise FILE` (below). Start
+   `cca serve` in the background if it says nothing is serving the report.
+5. **Reply briefly** in the user's language: what changed in the list, each
+   change's verdict or the day it is due, the report link
+   (`http://127.0.0.1:7319/`), and what to watch next.
+
+## A good proposal
+
+- **A problem the numbers show now**, on full days, that the action would act
+  on for at least 1% of the cost. Smaller ones go in the reply.
+- **One action that is enough on its own**: the setting or file and what to
+  put there. Check it against the current docs and name the page for each
+  claim; a claim stays unless a page says otherwise. Never invent a setting,
+  and do not propose one already in place (say so if it is in place but not
+  taking effect).
+- **Within what the user decided.** Never propose a declined option or a close
+  variant; stay within the reason given ("about 500k is fine"). When the
+  numbers show the user chose something on purpose, ask before proposing to
+  undo it. Record a new refusal with `cca decline add`.
+- **Rated** 1–5 on upkeep (`ease`), quality kept (`safety`) and savings with
+  [ratings.md](references/ratings.md), starting from the closest catalog
+  sample. Measure savings with `cca simulate` when the proposal changes the
+  compaction length or the size of tool results.
+- **Reproducible.** Each number names the cca command and days it came from,
+  preferably one command rather than arithmetic by hand, so the next run can
+  measure it the same way.
+
+## Keeping the list steady
+
+- Use the same `id` for the same proposal. Measure each one again, and keep it
+  exactly as written, `news` included, while its numbers move less than about
+  a tenth (about a point for shares under 10%) and its facts and reasoning
+  hold. Otherwise change only what moved, and say what in `news`.
+- When a change is about what a proposal targets and there are fewer than 2
+  full days since, wait: keep the rating and say in `news` until when. If the
+  problem is already under 1% since the change, drop it; the change dealt
+  with it.
+- When the user has carried a fix out, drop it if the problem is gone, or turn
+  it into the next step. Never keep "keep doing this".
+- When the summary says cca's prices or counting changed, measure again; that
+  alone does not make an update.
+- Write in the language the proposals are in, unless the user asks otherwise.
 
 ```json
 {"proposals": [{
   "id": "compact-at-half-window",
-  "title": "A short name for the problem and its fix, up to 40 characters, e.g. Compact long conversations at half the window",
-  "summary": "Two or three lines, up to 200 characters: the problem the numbers show now and the fix. The list shows only the title and this; the rest opens on a click.",
-  "action": "Exactly what to do, in one line, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
-  "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
-  "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and the date (the day, or the summary's read-at time; not a guessed time). Keep it as it is on a kept proposal; replace or drop it when the proposal is updated.",
-  "project": "Optional: the project it is for; leave it out when it is for all",
+  "title": "Up to 40 characters, e.g. Compact long conversations at half the window",
+  "summary": "Up to 200 characters: the problem now and the fix. The list shows only the title and this.",
+  "action": "One line, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
+  "detail": "Why (the numbers, their share of cost, the principle), exactly what to change, what it should do to the numbers and how to tell. A blank line starts a paragraph.",
+  "news": "Optional, up to 300 characters: what moved since the last run, with the numbers and the date.",
+  "project": "Optional: the project it is for",
   "ratings": {"ease": 5, "safety": 4, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
   "link": {"period": "7d", "date": "2026-10-16", "focus": "cost-model"}
 }]}
 ```
 
-**Keep the list, change only what moved.** Use the same `id` for the same
-proposal every run. Check each proposal now shown in this order:
-
-1. **Method.** Each number names the command it came from. When that is a
-   way the references rule out (any number worked out by hand, added up or
-   subtracted, when one `cca summary --tool …` command shows it, a replay that includes today or crosses a
-   compaction change, a command cca now refuses), measure it again the
-   allowed way. That is an update. When the summary says the prices or the
-   way cca reads calls changed, measure every number again too; there, only
-   numbers that moved past step 3 make it an update. `cca collect` is the
-   source only for what
-   no summary view shows (one session's tool use, result sizes); name the
-   fields used.
-2. **Days.** The rating comes from full days (`--full-days` leaves out
-   today). For a proposal about something a change touched, use the full
-   days since that change. A change here is a recorded one, or one the
-   summary shows in Context jumps or Mix shifts. Quoting a change's Shares
-   line does not by itself make a proposal touched. A change touched it when it is about the same tool, setting
-   or project (a change to a tool also touches the text its hooks add; Text
-   added by hooks shows the command that sets each up). Only once there are
-   2 full days on each side does a move in the proposal's own number (its
-   share of the cost, past the threshold in step 3, between the full days
-   before and the full days since) also count; before that, a proposal the
-   change is not about is rated from all the full days as usual (read both from
-   `cca summary --full-days`: a tool's Around line in `--tool`, and the
-   Shares line under each recorded change for output, hook text and models;
-   both have the same number of full days on each side). With fewer than 2 full days
-   since, keep the rating and say in
-   `news` that it is waiting and from which day (adding or dropping that line
-   is an update). Any proposal in that state, new or shown before, needs the problem on
-   the full days since too: when its share there is under the floor below
-   (1%), the change has already dealt with it, so drop it and mention it in
-   the reply. Otherwise rate
-   it from all the full days in the window before the change and mark it
-   waiting the same way. Rewrite a number that
-   includes today with the full days'
-   number when the two would give different ratings.
-3. **Numbers.** A number holds unless it moved by more than about a tenth
-   (for a percentage under 10%, by more than about a point) or changed the
-   rating; small drift is not a change.
-4. **Facts and reasoning.** Each claim from the docs in a detail names its
-   page. Open `source` and every docs page the detail names once per run (the
-   principles' sources need not be opened again)
-   (for the Claude Code version, take the one the running sessions show in
-   `ps`) and correct a fact that is now wrong (a version, a setting's value, a
-   price, a claim about which session or example costs most, read again from
-   Examples); remove a claim only when a page says otherwise, not because the
-   page you opened does not mention it; rewrite reasoning the numbers no longer support. Each is an
-   update. Dollar figures come from cca, whose prices are the list prices
-   read on the date the summary prints; when the pricing page differs, rate
-   from cca's numbers and say so in the reply, rather than re-pricing by
-   hand.
-5. **Done.** When the user has carried the fix out, judge it in step 4 from
-   the recorded change (offer `cca mark add` if its start was not recorded).
-   Never keep it as "keep doing this": drop it if the problem is gone,
-   otherwise rewrite it as the next step (for example, a command still takes
-   a large share after its first cut).
-
-A proposal that passes all five stays exactly as it is, `news` included; it
-keeps its dates, and the report marks only what changed as New or Updated.
-An updated proposal says in `news` what changed, and changes only the parts
-that moved; numbers that hold stay as written. A proposal that adds up
-several commands quotes one `cca summary --tool A --tool B …`, so the next run
-gets the same number; a group and its parts come from the same command, since
-each command reads the data again. Copy the proposals from `cca summary --json`; `stars`,
-`since` and `updated` are worked out by `cca advise` and can stay or go.
-
-**Each proposal is a problem the numbers show now and the fix for it.** Then
-look for further problems: go through the signals and every sample in
-catalog.md again, not only the proposals now shown, and add each one that
-fits. A fit whose share of the cost (the part the proposal would act on, not its
-savings) is under 1% on the full days it is rated from (step 2) is not a
-proposal; mention it in the reply instead. Drop a proposal that no longer
-applies. `cca advise` prints what was added, updated, kept and removed.
-
-**Each proposal is one concrete action that is enough on its own**: the
-setting, file, skill or subagent to change and what to put there (a key and
-value, a line to add). Before naming a setting or feature, open its current
-docs page (the settings reference is long: ask for the one key, and read on
-with WebFetch's `offset` until it is found; if it is not, say the claim is
-not confirmed) and check the name, the accepted values, which models it applies to
-and what overrides it (a choice made inside a session can override the
-settings file); put the main page in `source` and name any other page beside the claim it backs in the detail. When no docs page confirms a claim,
-leave it out or say it is not confirmed. Do not propose a setting that is
-already in place; when it is in place but the numbers show it is not taking
-effect, say that instead.
-Never invent a setting. A value is a starting point: say what to watch to tune
-it. Rate each proposal 1–5 stars on each axis (upkeep is `ease`, quality kept is
-`safety`) with [ratings.md](references/ratings.md), starting from the closest sample in
-[catalog.md](references/catalog.md); the overall stars are their geometric
-mean to one decimal place. When a proposal changes the compaction length or
-the size of tool results, measure its savings with `cca simulate` rather than
-estimating them. Look first for fewer calls: every call reads the whole
-conversation again, so cutting repeated calls saves far more than making each
-one smaller. Proposals that trade quality for cost are still listed, so the
-user can weigh them.
-
-`link` takes the `cca link` options (project, period, date, metrics, tool,
-session, focus, item); reading.md says which fits each signal. Use
-`period: 7d` with today's date for the summary's 7 days. **Numbers the
-linked view shows must match it** when they are written: the report shows one
-period at a time, so quote that period's numbers, not another window's. A kept
-proposal keeps its numbers while they hold (see above), even if the view now
-shows a slightly different value. Numbers the view cannot
-show (before and after a change, one project's share) say where they come from.
-For every number in the detail, name the command and days it came from (for
-example `cca summary --tool "bash cat"`, 10/11–10/17), so the next run can
-work it out the same way and tell a real move from a different method.
-
-Write the proposals in the language the user asks for. Without a request, keep
-the language of the proposals now shown, or use the user's language for a
-first list. When the language changes, rewrite every proposal and say so once
-in its `news`.
-
-6. **Reply briefly**, in the language the user writes in (even when the
-   proposals are in another one). One line per proposal that is new or changed (or "no
-   change" when nothing moved), the verdict on each recorded change (or, when
-   the summary says it is too early, the day it gives), the report link (`http://127.0.0.1:7319/`), and what to
-   watch next and when. Offer to record a step's start with
-   `cca mark add YYYY-MM-DD "short name"`.
-
-**Respect what the user decided.** Never propose a declined option or a close
-variant of it; work within the reason given, and when the reason sets a limit
-(for example "about 500k is fine"), stay within it. When the numbers show the
-user changed something on purpose (a setting, the model or the effort), do not
-propose undoing it without asking about it in the detail. When the user turns an option
-down, record it with `cca decline add "<option>" --reason "<why>"`, and drop it
-from the list.
+`link` opens the report on the view the numbers come from (the `cca link`
+options; reading.md says which fits). Copy the current list from
+`cca summary --json`; `cca advise` works out the stars and dates.
 
 ## Do not
 
-- Give vague advice ("keep conversations short"). Turn the principle into an
-  action the user can take now, checked against the current docs.
-- Claim a cause the numbers do not show. Say "suggests", and name the
-  alternative explanation (a different mix of work, model or project).
-- Judge a change on too little data. Follow measuring.md.
+- Give vague advice ("keep conversations short").
+- Claim a cause the numbers do not show. Say "suggests", and name the other
+  explanation.
+- Judge a change on too little data.

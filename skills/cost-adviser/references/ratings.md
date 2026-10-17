@@ -61,34 +61,18 @@ cca simulate --tool-results 0.7       # tool results 30% shorter
 cca simulate --tool-results 0.7 --tool read --tool "bash cat"   # only these
 ```
 
-A proposal that shortens only some tools' results must name each of them with
-`--tool` in one run (a group works too, e.g. `"bash cat"`); shortening every
-result overstates it, and adding up separate runs misses how they interact
-through compaction. A result under 1% either way is within what the replay
-can tell apart: read it as no clear effect, savings 1 star. Rate from full
-days: add `--full-days`, which leaves out today (the 7 days become 6), since a
-partial today moves the result as the day fills. Use the 7 days, except when the
-compaction length changed inside them (simulate warns when the largest
-context jumped): it shapes every replay, so then every replay covers only the
-full days since the change (`--since DATE --full-days`). When that leaves fewer than 2 full days, keep the savings
-rating the proposal has, say in `news` that it is waiting for more days, and
-rate it again once there are 2. A short window under 2% reads as no clear
-effect. Shorter results
-can even come out a little more expensive over a few days, because they move
-where each conversation stands between compactions when it ends; read that as
-no clear effect too.
+Name each tool a proposal shortens with `--tool` in one run; shortening every
+result overstates it. Replay full days (`--full-days`), and when the
+compaction length changed inside them (simulate warns), only the days since
+(`--since DATE --full-days`), since that length shapes every replay. A result
+under 1% either way, or one where shorter results cost a little more, is no
+clear effect: savings 1 star. The replay leaves out cache rebuilds, so rate by
+the percentage, not the dollars. For one step down from the current
+compaction length, give the length after the step.
 
-Add `--project NAME` for a proposal about one project, and `--days N` to change
-the window (7 days by default, the same days as the summary). The replay
-compares against the conversations as they ran, not against the current
-setting: it prints the length they really compacted at. If the setting changed
-during the window, cover only the days since (see above); for one step down
-from the current compaction length, give the length after the step. The
-replay leaves out cache rebuilds (a conversation reread after the cache
-expired), so its cost is below the recorded cost; rate by the percentage, not
-by the dollar amounts. For other proposals, estimate the cut from the share of
-cost the proposal touches and how much of it goes away: halving a command that
-takes 26% of the cost cuts about 13%.
+For other proposals, estimate the cut from the share of cost the proposal
+touches and how much of it goes away: halving a command that takes 26% of the
+cost cuts about 13%.
 
 ### Fewer tool calls save far more than smaller ones
 
