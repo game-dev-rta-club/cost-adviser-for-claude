@@ -174,7 +174,7 @@ function moreButtons(id,shown,total,step){$(id).innerHTML=`${shown<total?`<butto
 const CHILD_LIMIT=8;
 function findNode(id){let node=toolTree();for(const tk of tokens(id)){node=node.children.get(tk.text);if(!node)return null;}return node;}
 function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),shown=top.slice(0,state.toolLimit),out=[];
- $('#tools-note').innerHTML=`${toolRows().length} actions · ${usd(total)}${state.scope?` <button type="button" class="scope-chip" data-clear-scope title="Show all">${esc(state.scope.label)} ✕</button>`:''}`;
+ $('#tools-note').innerHTML=`${toolRows().length} actions · ${usd(total)}${state.scope?` <button type="button" class="scope-chip" data-clear-scope title="Show all">${esc(cut(state.scope.label,32))} ✕</button>`:''}`;
  const row=(n,rank)=>{const share=total?n.cost/total:0,list=kids(n),leaf=!list.length,open=!leaf&&isOpen(n),sel=state.tool===n.id;
   out.push(`<tr class="tool ${sel?'is-focus':''} ${leaf?'is-leaf':''}" data-tool="${esc(n.id)}"><td class="num">${rank||''}</td><td class="tool-name" style="padding-left:${8+(n.depth-1)*18}px"><span class="caret">${leaf?'':open?'▾':'▸'}</span>${esc(n.text)}</td><td class="num"><span class="share"><i style="width:${Math.max(2,share*90)}px"></i>${usd(n.cost)} <small>${Math.round(share*100)}%</small></span></td><td class="num">${num(n.count)}</td></tr>`);
   if(leaf&&sel){const ex=[...new Set(n.keys)].flatMap(k=>D.examples[k]||[]).filter(e=>state.scope?.kind!=='session'||e.session===state.scope.id).sort((a,b)=>b.result-a.result).slice(0,6);
