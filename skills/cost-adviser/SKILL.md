@@ -26,7 +26,9 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    Then read the settings in effect: `~/.claude/settings.json`, and in each
    project's folder `.claude/settings.json` and `.claude/settings.local.json`,
    including settings per model and the `env` entries. The summary's sessions
-   show each project's folder. A proposal about a setting starts from its
+   show each project's folder. Settings files are not all that is in effect:
+   a session can be started with its own model or effort (launch flags, such
+   as `--model` and `--effort` in `ps`, or `/model` inside it), and those win. A proposal about a setting starts from its
    current value. The conversation running this review is in the data too.
    When it is a subagent of a longer session, only the subagent's rows are the
    review; the rest is the user's work. Say which session it is when it is
@@ -38,7 +40,10 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    sample proposals in [catalog.md](references/catalog.md).
 4. **Check past changes.** For each recorded change, judge it with
    [measuring.md](references/measuring.md); its verdict goes in the reply
-   (step 6), not in the proposals. The adviser keeps no stages: each run looks
+   (step 6), not in the proposals. Look for changes nobody recorded too: a
+   jump in the largest context in By day (a new compaction length), or a
+   shift in the model or effort mix. Name its first day and offer
+   `cca mark add`. The adviser keeps no stages: each run looks
    at the numbers as they are.
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says
@@ -61,7 +66,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 **Keep the list, change only what moved.** Use the same `id` for the same
 proposal every run. Leave a proposal that is still to do as it is when its
-numbers and advice still hold. A number holds unless it moved by more than about a tenth (for a
+numbers and advice still hold. Judge a window that includes today on its full days; today only
+confirms. A number holds unless it moved by more than about a tenth (for a
 percentage under 10%, by more than about a point) or changed the rating; small
 drift, such as from today being partial, is not a change. Reasoning that the
 numbers no longer support is a change too. It
@@ -110,7 +116,9 @@ For every number in the detail, name the command and days it came from (for
 example `cca summary --tool "bash cat"`, 10/11–10/17), so the next run can
 work it out the same way and tell a real move from a different method.
 
-Write the proposals in the user's language.
+Write the proposals in the language the user asks for, otherwise in the
+user's language. When the language changes, rewrite every proposal and say so
+once in its `news`.
 
 6. **Reply briefly.** One line per proposal that is new or changed (or "no
    change" when nothing moved), the verdict on each recorded change (or when

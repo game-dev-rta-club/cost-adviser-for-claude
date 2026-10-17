@@ -46,3 +46,9 @@ A ratio missing from the summary means the period had too little use (under 10
 minutes or 10 calls). Say so instead of reading it as zero.
 
 Before naming a signal, filter by project: one busy project can move the total.
+
+A signal with no sample in catalog.md and no way to measure it (one session
+taking most of the cost, a large final-reply share) goes in the reply as an
+observation, not as a proposal. Setting keys are on the settings reference
+page (https://code.claude.com/docs/en/settings-reference); it is long, so look for the
+key by name.

@@ -65,7 +65,9 @@ A proposal that shortens only some tools' results must name each of them with
 `--tool` in one run (a group works too, e.g. `"bash cat"`); shortening every
 result overstates it, and adding up separate runs misses how they interact
 through compaction. A result under 1% either way is within what the replay
-can tell apart: read it as no clear effect, savings 1 star. Shorter results
+can tell apart: read it as no clear effect, savings 1 star. A replay over a
+few days that include today moves as the day fills; rate from the 7-day
+replay, and treat a short window under 2% as no clear effect. Shorter results
 can even come out a little more expensive over a few days, because they move
 where each conversation stands between compactions when it ends; read that as
 no clear effect too.
