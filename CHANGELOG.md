@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 — 2026-10-17
+
+- The skill takes the numbers as clues and then looks at what happened in the conversations behind them, so each proposal names the cause it saw there.
+
 ## 0.1.1 — 2026-10-17
 
 - The skill's goal is the reply: it tells you what to change, one short numbered item per proposal, each with a link that opens its card on the report.
