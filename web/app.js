@@ -187,13 +187,13 @@ function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),show
  moreButtons('#tools-more',shown.length,top.length,10);}
 // Sessions as a tree: All, each project, then its sessions. Picking a row
 // narrows Calls by action to it, and All shows everything again; the caret only
-// opens or closes a project. Every project starts open.
+// opens or closes a project. Every project starts closed.
 const SESSION_CHILDREN=5,cut=(t,n)=>t.length>n?t.slice(0,n-1)+'…':t;
 function renderSessions(){const m=new Map();for(const s of D.sessions.filter(s=>inProject(s)&&inPeriod(s))){const t=m.get(s.session)||{...s,calls:0,cost:0,activeMs:0};t.calls+=s.calls;t.cost+=s.cost;t.activeMs+=s.activeMs;t.first=Math.min(t.first,s.first);t.last=Math.max(t.last,s.last);m.set(s.session,t);}
  const by=(a,b)=>b[state.ssort]-a[state.ssort],groups=new Map();
  for(const s of m.values()){const g=groups.get(s.project)||{project:s.project,calls:0,cost:0,activeMs:0,sessions:[]};g.calls+=s.calls;g.cost+=s.cost;g.activeMs+=s.activeMs;g.sessions.push(s);groups.set(s.project,g);}
  const list=[...groups.values()].sort(by),shown=list.slice(0,state.sessionLimit),picked=(kind,id)=>state.scope?.kind===kind&&state.scope.id===id,out=[];
- const open=g=>state.sessOpen.get(g.project)??true,sum=k=>list.reduce((t,g)=>t+g[k],0);
+ const open=g=>state.sessOpen.get(g.project)??false,sum=k=>list.reduce((t,g)=>t+g[k],0);
  if(list.length)out.push(`<tr class="tool sess-all${state.scope?'':' is-focus'}" data-scope-all><td class="tool-name"><b>All</b> <small>${list.length} project${list.length===1?'':'s'}</small></td><td class="num">${num(sum('calls'))}</td><td class="num">${usd(sum('cost'))}</td><td class="num">${hrs(sum('activeMs'))}</td></tr>`);
  shown.forEach(g=>{const o=open(g);
   out.push(`<tr class="tool sess-project${picked('project',g.project)?' is-focus':''}" data-scope-project="${esc(g.project)}"><td class="tool-name" style="padding-left:20px"><span class="caret" data-sess-toggle="${esc(g.project)}">${o?'▾':'▸'}</span><b>${esc(g.project)}</b> <small>${g.sessions.length} session${g.sessions.length===1?'':'s'}</small></td><td class="num">${num(g.calls)}</td><td class="num">${usd(g.cost)}</td><td class="num">${hrs(g.activeMs)}</td></tr>`);
@@ -213,7 +213,7 @@ document.addEventListener('click',e=>{const t=e.target;
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
  const m=t.closest('[data-metric]');if(m){const set=state.shown[m.dataset.chart],id=m.dataset.metric;if(set.has(id)&&set.size>1)set.delete(id);else set.add(id);saveShown();renderChart();return;}
  const s=t.closest('[data-sort]');if(s){state.sort=s.dataset.sort;document.querySelectorAll('[data-sort]').forEach(b=>b.setAttribute('aria-pressed',b===s));renderTools();return;}
- const st=t.closest('[data-sess-toggle]');if(st){const id=st.dataset.sessToggle;state.sessOpen.set(id,!(state.sessOpen.get(id)??true));renderSessions();return;}
+ const st=t.closest('[data-sess-toggle]');if(st){const id=st.dataset.sessToggle;state.sessOpen.set(id,!(state.sessOpen.get(id)??false));renderSessions();return;}
  const sm=t.closest('[data-sess-more]');if(sm){state.sessMore.add(sm.dataset.sessMore);renderSessions();return;}
  const sa=t.closest('[data-scope-all]');if(sa){state.scope=null;state.tool=null;renderSessions();renderTools();return;}
  const cs=t.closest('[data-clear-scope]');if(cs){e.preventDefault();state.scope=null;renderSessions();renderTools();return;}
