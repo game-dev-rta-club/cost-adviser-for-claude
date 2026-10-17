@@ -7,18 +7,18 @@ week, except where they are marked as estimates. Rate them by
 summary lists declined proposals. Check the name and value of every setting
 against its current documentation before proposing it.
 
-Cost is the number of calls × what each call reads × the price per token, plus
-the cache written again after it expires. So the samples come under five
-angles; go through each, since a problem under one angle does not show under
-another:
+Cost is the number of calls × what each call reads on average × the price per
+token, plus the cache written again after it expires. So the samples come
+under four angles; go through each, since a problem under one angle does not
+show under another:
 
 - **A. Fewer calls.** Every call reads the whole conversation again, so this
   usually saves the most.
-- **B. Smaller calls.** Less read on each call.
-- **C. Calls in a fresh agent.** The same work in a short conversation, where
-  each call reads far less.
-- **D. A lower price.** A cheaper model or less thinking.
-- **E. The cache kept.** Less written again after a break.
+- **B. Less read per call, on average.** Two ways: keep the conversation
+  small, or move the calls out of it, so that tool use a long conversation
+  would do is done by an agent that starts with little context.
+- **C. A lower price.** A cheaper model or less thinking.
+- **D. The cache kept.** Less written again after a break.
 
 ## A. Fewer calls
 
@@ -51,7 +51,9 @@ once.
 one call instead of three, for a third of lookups that take 19% of the cost,
 cuts about 4%. **Overall: 3.6.**
 
-## B. Smaller calls
+## B. Less read per call, on average
+
+### Keep the conversation small
 
 ## 3. Make tool results smaller
 
@@ -108,7 +110,7 @@ above the current length (for example "about 500,000 is fine").
 **Ratings:** upkeep 5 stars; quality 3 stars; savings 3 stars in the example
 week, where one step from 500,000 to 450,000 cut about 4.1%. **Overall: 3.6.**
 
-## C. Calls in a fresh agent
+### Move tool use to an agent with little context
 
 ## 7. Hand self-contained runs of tool calls to a fresh agent
 
@@ -152,7 +154,7 @@ the context smaller and the subagent's own calls cost money too.
 things; savings 5 stars, estimated at about 10% when those calls take a large
 share, from the lower price per call. **Overall: 3.6.**
 
-## D. A lower price
+## C. A lower price
 
 ## 10. Use a smaller model by default
 
@@ -187,7 +189,7 @@ the cache, so it pays off when consultations are few.
 does the work; savings 4 stars, an estimate: less than moving to the lighter
 model outright, because of the consultations. **Overall: 3.4.**
 
-## E. The cache kept
+## D. The cache kept
 
 ## 13. Compact before a long break instead of letting the cache expire
 

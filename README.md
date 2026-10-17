@@ -51,7 +51,7 @@ ln -s "$PWD/skills/cost-adviser" ~/.claude/skills/cost-adviser
 - `references/principles.md`: the principles, each with its source.
 - `references/measuring.md`: how to judge whether a change helped.
 - `references/ratings.md`: how a proposal is rated.
-- `references/catalog.md`: sample proposals, already rated, under five angles: fewer calls, smaller calls, calls in a fresh agent, a lower price, the cache kept.
+- `references/catalog.md`: sample proposals, already rated, under four angles: fewer calls, less read per call (a smaller conversation, or tool use moved to an agent with little context), a lower price, the cache kept.
 
 ### How proposals are rated
 

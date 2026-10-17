@@ -28,10 +28,11 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
 2. **Find the problems.** Read the signals with
    [reading.md](references/reading.md), explain each with a principle in
    [principles.md](references/principles.md), and match it to a sample in
-   [catalog.md](references/catalog.md). Go through its five angles: fewer
-   calls, smaller calls, calls in a fresh agent, a lower price, the cache
-   kept. Fewer calls usually saves the most, since every call reads the whole
-   conversation again.
+   [catalog.md](references/catalog.md). Go through its four angles: fewer
+   calls, less read per call (a smaller conversation, or tool use moved to an
+   agent with little context), a lower price, the cache kept. Fewer calls
+   usually saves the most, since every call reads the whole conversation
+   again.
 3. **Judge past changes** with [measuring.md](references/measuring.md): the
    recorded ones, and those the summary spots (Context jumps, Mix shifts). The
    summary says when a verdict is due. Offer `cca mark add` for one that is not
