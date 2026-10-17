@@ -88,12 +88,15 @@ proposal every run. Check each proposal now shown in this order:
    full days since that change. A change touched it when the proposal's own
    number (its share of the cost) moved past the threshold in step 3 between
    the full days before and the full days since (read both from
-   `cca summary --full-days`, whose Around line has the same number of full
-   days on each side). With fewer than 2 full days
+   `cca summary --full-days`: a tool's Around line in `--tool`, and the
+   Shares line under each recorded change for output, hook text and models;
+   both have the same number of full days on each side). With fewer than 2 full days
    since, keep the rating and say in
    `news` that it is waiting and from which day (adding or dropping that line
-   is an update). A new proposal in that state is rated from the full days
-   before the change and marked waiting the same way. Rewrite a number that
+   is an update). A new proposal in that state needs the problem on the full days since
+   too: when its share there is under the floor below (1%), the change has
+   already dealt with it, so mention it in the reply instead. Otherwise rate
+   it from the full days before the change and mark it waiting the same way. Rewrite a number that
    includes today with the full days'
    number when the two would give different ratings.
 3. **Numbers.** A number holds unless it moved by more than about a tenth
@@ -101,7 +104,8 @@ proposal every run. Check each proposal now shown in this order:
    rating; small drift is not a change.
 4. **Facts and reasoning.** Open each proposal's `source` page once per run
    and correct a fact that is now wrong (a version, a setting's value, a
-   price); rewrite reasoning the numbers no longer support. Each is an
+   price, a claim about which session or example costs most, read again from
+   Examples); rewrite reasoning the numbers no longer support. Each is an
    update. Dollar figures come from cca, whose prices are the list prices
    read on the date the summary prints; when the pricing page differs, rate
    from cca's numbers and say so in the reply, rather than re-pricing by
@@ -114,7 +118,8 @@ proposal every run. Check each proposal now shown in this order:
 
 A proposal that passes all five stays exactly as it is, `news` included; it
 keeps its dates, and the report marks only what changed as New or Updated.
-An updated proposal says in `news` what changed. A proposal that adds up
+An updated proposal says in `news` what changed, and changes only the parts
+that moved; numbers that hold stay as written. A proposal that adds up
 several commands quotes one `cca summary --tool A --tool B …`, so the next run
 gets the same number. Copy the proposals from `cca summary --json`; `stars`,
 `since` and `updated` are worked out by `cca advise` and can stay or go.

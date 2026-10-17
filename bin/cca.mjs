@@ -117,6 +117,9 @@ const [command, ...rest] = process.argv.slice(2);
 const {values, positionals} = options(rest);
 // Only simulate shortens several tools at once; elsewhere --tool names one.
 if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail('--tool takes one tool or group here.');
+// Options another command takes are refused rather than quietly ignored.
+for (const [name, commands] of [['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
+  if (values[name] !== undefined && !commands.includes(command)) fail(`--${name} is for ${commands.join('/')} only.`);
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
 
