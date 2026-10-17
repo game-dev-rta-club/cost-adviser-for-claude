@@ -124,3 +124,27 @@ test('compaction is split out: the estimated summary and the cache write after i
   assert.ok(Math.abs(tools['(compacting)'].cost - summary - rebuild) < 1e-3);
   assert.ok(Math.abs(data.tools.reduce((s, t) => s + t.cost, 0) - row.cost) < 1e-3);
 });
+
+test('hook text is counted once and costs a write, then a read per later call until compaction', async () => {
+  const root = await tempDir();
+  const hook = (uuid, minute) => ({type: 'attachment', uuid, timestamp: at(minute), attachment: {type: 'hook_additional_context', content: ['x'.repeat(2750)], hookEvent: 'PostToolUse'}});
+  const entries = [
+    assistant({id: 'm1', at: at(0), cacheRead: 1000, output: 10}),
+    hook('h1', 1),
+    assistant({id: 'm2', at: at(2), cacheRead: 1000, output: 10}),
+    assistant({id: 'm3', at: at(3), cacheRead: 1000, output: 10}),
+    {type: 'system', subtype: 'compact_boundary', timestamp: at(4), compactMetadata: {trigger: 'auto', preTokens: 3000}},
+    assistant({id: 'm4', at: at(5), cacheRead: 1000, output: 10}),
+  ];
+  await writeTranscript(root, 'p/a.jsonl', entries);
+  // A resumed copy repeats the same entries; they count once.
+  await writeTranscript(root, 'p/b.jsonl', entries);
+  const data = await collect({root, days: 30, now: NOW});
+  assert.equal(data.hooks.length, 1);
+  const [h] = data.hooks;
+  assert.equal(h.hook, 'PostToolUse');
+  assert.equal(h.count, 1);
+  assert.equal(h.chars, 2750);
+  // 1000 tokens: written once on m2, read on m3, gone after the compaction.
+  assert.ok(Math.abs(h.cost - (1000 * 5 * 1.25 + 1000 * 5 * 0.1) / 1e6) < 1e-4);
+});

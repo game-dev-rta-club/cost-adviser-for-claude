@@ -25,8 +25,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
    Then read the settings in effect: `~/.claude/settings.json`, and in each
    project's folder `.claude/settings.json` and `.claude/settings.local.json`,
-   including settings per model and the `env` entries. The summary's sessions
-   show each project's folder. Settings files are not all that is in effect:
+   including settings per model and the `env` entries. The summary's Cost by
+   project shows each project's folder. Settings files are not all that is in effect:
    a session can be started with its own model or effort (launch flags, such
    as `--model` and `--effort` in `ps`, or `/model` inside it), and those win. A proposal about a setting starts from its
    current value. The conversation running this review is in the data too.
@@ -43,7 +43,9 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    (step 6), not in the proposals. Look for changes nobody recorded too:
    the summary's Context jumps (a new compaction length, even on a day with
    another recorded change), or a shift in the model or effort mix. Name its
-   first day and offer `cca mark add`. When two changes share a first day,
+   first day and offer `cca mark add`; for a gradual shift, the first day is
+   the first one where the new value is over half of the day (for example,
+   high effort over half of the cost). When two changes share a first day,
    the totals mix both: judge each by its own number (uses for a tool,
    average context for the compaction length). The adviser keeps no stages: each run looks
    at the numbers as they are.
@@ -68,7 +70,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 **Keep the list, change only what moved.** Use the same `id` for the same
 proposal every run. Leave a proposal that is still to do as it is when its
-numbers and advice still hold. Judge a window that includes today on its full days; today only
+numbers and advice still hold. A fact other than a number that is now wrong
+(a version, a setting's value) is corrected, and that counts as an update. Judge a window that includes today on its full days; today only
 confirms. A number holds unless it moved by more than about a tenth (for a
 percentage under 10%, by more than about a point) or changed the rating; small
 drift, such as from today being partial, is not a change. Reasoning that the
@@ -91,7 +94,7 @@ removed.
 **Each proposal is one concrete action that is enough on its own**: the
 setting, file, skill or subagent to change and what to put there (a key and
 value, a line to add). Before naming a setting or feature, open its current
-docs page and check the name, the accepted values, which models it applies to
+docs page (the settings reference is long: ask for the one key) and check the name, the accepted values, which models it applies to
 and what overrides it (a choice made inside a session can override the
 settings file); put that page in `source`. When no docs page confirms a claim,
 leave it out or say it is not confirmed. Do not propose a setting that is
@@ -125,9 +128,10 @@ the language of the proposals now shown, or use the user's language for a
 first list. When the language changes, rewrite every proposal and say so once
 in its `news`.
 
-6. **Reply briefly.** One line per proposal that is new or changed (or "no
-   change" when nothing moved), the verdict on each recorded change (or when
-   to look again), the report link (`http://127.0.0.1:7319/`), and what to
+6. **Reply briefly**, in the language the user writes in (even when the
+   proposals are in another one). One line per proposal that is new or changed (or "no
+   change" when nothing moved), the verdict on each recorded change (or, when
+   the summary says it is too early, the day it gives), the report link (`http://127.0.0.1:7319/`), and what to
    watch next and when. Offer to record a step's start with
    `cca mark add YYYY-MM-DD "short name"`.
 

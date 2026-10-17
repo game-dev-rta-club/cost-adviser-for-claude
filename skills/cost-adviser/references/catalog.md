@@ -34,7 +34,9 @@ week, where `cca simulate --tool-results 0.7` (results 30% shorter) cut 2.1%
 
 **Propose it when** the same text is added to every call, or a large fixed
 instruction is loaded in every conversation. Adding the text only when it has
-changed works too.
+changed works too. The summary's "Text added by hooks" shows each hook's
+count, average length and estimated share of cost by day; text a skill or
+CLAUDE.md loads is not in it.
 
 **Ratings:** upkeep 3 stars; quality 5 stars; savings 1 star, usually under 1%
 for the reason in "Making the context smaller saves little". **Overall: 2.5.**

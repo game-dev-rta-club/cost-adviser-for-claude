@@ -65,11 +65,15 @@ A proposal that shortens only some tools' results must name each of them with
 `--tool` in one run (a group works too, e.g. `"bash cat"`); shortening every
 result overstates it, and adding up separate runs misses how they interact
 through compaction. A result under 1% either way is within what the replay
-can tell apart: read it as no clear effect, savings 1 star. A replay over a
-few days that include today moves as the day fills; rate from the 7-day
-replay, and treat a short window under 2% as no clear effect. The exception is
-a proposal about the compaction length when that setting changed inside the
-7 days: there, the days since the change decide (see below). Shorter results
+can tell apart: read it as no clear effect, savings 1 star. Rate from full
+days: add `--full-days`, which ends the replay at yesterday, since a partial
+today moves the result as the day fills. Use the 7 days, except when the
+compaction length changed inside them: it shapes every replay, so then every
+replay covers only the full days since the change (`--days` with
+`--full-days`). When that leaves fewer than 2 full days, keep the savings
+rating the proposal has, say in `news` that it is waiting for more days, and
+rate it again once there are 2. A short window under 2% reads as no clear
+effect. Shorter results
 can even come out a little more expensive over a few days, because they move
 where each conversation stands between compactions when it ends; read that as
 no clear effect too.
@@ -78,7 +82,7 @@ Add `--project NAME` for a proposal about one project, and `--days N` to change
 the window (7 days by default, the same days as the summary). The replay
 compares against the conversations as they ran, not against the current
 setting: it prints the length they really compacted at. If the setting changed
-during the window, use `--days` to cover only the days since; for one step down
+during the window, cover only the days since (see above); for one step down
 from the current compaction length, give the length after the step. The
 replay leaves out cache rebuilds (a conversation reread after the cache
 expired), so its cost is below the recorded cost; rate by the percentage, not
