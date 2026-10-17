@@ -47,7 +47,9 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 ```json
 {"proposals": [{
   "id": "compact-at-half-window",
-  "action": "The conclusion in one line: exactly what to do, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
+  "title": "A short name for the problem and its fix, up to 40 characters, e.g. Compact long conversations at half the window",
+  "summary": "Two or three lines, up to 200 characters: the problem the numbers show now and the fix. The list shows only the title and this; the rest opens on a click.",
+  "action": "Exactly what to do, in one line, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
   "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
   "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Leave it out when nothing moved.",
   "project": "Optional: the project it is for; leave it out when it is for all",
@@ -67,12 +69,14 @@ then keeps its dates, and the report marks only what changed as New or
 Updated. Copy the proposals from `cca summary --json`; `stars`, `since` and
 `updated` are worked out by `cca advise` and can stay or go. Update its detail when the numbers moved, put what is worth noticing
 in `news`, add a proposal for a new finding, and drop one that no longer
-applies. **The list holds only what is still to do.** When the user has
-carried a proposal out, or it is already in place, drop it: offer
-`cca mark add` if its start was not recorded, and judge it in step 4 from the
-recorded change. Then look for the next improvement: go through the signals
-and every sample in catalog.md again, not only the proposals now shown, and
-add each one that fits. `cca advise` prints what was added, updated, kept and
+applies. **Each proposal is a problem the numbers show now and the fix for
+it.** When the user has carried a fix out, judge it in step 4 from the
+recorded change (offer `cca mark add` if its start was not recorded). If the
+problem is gone, drop the proposal. If it remains, propose the next step for
+it (for example, a command still takes a large share after its first cut);
+do not list a fix as if it were still to do. Then look for further problems:
+go through the signals and every sample in catalog.md again, not only the
+proposals now shown, and add each one that fits. `cca advise` prints what was added, updated, kept and
 removed.
 
 **Each proposal is one concrete action that is enough on its own**: the

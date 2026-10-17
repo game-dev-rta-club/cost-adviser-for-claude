@@ -30,7 +30,7 @@ Commands:
   advise <file.json>    Replace the improvement proposals listed under the projects
                         (the report is rebuilt). A proposal keeps its dates while
                         its content stays the same. --clear removes them.
-                        {"proposals": [{"id", "action", "detail", "news", "project",
+                        {"proposals": [{"id", "title", "summary", "action", "detail", "news", "project",
                          "ratings": {"ease","safety","savings": 1-5 stars},
                          "source": "https://...", "link": {<link options>}}]}
   summary               Print this period against the one before: each day, cost by

@@ -24,7 +24,7 @@ const DEFAULT_SHOWN={totals:['cost','activeMs','calls'],stats:['perHour','perCal
 const loadShown=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem('cca.shown')||'{}');}catch{}
  return Object.fromEntries(Object.entries(DEFAULT_SHOWN).map(([k,v])=>[k,new Set(Array.isArray(saved[k])?saved[k]:v)]));};
 const saveShown=()=>{try{localStorage.setItem('cca.shown',JSON.stringify(Object.fromEntries(Object.entries(state.shown).map(([k,v])=>[k,[...v]]))));}catch{}};
-const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,showLow:false,shown:loadShown()};
+const state={ssort:'cost',project:'all',period:'day',key:null,tool:null,sort:'cost',filter:'',toolLimit:10,sessionLimit:5,toggled:new Map(),moreTree:new Set(),allProjects:false,starsOn:new Set([5,4]),shown:loadShown()};
 // Ratios from a small sample mislead, so they are hidden below this much use.
 const MIN_ACTIVE_MS=10*60000,MIN_CALLS=10;
 const enough=a=>a.activeMs>=MIN_ACTIVE_MS&&a.calls>=MIN_CALLS;
@@ -190,7 +190,7 @@ function render(){renderProjects();renderProposals();renderChart();renderProfile
 const resetLimits=()=>{state.toolLimit=10;state.sessionLimit=5;state.tool=null;};
 document.addEventListener('click',e=>{const t=e.target;
  const all=t.closest('[data-all-projects]');if(all){state.allProjects=!state.allProjects;renderProjects();return;}
- const sl=t.closest('[data-show-low]');if(sl){state.showLow=!state.showLow;renderProposals();return;}
+ const sf=t.closest('[data-stars]');if(sf){const n=+sf.dataset.stars;state.starsOn.has(n)?state.starsOn.delete(n):state.starsOn.add(n);renderProposals();return;}
  const p=t.closest('[data-project]');if(p){state.project=p.dataset.project;resetLimits();render();return;}
  const per=t.closest('[data-p]');if(per){state.period=per.dataset.p;state.key=null;resetLimits();document.querySelectorAll('#period button').forEach(b=>b.setAttribute('aria-pressed',b===per));render();return;}
  const g=t.closest('[data-key]');if(g){state.key=g.dataset.key;resetLimits();render();return;}
@@ -249,17 +249,20 @@ const ratingTags=r=>`<dl class="ratings">${Object.keys(RATING_NAMES).filter(k=>r
 // The latest run's changes are marked, so a reader sees what moved since last time.
 const LATEST=PROPOSALS.reduce((d,p)=>p.updated>d?p.updated:d,'');
 const mark=p=>p.updated===LATEST?` <em>${p.since===p.updated?'New':'Updated'}</em>`:'';
-// Proposals under 3 stars (usually ones that cost quality) stay folded until asked for.
-const LOW=3;
+// Proposals are filtered by whole stars (4.6 counts as 4); 5 and 4 show at first.
+const bucket=p=>Math.max(1,Math.min(5,Math.floor(p.stars)));
+const titleOf=p=>p.title||p.action;
 const visibleProposals=()=>PROPOSALS.filter(p=>!p.project||state.project==='all'||p.project===state.project).sort((a,b)=>b.stars-a.stars);
 let activeProposal=null;
 // Each card opens its details in a card at the lower right (#proposal=ID), so
 // the list stays short and the view it is about is highlighted beside it.
-function renderProposals(){const all=visibleProposals(),low=all.filter(p=>p.stars<LOW&&p.id!==activeProposal).length,list=state.showLow?all:all.filter(p=>p.stars>=LOW||p.id===activeProposal);
- $('#proposals').innerHTML=all.length?`<h2>Improvements</h2>${list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
+function renderProposals(){const all=visibleProposals(),list=all.filter(p=>state.starsOn.has(bucket(p))||p.id===activeProposal);
+ const count=n=>all.filter(p=>bucket(p)===n).length;
+ const filter=`<div class="star-filter" role="group" aria-label="Show proposals by stars">${[5,4,3,2,1].map(n=>`<button type="button" data-stars="${n}" aria-pressed="${state.starsOn.has(n)}"${count(n)?'':' class="is-empty"'}>★${n}<small>${count(n)}</small></button>`).join('')}</div>`;
+ $('#proposals').innerHTML=all.length?`<h2>Improvements</h2>${filter}${list.length?list.map(p=>`<a class="proposal${activeProposal===p.id?' is-active':''}" href="#proposal=${encodeURIComponent(p.id)}" data-proposal="${esc(p.id)}">
   <span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span>
-  <strong>${esc(p.action)}</strong>${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
-  ${p.news?`<span class="proposal-news">${esc(p.news)}</span>`:''}<span class="proposal-more">Details ›</span></a>`).join('')}${low?`<button type="button" class="more-proposals" data-show-low>${state.showLow?'Hide ★1–2':`Show ★1–2 (${low})`}</button>`:''}`:'';}
+  <strong>${esc(titleOf(p))}</strong>${p.summary?`<span class="proposal-summary">${esc(p.summary)}</span>`:''}${p.project&&state.project==='all'?`<small class="proposal-project">${esc(p.project)}</small>`:''}
+  <span class="proposal-more">Details ›</span></a>`).join(''):'<p class="proposal-none">No proposals with these stars. Turn on more above.</p>'}`:'';}
 const callout=document.createElement('aside');callout.className='callout';callout.hidden=true;callout.setAttribute('aria-live','polite');document.body.append(callout);
 // The card stays in a corner; the item it is about is scrolled into the upper
 // part of the window, so the card does not cover it.
@@ -268,7 +271,8 @@ function showProposal(id){const p=PROPOSALS.find(x=>x.id===id);if(!p)return hide
  const anchor=applyView(new URLSearchParams(p.link||{}));
  const list=visibleProposals(),i=list.findIndex(x=>x.id===id),prev=list[i-1],next=list[i+1];
  callout.innerHTML=`<header><span class="stars" role="img" aria-label="Recommended ${p.stars} of 5">${overallText(p.stars)}${mark(p)}</span><button type="button" data-callout-close aria-label="Close">✕</button></header>
-  <h3>${esc(p.action)}</h3>${p.project?`<small class="proposal-project">${esc(p.project)}</small>`:''}
+  <h3>${esc(titleOf(p))}</h3>${p.project?`<small class="proposal-project">${esc(p.project)}</small>`:''}
+  ${p.summary?`<p class="callout-summary">${esc(p.summary)}</p>`:''}${p.title&&p.action?`<p class="callout-action"><b>What to do</b>${esc(p.action)}</p>`:''}
   ${p.news?`<p class="proposal-news">${esc(p.news)}</p>`:''}${p.detail?`<p class="callout-detail">${esc(p.detail)}</p>`:''}${ratingTags(p.ratings)}
   ${/^https?:\/\//.test(p.source||'')?`<a class="option-source" href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.source)}</a>`:''}
   <footer>${prev?`<a href="#proposal=${encodeURIComponent(prev.id)}">← Previous</a>`:'<span></span>'}<small>Since ${md(p.since)}${p.updated!==p.since?` · updated ${md(p.updated)}`:''}</small>${next?`<a href="#proposal=${encodeURIComponent(next.id)}">Next →</a>`:'<span></span>'}</footer>`;

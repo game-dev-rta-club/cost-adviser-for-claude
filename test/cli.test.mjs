@@ -93,38 +93,42 @@ test('links describe one view, and the viewer only sends the built report', asyn
 
 test('advice: proposals are checked, keep their dates while unchanged, and show in the report', async () => {
   const AB = {ease: 5, safety: 3, savings: 5};
-  const one = p => checkAdvice({proposals: [{id: 'x', action: 'Do x', ratings: AB, ...p}]}, null, '2026-10-16');
+  const one = p => checkAdvice({proposals: [{id: 'x', title: 'T', summary: 'S', action: 'Do x', ratings: AB, ...p}]}, null, '2026-10-16');
   assert.throws(() => checkAdvice({}), /proposals/);
   assert.throws(() => one({id: 'Bad Id'}), /id is required/);
   assert.throws(() => one({action: ''}), /action is required/);
+  assert.throws(() => one({title: ''}), /title is required/);
+  assert.throws(() => one({title: 'x'.repeat(41)}), /keep it to 40/);
+  assert.throws(() => one({summary: ''}), /summary is required/);
+  assert.throws(() => one({summary: 'x'.repeat(201)}), /keep it to 200/);
   assert.throws(() => one({ratings: {ease: 6, safety: 4, savings: 4}}), /must be 1 to 5 stars/);
   assert.throws(() => one({ratings: {ease: 'A', safety: 4, savings: 4}}), /must be 1 to 5 stars/);
   assert.throws(() => one({ratings: {...AB, cost: 4}}), /not a rating/);
   assert.throws(() => one({source: 'javascript:alert(1)'}), /http/);
   assert.throws(() => one({link: {evil: '1'}}), /not a link option/);
-  assert.throws(() => checkAdvice({proposals: [{id: 'x', action: 'a', ratings: AB}, {id: 'x', action: 'b', ratings: AB}]}), /used twice/);
+  assert.throws(() => checkAdvice({proposals: [{id: 'x', title: 'T', summary: 'S', action: 'a', ratings: AB}, {id: 'x', title: 'T', summary: 'S', action: 'b', ratings: AB}]}), /used twice/);
   const first = one({action: ' Use Sonnet ', detail: 'd', source: 'https://example.com', link: {tool: 'bash cat', date: ''}});
-  assert.deepEqual(first.advice.proposals[0], {id: 'x', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4.2, since: '2026-10-16', updated: '2026-10-16'});
+  assert.deepEqual(first.advice.proposals[0], {id: 'x', title: 'T', summary: 'S', action: 'Use Sonnet', detail: 'd', news: undefined, project: undefined, ratings: AB, source: 'https://example.com', link: {tool: 'bash cat'}, stars: 4.2, since: '2026-10-16', updated: '2026-10-16'});
   // The overall rating is the geometric mean to one decimal place.
   assert.equal(one({ratings: {ease: 3, safety: 4, savings: 3}}).advice.proposals[0].stars, 3.3, 'to one decimal place');
   assert.equal(one({ratings: {ease: 5, safety: 5, savings: 4}}).advice.proposals[0].stars, 4.6);
   assert.equal(one({ratings: {ease: 3, safety: 5, savings: 4}}).advice.proposals[0].stars, 3.9);
   assert.equal(one({ratings: {ease: 5, safety: 1, savings: 5}}).advice.proposals[0].stars, 2.9, 'one weak axis pulls it down');
   // A later run: the same content keeps its dates, a change is marked, a gone id is listed.
-  const prev = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', ratings: AB}, {id: 'gone', action: 'c', ratings: AB}]}, null, '2026-10-15').advice;
-  const next = checkAdvice({proposals: [{id: 'same', action: 'a', ratings: AB}, {id: 'moved', action: 'b', news: '82% → 80%', ratings: AB}, {id: 'new', action: 'd', ratings: AB}]}, prev, '2026-10-16');
+  const prev = checkAdvice({proposals: [{id: 'same', title: 'T', summary: 'S', action: 'a', ratings: AB}, {id: 'moved', title: 'T', summary: 'S', action: 'b', ratings: AB}, {id: 'gone', title: 'T', summary: 'S', action: 'c', ratings: AB}]}, null, '2026-10-15').advice;
+  const next = checkAdvice({proposals: [{id: 'same', title: 'T', summary: 'S', action: 'a', ratings: AB}, {id: 'moved', title: 'T', summary: 'S', action: 'b', news: '82% → 80%', ratings: AB}, {id: 'new', title: 'T', summary: 'S', action: 'd', ratings: AB}]}, prev, '2026-10-16');
   assert.deepEqual(next.changes, {added: ['new'], updated: ['moved'], kept: ['same'], removed: ['gone']});
   assert.deepEqual(next.advice.proposals.map(p => [p.id, p.since, p.updated]), [['same', '2026-10-15', '2026-10-15'], ['moved', '2026-10-15', '2026-10-16'], ['new', '2026-10-16', '2026-10-16']]);
 
   const home = await tempDir(), root = await tempDir(), env = {CCA_HOME: home};
   await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: new Date().toISOString(), output: 10})]);
   const file = path.join(home, 'proposals.json');
-  await fs.writeFile(file, JSON.stringify({proposals: [{id: 'x', action: '</script><b>x', ratings: AB}]}));
+  await fs.writeFile(file, JSON.stringify({proposals: [{id: 'x', title: 'T', summary: 'S', action: '</script><b>x', ratings: AB}]}));
   assert.match((await cca(['advise', file, '--transcripts', root], env)).stdout, /Saved 1 proposals\.\n  added: x/);
   const html = await fs.readFile(path.join(home, 'report.html'), 'utf8');
   assert.match(html, /"advice":\{"updatedAt":/);
   assert.equal(html.match(/<\/script>/g).length, 2);
-  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★4.2  /);
+  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /Proposals now shown[\s\S]*x  ★4.2  T/);
   await fs.writeFile(file, '{"proposals": [{}]}');
   await assert.rejects(cca(['advise', file, '--transcripts', root], env), e => e.code === 2 && /id is required/.test(e.stderr));
   await cca(['advise', '--clear', '--transcripts', root], env);
