@@ -30,7 +30,8 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    project shows each project's folder; `(temp)` gathers temporary folders and
    has no settings of its own. Settings files are not all that is in effect:
    a session can be started with its own model or effort (launch flags, such
-   as `--model` and `--effort` in `ps`, or `/model` inside it), and those win. A proposal about a setting starts from its
+   as `--model` and `--effort` in `ps -axo pid,lstart,command`, or `/model`
+   inside it), and those win. A proposal about a setting starts from its
    current value. The conversation running this review is in the data too.
    When it is a subagent of a longer session, only the subagent's rows are the
    review (marked subagent, with a session of the form `<parent>/agent-…`);
@@ -90,9 +91,11 @@ proposal every run. Check each proposal now shown in this order:
    today). For a proposal about something a recorded change touched, use the
    full days since that change. A change touched it when it is about the same tool, setting
    or project (a change to a tool also touches the text its hooks add; Text
-   added by hooks shows the command that sets each up); or, once there are 2 full days on each side, when the
-   proposal's own number (its share of the cost) moved past the threshold in
-   step 3 between the full days before and the full days since (read both from
+   added by hooks shows the command that sets each up). Only once there are
+   2 full days on each side does a move in the proposal's own number (its
+   share of the cost, past the threshold in step 3, between the full days
+   before and the full days since) also count; before that, a proposal the
+   change is not about is rated from all the full days as usual (read both from
    `cca summary --full-days`: a tool's Around line in `--tool`, and the
    Shares line under each recorded change for output, hook text and models;
    both have the same number of full days on each side). With fewer than 2 full days
@@ -109,11 +112,13 @@ proposal every run. Check each proposal now shown in this order:
 3. **Numbers.** A number holds unless it moved by more than about a tenth
    (for a percentage under 10%, by more than about a point) or changed the
    rating; small drift is not a change.
-4. **Facts and reasoning.** Open each proposal's `source` page once per run
+4. **Facts and reasoning.** Each claim from the docs in a detail names its
+   page. Open `source` and every page the detail names once per run
    (for the Claude Code version, take the one the running sessions show in
    `ps`) and correct a fact that is now wrong (a version, a setting's value, a
    price, a claim about which session or example costs most, read again from
-   Examples); rewrite reasoning the numbers no longer support. Each is an
+   Examples); remove a claim only when a page says otherwise, not because the
+   page you opened does not mention it; rewrite reasoning the numbers no longer support. Each is an
    update. Dollar figures come from cca, whose prices are the list prices
    read on the date the summary prints; when the pricing page differs, rate
    from cca's numbers and say so in the reply, rather than re-pricing by
@@ -129,7 +134,8 @@ keeps its dates, and the report marks only what changed as New or Updated.
 An updated proposal says in `news` what changed, and changes only the parts
 that moved; numbers that hold stay as written. A proposal that adds up
 several commands quotes one `cca summary --tool A --tool B …`, so the next run
-gets the same number. Copy the proposals from `cca summary --json`; `stars`,
+gets the same number; a group and its parts come from the same command, since
+each command reads the data again. Copy the proposals from `cca summary --json`; `stars`,
 `since` and `updated` are worked out by `cca advise` and can stay or go.
 
 **Each proposal is a problem the numbers show now and the fix for it.** Then
@@ -147,7 +153,7 @@ docs page (the settings reference is long: ask for the one key, and read on
 with WebFetch's `offset` until it is found; if it is not, say the claim is
 not confirmed) and check the name, the accepted values, which models it applies to
 and what overrides it (a choice made inside a session can override the
-settings file); put that page in `source`. When no docs page confirms a claim,
+settings file); put the main page in `source` and name any other page beside the claim it backs in the detail. When no docs page confirms a claim,
 leave it out or say it is not confirmed. Do not propose a setting that is
 already in place; when it is in place but the numbers show it is not taking
 effect, say that instead.

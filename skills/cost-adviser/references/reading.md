@@ -56,3 +56,8 @@ taking most of the cost, a large final-reply share) goes in the reply as an
 observation, not as a proposal. Setting keys are on the settings reference
 page (https://code.claude.com/docs/en/settings-reference); it is long, so look for the
 key by name.
+
+A large cache-write share that stays level has no sample in the catalog. Look at
+the "cache rebuilt" examples in `--tool` (calls after the cache expired) and
+mention it in the reply; propose something only when the numbers show what
+causes it.
