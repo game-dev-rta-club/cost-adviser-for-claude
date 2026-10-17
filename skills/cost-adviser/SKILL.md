@@ -56,7 +56,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
   "summary": "Two or three lines, up to 200 characters: the problem the numbers show now and the fix. The list shows only the title and this; the rest opens on a click.",
   "action": "Exactly what to do, in one line, e.g. Add \"autoCompactWindow\": 500000 to ~/.claude/settings.json",
   "detail": "Why: the numbers, their share of cost and the principle. Exactly where and what to change, what it should do to these numbers, and how to tell if it worked. A blank line starts a new paragraph.",
-  "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Leave it out when nothing moved.",
+  "news": "Optional, one or two lines: what is worth noticing since the last run, with the numbers and date. Keep it as it is on a kept proposal; replace or drop it when the proposal is updated.",
   "project": "Optional: the project it is for; leave it out when it is for all",
   "ratings": {"ease": 5, "safety": 4, "savings": 5},
   "source": "https://… (the docs page for the setting or feature)",
@@ -109,16 +109,19 @@ user can weigh them.
 `link` takes the `cca link` options (project, period, date, metrics, tool,
 session, focus, item); reading.md says which fits each signal. Use
 `period: 7d` with today's date for the summary's 7 days. **Numbers the
-linked view shows must match it**: the report shows one period at a time, so
-quote that period's numbers, not another window's. Numbers the view cannot
+linked view shows must match it** when they are written: the report shows one
+period at a time, so quote that period's numbers, not another window's. A kept
+proposal keeps its numbers while they hold (see above), even if the view now
+shows a slightly different value. Numbers the view cannot
 show (before and after a change, one project's share) say where they come from.
 For every number in the detail, name the command and days it came from (for
 example `cca summary --tool "bash cat"`, 10/11–10/17), so the next run can
 work it out the same way and tell a real move from a different method.
 
-Write the proposals in the language the user asks for, otherwise in the
-user's language. When the language changes, rewrite every proposal and say so
-once in its `news`.
+Write the proposals in the language the user asks for. Without a request, keep
+the language of the proposals now shown, or use the user's language for a
+first list. When the language changes, rewrite every proposal and say so once
+in its `news`.
 
 6. **Reply briefly.** One line per proposal that is new or changed (or "no
    change" when nothing moved), the verdict on each recorded change (or when
