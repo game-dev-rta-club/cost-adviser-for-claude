@@ -1,111 +1,74 @@
-# Cost Adviser For Claude
+<p align="center">
+  <img src="assets/logo.svg" width="112" height="112" alt="Cost Adviser logo: three bars step down beside a coin.">
+</p>
 
-Measure what Claude Code conversations cost, find where the cost goes, and check
-whether a change made things cheaper. It reads the transcripts Claude Code
-already keeps (`~/.claude/projects`). Nothing is sent anywhere.
+<h1 align="center">Cost Adviser For Claude</h1>
 
-Requires Node.js 20 or later. No dependencies.
+<div align="center">
+
+[![CI](https://github.com/game-dev-rta-club/cost-adviser-for-claude/actions/workflows/ci.yml/badge.svg)](https://github.com/game-dev-rta-club/cost-adviser-for-claude/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/game-dev-rta-club/cost-adviser-for-claude)](https://github.com/game-dev-rta-club/cost-adviser-for-claude/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+</div>
+
+**See where your Claude Code money goes—and what to change.**
+
+A command-line tool and an agent skill for Claude Code. `cca` turns the conversation records Claude Code already keeps on your machine into a report. The `cost-adviser` skill reads that report with your agent and keeps a short list of improvements, each rated so you can weigh it. Nothing is sent anywhere.
+
+![The report: cost, active time and calls for each day, with a marker on the day a change went in, and the rated improvements beside it.](assets/report.png)
+
+## Find where the cost goes
+
+Every tool call makes the model read the whole conversation again. So cost is the **number of calls × what each call reads × the price per token**, plus the cache written again after it expires.
+
+The report splits the cost along each of these: by day, model, project and conversation, and as a tree of what each call did (`bash › git › status`, `read`, a skill's own commands). The largest cost is usually a few repeated steps in long conversations, not the size of any one result.
+
+## Get improvements you can weigh
+
+Ask your agent for a review. It measures, explains what it sees with basic principles, and updates the list on the report. Each improvement says what to change and why, with the numbers and the command that reproduces them.
+
+![An improvement's details: its stars, what to do, and why, with the numbers behind it.](assets/proposal.png)
+
+- **Rated on three axes:** upkeep, quality kept and savings, from one to five stars. One weak axis pulls the overall rating down.
+- **Four angles:** fewer calls, less read per call (a smaller conversation, or tool use handed to an agent with little context), a lower price, and the cache kept.
+- **A steady list:** an improvement changes only when its numbers or facts do, so a change on the report means something.
+
+## Check whether a change worked
+
+Record the day you changed something; the report marks it, and the summary compares the days before it with the days since. Before changing anything, `cca simulate` replays your recent conversations as if the change had been in place: an earlier compaction, shorter tool results, or work handed to a fresh agent.
+
+## Install and use
 
 ```sh
-npm link            # puts cca on your PATH (or run node bin/cca.mjs)
+npm install -g github:game-dev-rta-club/cost-adviser-for-claude
+npx skills@latest add game-dev-rta-club/cost-adviser-for-claude \
+  --skill cost-adviser \
+  --agent claude-code \
+  --yes
+```
+
+The first line installs `cca`; the second adds the skill to your project. Then, in Claude Code:
+
+```text
+/cost-adviser
+```
+
+Or look for yourself:
+
+```sh
 cca build --open    # write the report and open it
+cca summary         # the same as text: this week against the last
 ```
 
-The report is one HTML file with the data inside
-(`~/.cost-adviser-for-claude/report.html`), so it opens at once and needs
-no server. Run `cca build` again to bring it up to date; only transcripts that
-changed since the last run are read again.
+**Requires:** Claude Code and Node.js 20 or later. No other dependencies. `cca` reads `~/.claude/projects` and writes only to `~/.cost-adviser-for-claude`. Costs are estimates at list prices per model; on a subscription, they show what the same use would cost through the API.
 
-## Commands
+Every command and how each number is counted: [Reference](docs/reference.md).
 
-| Command | What it does |
-|---|---|
-| `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time (including compacting per active hour), the cost profile, tools and sessions. |
-| `cca summary [--days 7 | --since DATE [--until DATE]] [--full-days] [--project NAME] [--tool NAME]… [--json]` | The report as text, for a person or an agent: this period against the one before, each day, cost by model, cost by project with its folder, calls by action as a tree, top sessions, text added by hooks, days when the largest context jumped, and each recorded change before vs after (with the day a verdict is due). `--full-days` leaves out the partial today (7 days become 6). `--tool` prints only one tool or group (e.g. `"bash chill"`; repeat it to add several up) by day, with cost and uses per active hour, each part's share of each day, and its costliest examples. |
-| `cca decline add "<option>" --reason "<why>"` / `remove` / `list` | Record an option the user decided against. The summary lists them, and the skill never proposes them again. |
-| `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
-| `cca link [--project P] [--period day\|3d\|7d\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
-| `cca advise proposals.json` / `cca advise --clear` | Replace the improvement proposals listed under the projects: overall stars (the geometric mean, to one decimal place, of 1–5 stars on upkeep, quality kept and savings; a slider sets the lowest rating shown, ★3 at first), a short title and two or three lines on the problem and its fix, and details that open in a card at the lower right while the related view is highlighted (`#proposal=ID` opens one directly). A proposal keeps its dates while its content stays the same, so only what changed is marked New or Updated. |
-| `cca simulate [--compact-at TOKENS] [--tool-results SHARE [--tool NAME]…] [--delegate MIN[-MAX]] [--days 7 | --since DATE] [--full-days] [--project NAME] [--json]` | Replay the recent conversations call by call as if a change had been in place, and print the cost with and without it: compaction starting at another length, or tool results keeping a share of their size (0.7 = 30% shorter), of every tool or only the tools given with `--tool` (repeat it for several), or each run of MIN to MAX tool calls in a row in a main conversation handed to a fresh agent (the most it could save, since it assumes every such run can be handed over). `--since` starts at a day (for the days since a setting changed); `--full-days` leaves out the partial today (7 days become 6). It warns when the largest context jumped inside the days. An estimate, used to rate how much a proposal would save. |
-| `cca mark add 2026-10-16 "Fewer chill calls"` | Record the day a change went in. It appears as a ⭐ tag on the charts; the report is rebuilt. |
-| `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
-| `cca collect [--days 30] [--out data.json]` | The collected data as JSON, for the same days as the summary (counted back from today at midnight). |
+## Update
 
-`--transcripts DIR` reads another transcript folder. Recorded changes, the
-report and a cache of read transcripts are kept in `~/.cost-adviser-for-claude`
-(set `CCA_HOME` to move it). Deleting `cache.json` only costs one full read.
+Rerun the install commands to update. See the [release notes](CHANGELOG.md).
 
-## The /cost-adviser skill
+## Project
 
-`skills/cost-adviser` lets an agent run the review: it refreshes the report,
-reads the summary, explains what it sees with basic principles, and keeps the
-list of improvement proposals on the report up to date, each rated and with
-how to measure it. Run it whenever you like; each run looks at the numbers as
-they are.
-
-```sh
-ln -s "$PWD/skills/cost-adviser" ~/.claude/skills/cost-adviser
-```
-
-- `references/reading.md`: where to look in the results.
-- `references/principles.md`: the principles, each with its source.
-- `references/measuring.md`: how to judge whether a change helped.
-- `references/ratings.md`: how a proposal is rated.
-- `references/catalog.md`: sample proposals, already rated, under four angles: fewer calls, less read per call (a smaller conversation, or tool use moved to an agent with little context), a lower price, the cache kept.
-
-### How proposals are rated
-
-Each proposal is rated from one to five stars on three axes: upkeep (how little
-attention it needs once it is in place), quality kept (how well the work keeps
-its quality), and savings (how much it is expected to cut your total cost,
-estimated from your recent conversations). The overall rating multiplies the
-three and takes the cube root, so one weak axis pulls it down. A slider above the
-list sets the lowest rating shown, ★3 and above at first.
-
-The references stay at the level of principles on purpose, so they do not go
-stale when tools and settings change.
-
-## How numbers are counted
-
-- **Cost** uses list prices per model from the [pricing page](https://platform.claude.com/docs/en/about-claude/pricing), as read on the date in `lib/prices.mjs`: cache hits, 5-minute and 1-hour cache writes, fast mode and long Haiku prompts each at their own price.
-  Cache reads cost 0.1× input and cache writes 1.25× input. A message written
-  several times while it streams is counted once.
-- **Active time** adds the gaps between calls in one conversation, each capped
-  at 5 minutes.
-- **Compacting** is not logged as a call. Its summary is estimated: the
-  conversation before it (`preTokens`) read at the cache price, plus the
-  summary's length / 4 as output. The cache write of the first call after it is
-  measured and counted as compacting, not input. Calls by action shows it as
-  `(compacting)`.
-- **Tool cost**: a call's cost is shared equally among the tools it asked for.
-  An inline Python script (`python3 - <<EOF`, `python3 -c`) is named by what it
-  does: `(edit .md)`, `(write .json)`, `(read files)`, `(read data)`,
-  `(read transcripts)`, `(run commands)`; anything else by its first uncommon
-  import, e.g. `(uses PIL)`. New file types and libraries get their own row
-  without a new rule.
-  A call that uses no tool is "(final reply)": the reply that ends a turn,
-  written after reading the whole conversation.
-- **Subagent calls** are calls from subagent transcripts, as a share of all calls.
-- **Cache hit rate** is cache reads as a share of all input tokens.
-- **Ratios** (cost per hour, per call, average context, the shares) are left
-  out for periods with under 10 minutes of activity or under 10 calls.
-- **A change's effect**: `summary` compares the same number of days before the
-  change and from it on (at most `--days`).
-
-## Development
-
-```sh
-npm run check
-```
-
-### Changing the skill
-
-Keep `skills/cost-adviser` short. It works best when it states the goal and
-what a good result looks like, and leaves the judgment to the agent; a list of
-narrow rules for every case makes it worse, because the rules start to
-contradict each other and crowd out the goal. When a run goes wrong, first
-cut words and make the goal clearer. Move a mechanical step into `cca` (a
-check, a warning, a number it can print), so the instructions need not say it.
-Add a rule only when that is not enough. Before building something into
-`cca` or the skill, search for an open-source tool or skill that already does
-it.
+[Game Dev RTA Club](https://github.com/game-dev-rta-club) · [MIT](LICENSE) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
