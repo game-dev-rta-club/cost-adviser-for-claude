@@ -45,17 +45,18 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    [measuring.md](references/measuring.md); its verdict goes in the reply
    (step 6), not in the proposals. Look for changes nobody recorded too:
    the summary's Context jumps (a new compaction length, even on a day with
-   another recorded change), or a shift in the model or effort mix. Name its
+   another recorded change) and Mix shifts (a model or effort over half of a
+   day). Name its
    first day and offer `cca mark add` (again on each run until the user
    records it; one line is enough); for a gradual shift, the first day is
-   the first one where the new value is over half of the day (for example,
-   high effort over half of the cost). When two changes share a first day,
+   the one Mix shifts names. When two changes share a first day,
    the totals mix both: judge each by its own number (uses for a tool,
    average context for the compaction length). The adviser keeps no stages: each run looks
    at the numbers as they are.
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says
    nothing is serving the report, start `cca serve` in the background.
+   It refuses a title over 40 characters or a summary over 200.
 
 ```json
 {"proposals": [{
@@ -78,14 +79,16 @@ proposal every run. Check each proposal now shown in this order:
 1. **Method.** Each number names the command it came from. When that is a
    way the references rule out (adding up `cca collect` rows by hand when a
    summary view shows the number, a replay that includes today or crosses a
-   compaction change, a command cca now refuses), measure it again the
-   allowed way. That is an update. `cca collect` is the source only for what
+   compaction change, a command cca now refuses, dollar figures from before
+   the summary says the prices changed), measure it again the allowed way. That is an update. `cca collect` is the source only for what
    no summary view shows (one session's tool use, result sizes); name the
    fields used.
 2. **Days.** The rating comes from full days (`--full-days` leaves out
    today). For a proposal about something a recorded change touched, use the
-   full days since that change (also when it is unclear whether the change
-   touched it); with fewer than 2, keep the rating and say in
+   full days since that change. A change touched it when the proposal's own
+   number (its share of the cost) moved past the threshold in step 3 between
+   the full days before and the full days since. With fewer than 2 full days
+   since, keep the rating and say in
    `news` that it is waiting and from which day (adding or dropping that line
    is an update). Rewrite a number that includes today with the full days'
    number when the two would give different ratings.
@@ -115,8 +118,8 @@ gets the same number. Copy the proposals from `cca summary --json`; `stars`,
 **Each proposal is a problem the numbers show now and the fix for it.** Then
 look for further problems: go through the signals and every sample in
 catalog.md again, not only the proposals now shown, and add each one that
-fits. A fit whose part is under 1% of the cost on the full days is not a
-proposal; mention it in the reply instead. Drop a proposal that no longer
+fits. A fit whose part is under 1% of the cost on the full days it is rated from
+(step 2) is not a proposal; mention it in the reply instead. Drop a proposal that no longer
 applies. `cca advise` prints what was added, updated, kept and removed.
 
 **Each proposal is one concrete action that is enough on its own**: the

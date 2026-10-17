@@ -84,3 +84,15 @@ test('the summary has the report views: each day, models, the tool tree and one 
   const own = treeLines(toolTree([{tool: 'bash chill', cost: 1, count: 2}, {tool: 'bash chill goal', cost: 3, count: 1}]));
   assert.deepEqual(own.map(t => [t.id, t.cost]), [['bash', 4], ['bash chill', 4], ['bash chill goal', 3], ['bash chill (itself)', 1]], 'a group\'s own uses are listed so children add up');
 });
+
+test('summary names mix shifts and says when the prices changed since the proposals', () => {
+  const day = (d, high) => ({...row(d), byModelEffort: {'opus-5-5 · high': {cost: 10 * high, calls: 50}, 'opus-5-5 · medium': {cost: 10 * (1 - high), calls: 50}}});
+  const data = {days: 30, generatedAt: '2026-10-15T12:00:00Z', prices: {url: 'https://p', readOn: '2026-10-17', models: []},
+    daily: [day('2026-10-13', 0.4), day('2026-10-14', 0.5), day('2026-10-15', 0.8)], tools: [], sessions: []};
+  const s = summarize(data, {days: 3, today: '2026-10-15', advice: {pricesReadOn: '2026-10-01', proposals: []}});
+  assert.deepEqual(s.mixShifts.map(m => [m.day, m.name]), [['2026-10-15', 'opus-5-5 · high']], 'the first day over half, not a day at exactly half');
+  const text = formatSummary(s);
+  assert.match(text, /Mix shifts[\s\S]*2026-10-15  opus-5-5 · high 80\.0% \(was 50\.0%/);
+  assert.match(text, /prices changed since the proposals were saved \(prices read on 2026-10-01\)/);
+  assert.doesNotMatch(formatSummary(summarize(data, {days: 3, today: '2026-10-15', advice: {pricesReadOn: '2026-10-17', proposals: []}})), /prices changed/);
+});

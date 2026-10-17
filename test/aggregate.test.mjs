@@ -26,6 +26,10 @@ test('tool keys group similar uses', () => {
   assert.equal(bash("python3 -c 'print(1)'"), 'bash python3 (other)');
   assert.equal(bash("git status; python3 - <<'EOF'\nprint(1)\nEOF"), 'bash git status');
   assert.equal(bash("'/a/runtime/chill' connection reply --event 4"), 'bash chill connection reply');
+  // Text in a heredoc is not a command.
+  assert.equal(bash("python3 - <<'EOF'\nprint('runtime/chill connection inbox')\nEOF"), 'bash python3 (other)');
+  assert.equal(bash("cat > a.json <<EOF\n{\"run\": \"chill goal show\"}\nEOF\necho done"), 'bash cat');
+  assert.equal(bash("head -2 out.txt; '/a/runtime/chill' connection inbox"), 'bash chill connection inbox');
   assert.equal(bash('for f in *; do grep x $f; done'), 'bash grep');
   assert.equal(toolKey({name: 'mcp__Claude_Browser__navigate'}), 'mcp Browser.navigate');
   assert.equal(toolKey({name: 'Read'}), 'read');
