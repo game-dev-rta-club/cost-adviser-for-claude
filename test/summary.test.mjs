@@ -76,8 +76,8 @@ test('the summary has the report views: each day, models, the tool tree and one 
   // With --tool only that tool is printed; the rest is the plain summary.
   const text = formatSummary(s), full = formatSummary({...s, toolDetail: null});
   assert.ok(s.toolDetail.parts.length >= 1 && s.toolDetail.parts.every(x => x.id.startsWith('bash chill')), 'its parts one level down');
-  assert.match(text, /Tool "bash chill" by day/);
-  assert.doesNotMatch(text, /Tool use as a tree/);
+  assert.match(text, /Action "bash chill" by day/);
+  assert.doesNotMatch(text, /Calls by action/);
   assert.match(full, /By day/);
   assert.match(full, /\$7\.00 .* bash chill \[2\]/);
   assert.equal(treeLines(toolTree([]), {}).length, 0);

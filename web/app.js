@@ -61,7 +61,7 @@ const PROJECT_LIMIT=10;
 function renderProjects(){const total={};for(const r of D.daily)total[r.project]=(total[r.project]||0)+r.cost;
  const list=Object.keys(total).sort((a,b)=>total[b]-total[a]);
  const shown=state.allProjects?list:list.filter((p,i)=>i<PROJECT_LIMIT||p===state.project);
- $('#projects').innerHTML=[['all','All Project'],...shown.map(p=>[p,p])].map(([id,name])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span></button>`).join('')
+ $('#projects').innerHTML=[['all','All projects'],...shown.map(p=>[p,p])].map(([id,name])=>`<button data-project="${esc(id)}" class="${id==='all'?'':'indent'}" aria-current="${state.project===id}"><span>${esc(name)}</span></button>`).join('')
   +(list.length>PROJECT_LIMIT?`<button type="button" class="indent more-projects" data-all-projects>${state.allProjects?'Show fewer':`Show all (${list.length-shown.length} more)`}</button>`:'');}
 // A time series per chart: each period is a group of bars, one per shown metric,
 // each on its own scale. The right axis shows one metric's scale at a time.
@@ -143,7 +143,8 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  fitLabels();}
 function toolRows(){const m=new Map();for(const r of D.tools.filter(r=>inProject(r)&&inPeriod(r)&&r.tool.includes(state.filter))){const t=m.get(r.tool)||{tool:r.tool,count:0,resultChars:0,cost:0,keys:[]};t.count+=r.count;t.resultChars+=r.resultChars;t.cost+=r.cost;t.keys.push(`${r.day}|${r.project}|${r.tool}`);m.set(r.tool,t);}
  const by={cost:t=>t.cost,count:t=>t.count,result:t=>t.resultChars,unit:t=>t.cost/t.count};return [...m.values()].sort((a,b)=>by[state.sort](b)-by[state.sort](a));}
-// Tool Use is a tree, like a profiler: uses that share leading words add up
+// Calls by action: each call's cost goes to what it did (the tools it asked for,
+// the final reply, or compacting). It is a tree, like a profiler: uses that share leading words add up
 // (bash › chill › connection › reply). Each node's id is the start of the
 // key up to it, so a leaf's id is its key.
 const tokens=key=>[...key.matchAll(key.startsWith('mcp ')?/\([^)]*\)|[^\s.]+/g:/\([^)]*\)|\S+/g)].map(m=>({text:m[0],id:key.slice(0,m.index+m[0].length)}));
@@ -170,7 +171,7 @@ function moreButtons(id,shown,total,step){$(id).innerHTML=`${shown<total?`<butto
 const CHILD_LIMIT=8;
 function findNode(id){let node=toolTree();for(const tk of tokens(id)){node=node.children.get(tk.text);if(!node)return null;}return node;}
 function renderTools(){const root=toolTree(),total=root.cost,top=kids(root),shown=top.slice(0,state.toolLimit),out=[];
- $('#tools-note').textContent=`${toolRows().length} tools · ${usd(total)}`;
+ $('#tools-note').textContent=`${toolRows().length} actions · ${usd(total)}`;
  const row=(n,rank)=>{const share=total?n.cost/total:0,list=kids(n),leaf=!list.length,open=!leaf&&isOpen(n),sel=state.tool===n.id;
   out.push(`<tr class="tool ${sel?'is-focus':''} ${leaf?'is-leaf':''}" data-tool="${esc(n.id)}"><td class="num">${rank||''}</td><td class="tool-name" style="padding-left:${8+(n.depth-1)*18}px"><span class="caret">${leaf?'':open?'▾':'▸'}</span>${esc(n.text)}</td><td class="num"><span class="share"><i style="width:${Math.max(2,share*90)}px"></i>${usd(n.cost)} <small>${Math.round(share*100)}%</small></span></td><td class="num">${num(n.count)}</td></tr>`);
   if(leaf&&sel){const ex=n.keys.flatMap(k=>D.examples[k]||[]).sort((a,b)=>b.result-a.result).slice(0,6);

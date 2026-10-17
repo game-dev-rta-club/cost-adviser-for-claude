@@ -21,7 +21,7 @@ changed since the last run are read again.
 | Command | What it does |
 |---|---|
 | `cca build [--days 30] [--out FILE] [--open]` | Write the report: totals and stats over time (including compacting per active hour), the cost profile, tools and sessions. |
-| `cca summary [--days 7] [--project NAME] [--tool NAME] [--json]` | The report as text, for a person or an agent: this period against the one before, each day, cost by model, cost by project with its folder, tool use as a tree, top sessions, and each recorded change before vs after. `--tool` prints only one tool or group (e.g. `"bash chill"`) by day, with cost and uses per active hour and its costliest examples. |
+| `cca summary [--days 7] [--project NAME] [--tool NAME] [--json]` | The report as text, for a person or an agent: this period against the one before, each day, cost by model, cost by project with its folder, calls by action as a tree, top sessions, and each recorded change before vs after. `--tool` prints only one tool or group (e.g. `"bash chill"`) by day, with cost and uses per active hour and its costliest examples. |
 | `cca decline add "<option>" --reason "<why>"` / `remove` / `list` | Record an option the user decided against. The summary lists them, and the skill never proposes them again. |
 | `cca serve [--port 7319]` | Show the built report at http://127.0.0.1:7319, so links to it can be clicked from other pages. It only sends the file. |
 | `cca link [--project P] [--period day\|3d\|7d\|month] [--date DAY] [--metrics stats.ctx,…] [--tool NAME] [--session ID] [--focus …] [--item ROW]` | Print a link that opens the report on one item and highlights it. |
@@ -75,7 +75,7 @@ stale when tools and settings change.
 - **Compacting** is not logged as a call. Its summary is estimated: the
   conversation before it (`preTokens`) read at the cache price, plus the
   summary's length / 4 as output. The cache write of the first call after it is
-  measured and counted as compacting, not input. Tool Use shows it as
+  measured and counted as compacting, not input. Calls by action shows it as
   `(compacting)`.
 - **Tool cost**: a call's cost is shared equally among the tools it asked for.
   An inline Python script (`python3 - <<EOF`, `python3 -c`) is named by what it

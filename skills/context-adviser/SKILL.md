@@ -13,7 +13,7 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
 
 1. **Refresh.** Run `cca build`, then `cca summary` (add `--project NAME`
    when asked). It has what the report shows: totals against the previous
-   period, each day, cost by model, tool use as a tree, sessions and recorded
+   period, each day, cost by model, calls by action as a tree, sessions and recorded
    changes. `--tool "bash chill"` prints only that tool or group, day by day.
    Use `--json` when you need exact numbers. If `cca` is missing, say so and
    stop. The summary ends with the options the user declined and the

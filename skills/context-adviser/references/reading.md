@@ -22,11 +22,12 @@ much work there was.
 | Cost by model | The mix shifts | A mix change can explain a cost change by itself; rule it out first | `--focus cost-model` |
 
 Add `--project NAME` when the signal belongs to one project. The report shows
-Profile, Tool Use and Sessions for one period at a time (the latest day unless
+Profile, Calls by action and Sessions for one period at a time (the latest day unless
 told otherwise), so add `--period 7d --date DAY` to match the summary's 7
 days (counted back from the build day), `--period 3d` for the last three days,
 or `--date DAY` for a single day. A link opens the report on that item
-and highlights it. Tool Use is a tree: commands that share leading words add
+and highlights it. Calls by action is a tree (each call's cost goes to the
+tools it asked for, its final reply, or compacting): commands that share leading words add
 up (bash › chill › connection › reply), so compare groups as well as leaves.
 
 Compacting is partly estimated: the summary request is not logged, so its

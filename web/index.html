@@ -117,7 +117,7 @@ details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px
 <body>
 <header><h1>Context Adviser For Claude</h1><p id="meta"></p></header>
 <div class="layout">
- <nav aria-label="Projects"><h2>Project</h2><div id="projects"></div><div id="proposals" class="proposals"></div></nav>
+ <nav aria-label="Projects"><h2>Projects</h2><div id="projects"></div><div id="proposals" class="proposals"></div></nav>
  <main>
   <section><h2>Summary <span class="tabs" id="period"><button data-p="day" aria-pressed="true">Day</button><button data-p="3d" aria-pressed="false">3 days</button><button data-p="7d" aria-pressed="false">7 days</button><button data-p="month" aria-pressed="false">Month</button></span></h2>
    <h3 class="chart-title">Totals</h3>
@@ -129,9 +129,9 @@ details.block>summary h2 small{font-weight:400;color:var(--muted);font-size:12px
   <section id="profile"><h2 id="profile-title">Profile</h2>
    <div class="overview"><div class="headline"><span>Cost</span><b id="cost"></b></div><dl id="stats"></dl></div>
    <div id="breakdowns"></div></section>
-  <details class="block" id="tools-section" open><summary><h2>Tool Use <small id="tools-note"></small></h2></summary>
-   <div class="toolbar"><input id="tool-filter" type="search" placeholder="Filter (e.g. bash chill)" aria-label="Filter tools"></div>
-   <div class="scroll"><table><thead><tr><th>#</th><th>Tool</th><th class="num"><button data-sort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-sort="count">Uses</button></th></tr></thead><tbody id="tools"></tbody></table></div>
+  <details class="block" id="tools-section" open><summary><h2>Calls by action <small id="tools-note"></small></h2></summary>
+   <div class="toolbar"><input id="tool-filter" type="search" placeholder="Filter (e.g. bash chill)" aria-label="Filter actions"></div>
+   <div class="scroll"><table><thead><tr><th>#</th><th>Action</th><th class="num"><button data-sort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-sort="count">Uses</button></th></tr></thead><tbody id="tools"></tbody></table></div>
    <div class="more" id="tools-more"></div></details>
   <details class="block" id="sessions-section" open><summary><h2>Sessions <small id="sessions-note"></small></h2></summary>
    <div class="scroll"><table><thead><tr><th>Session</th><th>Project</th><th class="num"><button data-ssort="calls">Calls</button></th><th class="num"><button data-ssort="cost" aria-pressed="true">Cost</button></th><th class="num"><button data-ssort="activeMs">Active time</button></th></tr></thead><tbody id="sessions"></tbody></table></div>
