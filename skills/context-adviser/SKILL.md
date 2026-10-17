@@ -37,9 +37,9 @@ proposals (`cca advise`), and, when the user agrees, `cca mark add` and
    [principles.md](references/principles.md), with its source, and to the
    sample proposals in [catalog.md](references/catalog.md).
 4. **Check past changes.** For each recorded change, judge it with
-   [measuring.md](references/measuring.md); its verdict goes in the `news` of
-   the proposal it came from. The adviser keeps no stages: each run looks at
-   the numbers as they are.
+   [measuring.md](references/measuring.md); its verdict goes in the reply
+   (step 6), not in the proposals. The adviser keeps no stages: each run looks
+   at the numbers as they are.
 5. **Update the proposals.** Start from the proposals now shown and write the
    whole list again to a JSON file, then run `cca advise FILE`. If it says
    nothing is serving the report, start `cca serve` in the background.
@@ -67,11 +67,13 @@ then keeps its dates, and the report marks only what changed as New or
 Updated. Copy the proposals from `cca summary --json`; `stars`, `since` and
 `updated` are worked out by `cca advise` and can stay or go. Update its detail when the numbers moved, put what is worth noticing
 in `news`, add a proposal for a new finding, and drop one that no longer
-applies. When the user has carried a proposal out, keep it until its effect is
-judged: say in the action that it is done, put what it changed in `news`, judge
-it with measuring.md once there are enough days, and offer `cca mark add` if
-its start was not recorded. Drop it after the verdict. `cca advise` prints what
-was added, updated, kept and removed.
+applies. **The list holds only what is still to do.** When the user has
+carried a proposal out, or it is already in place, drop it: offer
+`cca mark add` if its start was not recorded, and judge it in step 4 from the
+recorded change. Then look for the next improvement: go through the signals
+and every sample in catalog.md again, not only the proposals now shown, and
+add each one that fits. `cca advise` prints what was added, updated, kept and
+removed.
 
 **Each proposal is one concrete action that is enough on its own**: the
 setting, file, skill or subagent to change and what to put there (a key and
@@ -107,8 +109,9 @@ work it out the same way and tell a real move from a different method.
 Write the proposals in the user's language.
 
 6. **Reply briefly.** One line per proposal that is new or changed (or "no
-   change" when nothing moved), the report link (`http://127.0.0.1:7319/`),
-   and what to watch next and when. Offer to record a step's start with
+   change" when nothing moved), the verdict on each recorded change (or when
+   to look again), the report link (`http://127.0.0.1:7319/`), and what to
+   watch next and when. Offer to record a step's start with
    `cca mark add YYYY-MM-DD "short name"`.
 
 **Respect what the user decided.** Never propose a declined option or a close
