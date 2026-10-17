@@ -22,7 +22,8 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
    `--project`, `--json`. Read the settings in effect: `~/.claude/settings.json`
    and each project's `.claude/settings.json` and `.claude/settings.local.json`.
    Launch flags win over them; count those of the running sessions with
-   `ps -axo command | grep -oE -- '--(model|effort)[= ][^ ]+' | sort | uniq -c`.
+   `ps -axo command | grep -oE -- '--(model|effort|autocompact)[= ][^ ]+' | sort | uniq -c`
+   (their path also shows the Claude Code version that is running).
    This review is in the data too, as a subagent of the session running it.
 2. **Find the problems.** Read the signals with
    [reading.md](references/reading.md), explain each with a principle in
@@ -57,9 +58,10 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
   [ratings.md](references/ratings.md), starting from the closest catalog
   sample. Measure savings with `cca simulate` when the proposal changes the
   compaction length or the size of tool results.
-- **Reproducible.** Each number names the cca command and days it came from,
-  preferably one command rather than arithmetic by hand, so the next run can
-  measure it the same way.
+- **Reproducible.** Quote full-day numbers, each with the cca command and
+  days it came from, preferably one command rather than arithmetic by hand,
+  so the next run can measure it the same way and today's partial numbers do
+  not drift it.
 
 ## Keeping the list steady
 
@@ -94,7 +96,8 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
 
 `link` opens the report on the view the numbers come from (the `cca link`
 options; reading.md says which fits). Copy the current list from
-`cca summary --json`; `cca advise` works out the stars and dates.
+`cca summary --json`; `cca advise` works out the stars and dates and ignores
+them in the file.
 
 ## Do not
 

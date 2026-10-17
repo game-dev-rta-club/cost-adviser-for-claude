@@ -28,3 +28,7 @@ works adds calls of its own.
 
 Source for the spread of calls per request: measured on our transcripts,
 2026-10 (cost-adviser design notes).
+
+A change that is not recorded yet (Context jumps, Mix shifts) can be read the
+same way with `cca summary --since DAY --until LAST_FULL_DAY`, which compares
+those days with as many days before them.

@@ -30,6 +30,11 @@ test('tool keys group similar uses', () => {
   assert.equal(bash("python3 - <<'EOF'\nprint('runtime/chill connection inbox')\nEOF"), 'bash python3 (other)');
   assert.equal(bash("cat > a.json <<EOF\n{\"run\": \"chill goal show\"}\nEOF\necho done"), 'bash cat (write)');
   assert.equal(bash("head -2 out.txt; '/a/runtime/chill' connection inbox"), 'bash chill connection inbox');
+  // Only a step that runs chill is a chill call; a path inside another command is not.
+  assert.equal(bash('pgrep -fl "/a/runtime/chill.mjs connection wait" | wc -l'), 'bash pgrep');
+  assert.equal(bash("C='/a b/runtime/chill'; \"$C\" goal show --id 4"), 'bash chill goal show');
+  assert.equal(bash("PORT=1 X='/d' '/opt/node' '/a/runtime/chill.mjs' monitor result --id 1"), 'bash chill monitor result');
+  assert.equal(bash("chill() { node /a/chill.mjs \"$@\"; }\nchill goal review --id 1"), 'bash chill goal review');
   // A script's subcommand is kept; paths and flags are not.
   assert.equal(bash('node tools/agent-play.mjs sequence --steps 3'), 'bash node agent-play.mjs sequence');
   assert.equal(bash('node tools/agent-play.mjs ./level.json'), 'bash node agent-play.mjs');
