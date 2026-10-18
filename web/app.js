@@ -326,4 +326,20 @@ function applyLink(){const q=new URLSearchParams(location.hash.slice(1));
  if(q.has('proposal'))return showProposal(q.get('proposal'));
  hideProposal();if(![...q.keys()].length)return;bringIntoView(applyView(q));}
 window.addEventListener('hashchange',applyLink);
+// Reload builds the report again through `cca serve`; a page opened as a
+// file has no server to ask, so the dialog says how to get one.
+const RELOAD_ICON=$('#reload svg').outerHTML,reloadDialog=$('#reload-dialog');
+$('#updated').textContent=`Updated ${md(LAST_DAY)} ${new Date(D.generatedAt).toTimeString().slice(0,5)}`;
+function showReload(stage,message=''){const served=/^https?:$/.test(location.protocol);
+ reloadDialog.innerHTML=!served?`<h2 id="reload-title">Reload needs cca serve</h2><p>This page was opened as a file, so it cannot build itself again. Run <code>cca serve</code> and open <code>http://127.0.0.1:7319/</code>, or run <code>cca build</code> and reopen this file.</p><menu><button type="button" class="primary" data-reload="close">Close</button></menu>`
+  :stage==='running'?`<h2 id="reload-title">Reloading…</h2><p>Reading the latest conversations and building the report. The page refreshes when it is done.</p><menu><button type="button" class="primary" disabled><span class="spin" style="display:inline-flex">${RELOAD_ICON}</span> Reloading</button></menu>`
+  :`<h2 id="reload-title">Reload the data?</h2><p>This reads the latest Claude Code conversations and builds the report again. It can take a while.</p>${message?`<p class="error">${esc(message)}</p>`:''}<menu><button type="button" data-reload="close">Cancel</button><button type="button" class="primary" data-reload="run">${message?'Try again':'Reload'}</button></menu>`;
+ if(!reloadDialog.open)reloadDialog.showModal();reloadDialog.querySelector('.primary:not(:disabled)')?.focus();}
+async function runReload(){showReload('running');
+ try{const res=await fetch('refresh',{method:'POST',headers:{'X-CCA-Refresh':'1'}});if(!res.ok)throw new Error(await res.text()||`The server answered ${res.status}.`);location.reload();}
+ catch(error){showReload('confirm',error instanceof TypeError?'Could not reach cca serve. Is it still running?':`Could not reload: ${error.message}`);}}
+$('#reload').addEventListener('click',()=>showReload('confirm'));
+reloadDialog.addEventListener('click',e=>{const b=e.target.closest('[data-reload]');if(b?.dataset.reload==='close')reloadDialog.close();else if(b?.dataset.reload==='run')runReload();});
+// Escape must not hide a rebuild that is still running.
+reloadDialog.addEventListener('cancel',e=>{if(reloadDialog.querySelector('.spin'))e.preventDefault();});
 render();applyLink();

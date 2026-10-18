@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A Reload button at the top right of the report builds it again from the latest conversations, without leaving the page. It works when the report is open through `cca serve`, which is how the skill's links open it.
+
 ## 0.1.2 — 2026-10-17
 
 - The skill takes the numbers as clues and then looks at what happened in the conversations behind them, so each proposal names the cause it saw there.

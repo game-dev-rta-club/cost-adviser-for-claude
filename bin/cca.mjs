@@ -23,7 +23,7 @@ Commands:
   build                 Collect and write the Web view as one HTML file
                         (~/.cost-adviser-for-claude/report.html). --open opens it.
   serve                 Show the built report at http://127.0.0.1:7319 so links to it
-                        can be clicked. It only sends the file; run build to update it.
+                        can be clicked. Its Reload button builds it again (30 days).
   link [options]        Print a link that opens the report on one item and highlights it:
                         --project --period day|3d|7d|month --date YYYY-MM-DD
                         --metrics totals.cost,stats.ctx --tool NAME --session ID
@@ -149,7 +149,7 @@ else if (command === 'build') {
   const report = await build(count(values.days, 30, 'days'), values.out);
   if (values.open) openFile(report.file);
 } else if (command === 'serve') {
-  const port = count(values.port, DEFAULT_PORT, 'port', 0), server = createViewer(reportFile(home));
+  const port = count(values.port, DEFAULT_PORT, 'port', 0), server = createViewer(reportFile(home), {rebuild: () => build(30)});
   server.on('error', error => fail(error.code === 'EADDRINUSE' ? `port ${port} is in use (is cca serve already running?).` : error.message));
   server.listen(port, '127.0.0.1', () => console.log(`Report: http://127.0.0.1:${server.address().port}/ (Ctrl+C to stop)`));
 } else if (command === 'link') {

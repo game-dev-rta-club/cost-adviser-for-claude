@@ -88,6 +88,38 @@ test('links describe one view, and the viewer only sends the built report', asyn
     assert.equal((await fetch(url + 'report.html')).status, 404);
     assert.equal((await fetch(url + '../cache.json')).status, 404);
     assert.equal((await fetch(url, {method: 'POST'})).status, 405);
+    assert.equal((await fetch(url + 'refresh', {method: 'POST', headers: {'X-CCA-Refresh': '1'}})).status, 404);
+  } finally { server.close(); }
+});
+
+test('the viewer rebuilds the report when the page asks, once for clicks that overlap', async () => {
+  const home = await tempDir(), file = path.join(home, 'report.html');
+  await fs.writeFile(file, 'old');
+  let builds = 0, fail = false;
+  const server = createViewer(file, {rebuild: async () => {
+    builds++;
+    await new Promise(resolve => setTimeout(resolve, 50));
+    if (fail) throw new Error('transcripts unreadable');
+    await fs.writeFile(file, 'new');
+    return {calls: 3};
+  }});
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${server.address().port}/`, refresh = () => fetch(url + 'refresh', {method: 'POST', headers: {'X-CCA-Refresh': '1'}});
+  try {
+    assert.equal((await fetch(url + 'refresh', {method: 'POST'})).status, 403);
+    assert.equal(builds, 0);
+    const [a, b] = await Promise.all([refresh(), refresh()]);
+    assert.deepEqual([a.status, b.status], [200, 200]);
+    assert.deepEqual(await a.json(), {calls: 3});
+    assert.equal(builds, 1);
+    assert.equal(await (await fetch(url)).text(), 'new');
+    fail = true;
+    const failed = await refresh();
+    assert.equal(failed.status, 500);
+    assert.match(await failed.text(), /transcripts unreadable/);
+    fail = false;
+    assert.equal((await refresh()).status, 200);
+    assert.equal(builds, 3);
   } finally { server.close(); }
 });
 
