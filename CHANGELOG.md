@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The Summary charts open scrolled to the latest period, and both charts scroll together. A period you click stays where it is.
+
 ## 0.1.3 — 2026-10-18
 
 - A Reload button at the top right of the report builds it again from the latest conversations, without leaving the page. It works when the report is open through `cca serve`, which is how the skill's links open it.

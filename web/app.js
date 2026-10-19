@@ -114,7 +114,15 @@ document.addEventListener('pointerover',e=>{const el=hovered(e.target);if(el)sho
 document.addEventListener('pointerout',e=>{const el=hovered(e.target);if(!el||el.contains(e.relatedTarget))return;showGrid(chartOf(el),null);});
 function renderChart(){const ps=periods();if(!ps.some(p=>p.key===state.key))state.key=ps.at(-1)?.key||null;
  for(const [name,metrics] of Object.entries(CHARTS)){drawChart(name,metrics,state.shown[name],ps);
-  document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}</button>`).join('');}}
+  document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}</button>`).join('');}
+ revealKey();}
+// Wide charts scroll sideways. The chosen period (the latest unless one was
+// clicked) is kept in view, so the page opens on today, not the oldest day.
+function revealKey(){for(const wrap of document.querySelectorAll('.chart-wrap')){const band=wrap.querySelector(`.group[data-key="${state.key}"] .band`);if(!band)continue;
+ const r=band.getBoundingClientRect(),w=wrap.getBoundingClientRect();
+ if(r.left<w.left)wrap.scrollLeft+=r.left-w.left;else if(r.right>w.right)wrap.scrollLeft+=r.right-w.right;}}
+// Both charts show the same periods, so they scroll together.
+for(const wrap of document.querySelectorAll('.chart-wrap'))wrap.addEventListener('scroll',()=>{for(const other of document.querySelectorAll('.chart-wrap'))if(other!==wrap&&other.scrollLeft!==wrap.scrollLeft)other.scrollLeft=wrap.scrollLeft;},{passive:true});
 // A part's label sits on its bar when the bar is wide enough: the group on
 // the first line and the part on the second, e.g. "Input\n(cache read)".
 const modelLabel=name=>{const [model,effort]=name.split(' · ');return [model.replace(/^(\w)(\w*)-(\d+)-(\d+)$/,(m,a,b,x,y)=>`${a.toUpperCase()}${b} ${x}.${y}`),effort].filter(Boolean).join('\n');};
