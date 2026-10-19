@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.5 — 2026-10-19
 
 - The Stats chart no longer stops short of the latest period when it shows more metrics than Totals: both charts keep their axes the same width, so they scroll together to the end.
 
