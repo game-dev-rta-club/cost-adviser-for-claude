@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The Stats chart no longer stops short of the latest period when it shows more metrics than Totals: both charts keep their axes the same width, so they scroll together to the end.
+
 ## 0.1.4 — 2026-10-19
 
 - The Summary charts open scrolled to the latest period, and both charts scroll together. A period you click stays where it is.
