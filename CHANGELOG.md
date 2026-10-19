@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6 — 2026-10-19
 
 - In Safari, the Summary charts no longer hide their date labels under the scroll bar when scroll bars are always shown.
 
