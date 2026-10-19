@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.4 — 2026-10-19
 
 - The Summary charts open scrolled to the latest period, and both charts scroll together. A period you click stays where it is.
 
