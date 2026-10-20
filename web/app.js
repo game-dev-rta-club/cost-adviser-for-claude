@@ -66,33 +66,29 @@ function renderProjects(){const total={};for(const r of D.daily)total[r.project]
 // A time series per chart: each period is a group of bars, one per shown metric,
 // each on its own scale. The right axis shows one metric's scale at a time.
 const nice=v=>{const e=10**Math.floor(Math.log10(v)),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;};
-// A change sits as a tag above the bars of the period it falls in. The star
-// marks that period; the name runs right, or left near the right edge.
-function changeTags(ps,width){const stack={};
- return CHANGES.map(c=>{const i=ps.findIndex(p=>p.key===periodKey(c.date,state.period));if(i<0)return '';const n=stack[i]=(stack[i]||0)+1;
-  return `<g class="change-tag" data-cx="${(i+.5)*width}" data-n="${n}" data-label="${esc(c.label)}" data-tip="⭐ ${esc(c.date)} ${esc(c.label)}"><rect height="18" rx="9"/><text>⭐ ${esc(c.label)}</text></g>`;}).join('');}
-// Size each tag to its text and keep it above every bar it covers.
-function fitTags(svg,plot,tops,width){for(const g of svg.querySelectorAll('.change-tag')){const t=g.querySelector('text'),r=g.querySelector('rect'),w=t.getComputedTextLength()+16,cx=+g.dataset.cx,pad=13;
- const right=cx-pad+w<=plot,x0=right?cx-pad:cx+pad-w;
- t.textContent=right?`⭐ ${g.dataset.label}`:`${g.dataset.label} ⭐`;t.setAttribute('text-anchor',right?'start':'end');t.setAttribute('x',right?x0+8:x0+w-8);
- const from=Math.max(0,Math.floor(x0/width)),to=Math.min(tops.length-1,Math.floor((x0+w)/width));
- const y=Math.max(10,Math.min(...tops.slice(from,to+1))-14-(g.dataset.n-1)*20);
- t.setAttribute('y',y+2);r.setAttribute('x',x0);r.setAttribute('y',y-11);r.setAttribute('width',w);}}
-function drawChart(name,metrics,shown,ps,slots){const id=`#chart-${name}`,ms=Object.keys(metrics).filter(k=>shown.has(k)),gw=72,h=214,top=32,base=h-24,aw=46,plot=Math.max(ps.length*gw,420),scale=plot/(ps.length*gw||1);
+// A recorded change is a star in a row along the top of the chart, over the
+// period it falls in, with a count when the period has several. Its title and
+// detail open in a popup on hover or click (changePop below), so the chart
+// stays clear however many there are.
+const STAR='0.0,-7.0 1.8,-2.4 6.7,-2.2 2.9,0.9 4.1,5.7 0.0,3.0 -4.1,5.7 -2.9,0.9 -6.7,-2.2 -1.8,-2.4';
+function changeMarks(ps,width){const by=new Map();
+ CHANGES.forEach((c,n)=>{const i=ps.findIndex(p=>p.key===periodKey(c.date,state.period));if(i>=0)by.set(i,[...(by.get(i)||[]),n]);});
+ return [...by].map(([i,ns])=>{const cx=(i+.5)*width,many=ns.length>1,w=many?36:22;
+  return `<g class="change-mark" data-changes="${ns.join(',')}" tabindex="0" role="button" aria-label="${esc(`Changes: ${ns.map(n=>CHANGES[n].label).join(', ')}`)}" transform="translate(${cx} 14)"><rect x="${-w/2}" y="-10" width="${w}" height="20" rx="10"/><polygon points="${STAR}" transform="translate(${many?-7:0} 0)"/>${many?`<text x="6" y="4">${ns.length}</text>`:''}</g>`;}).join('');}
+function drawChart(name,metrics,shown,ps,slots){const id=`#chart-${name}`,ms=Object.keys(metrics).filter(k=>shown.has(k)),gw=72,aw=46,plot=Math.max(ps.length*gw,420),scale=plot/(ps.length*gw||1);
  const ok=p=>!sparse(name)||enough(p);
  const step=Object.fromEntries(ms.map(k=>{const u=metrics[k].unit||1;return [k,nice(Math.max(...ps.filter(ok).map(metrics[k].v),1e-9)/u/4)*u];})),max=Object.fromEntries(ms.map(k=>[k,step[k]*4]));
  const widths=ms.map(k=>metrics[k].wide?18:7),gap=3,groupW=widths.reduce((s,w)=>s+w,0)+gap*(ms.length-1);
- const y=f=>base-f*(base-top);
+ const h=214,top=32,base=h-24,y=f=>base-f*(base-top);
  const svg=$(id),axis=$(`${id}-axis`);svg.setAttribute('viewBox',`0 0 ${plot} ${h}`);svg.style.minWidth=`${plot}px`;
  axis.setAttribute('viewBox',`0 0 ${aw*slots} ${h}`);axis.style.width=`${aw*slots}px`;
  // One axis per shown metric, in its color.
  axis.innerHTML=ms.map((k,j)=>{const m=metrics[k],x=j*aw;return `<g class="axis" data-axis="${k}" transform="translate(${x} 0)"><rect class="axis-hit" x="0" y="0" width="${aw}" height="${base}"/><line x1="1.5" x2="1.5" y1="${top}" y2="${base}" stroke="${m.color}" stroke-width="3"/>${[0,1,2,3,4].map(i=>`<line x1="0" x2="6" y1="${y(i/4)}" y2="${y(i/4)}" stroke="${m.color}" stroke-width="2"/><text x="9" y="${y(i/4)+4}" text-anchor="start" fill="${m.color}">${i?(m.af||m.f)(step[k]*i):0}</text>`).join('')}</g>`;}).join('');
-const tops=[];
  svg.innerHTML=`<line x1="0" x2="${plot}" y1="${base+.5}" y2="${base+.5}" stroke="var(--line)"/>`+ms.map(k=>`<g class="grid-set" data-axis="${k}">${[1,2,3,4].map(i=>`<line class="grid" x1="0" x2="${plot}" y1="${y(i/4)+.5}" y2="${y(i/4)+.5}" stroke="${metrics[k].color}"/>`).join('')}</g>`).join('')+ps.map((p,i)=>{const x0=i*gw*scale,cx=x0+gw*scale/2;let x=cx-groupW/2;
-  tops[i]=base;const bars=ok(p)?ms.map((k,j)=>{const m=metrics[k],v=m.v(p),bh=Math.max(1,v/max[k]*(base-top)),bx=x;x+=widths[j]+gap;tops[i]=Math.min(tops[i],base-bh);
+  const bars=ok(p)?ms.map((k,j)=>{const m=metrics[k],v=m.v(p),bh=Math.max(1,v/max[k]*(base-top)),bx=x;x+=widths[j]+gap;
    return `<rect x="${bx}" y="${base-bh}" width="${widths[j]}" height="${bh}" rx="${widths[j]>10?3:1.5}" fill="${m.color}" data-tip="${periodLabel(p.key,state.period)}|${m.name}|${m.f(v)}" data-color="${m.color}"></rect>`;}).join('')
    :'';
-  return `<g class="group ${p.key===state.key?'is-sel':''}" data-key="${p.key}"><rect class="band" x="${x0+2}" y="0" width="${gw*scale-4}" height="${h}" rx="6"/>${bars}<text x="${cx}" y="${h-7}" text-anchor="middle">${periodLabel(p.key,state.period)}</text></g>`;}).join('')+changeTags(ps,gw*scale);fitTags(svg,plot,tops,gw*scale);}
+  return `<g class="group ${p.key===state.key?'is-sel':''}" data-key="${p.key}"><rect class="band" x="${x0+2}" y="0" width="${gw*scale-4}" height="${h}" rx="6"/>${bars}<text x="${cx}" y="${h-7}" text-anchor="middle">${periodLabel(p.key,state.period)}</text></g>`;}).join('')+changeMarks(ps,gw*scale);}
 // A tooltip that shows at once (the browser's own waits about a second):
 // "where|what|value", with the item's color as a swatch.
 const tip=document.createElement('div');tip.className='tip';tip.hidden=true;document.body.append(tip);
@@ -353,4 +349,25 @@ $('#reload').addEventListener('click',()=>showReload('confirm'));
 reloadDialog.addEventListener('click',e=>{const b=e.target.closest('[data-reload]');if(b?.dataset.reload==='close')reloadDialog.close();else if(b?.dataset.reload==='run')runReload();});
 // Escape must not hide a rebuild that is still running.
 reloadDialog.addEventListener('cancel',e=>{if(reloadDialog.querySelector('.spin'))e.preventDefault();});
+// The changes behind a star: hovering opens them, clicking keeps them open
+// until a click elsewhere, Escape or ✕. The popup sits below the star, or
+// above it near the bottom of the window.
+const changePop=document.createElement('div');changePop.className='change-pop';changePop.hidden=true;changePop.setAttribute('role','dialog');document.body.append(changePop);
+let popMark=null,popPinned=false;
+function openPop(mark,pin){popMark=mark;popPinned=pin;
+ const list=mark.dataset.changes.split(',').map(n=>CHANGES[+n]);
+ changePop.innerHTML=`${pin?'<button type="button" class="close" data-pop-close aria-label="Close">✕</button>':''}${list.map(c=>`<article><small>⭐ ${esc(c.date)}</small><strong>${esc(c.label)}</strong>${c.detail?`<p>${esc(c.detail)}</p>`:''}</article>`).join('')}`;
+ changePop.classList.toggle('pinned',pin);changePop.hidden=false;
+ const r=mark.getBoundingClientRect(),w=changePop.offsetWidth,h=changePop.offsetHeight;
+ const x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8),below=r.bottom+8+h<=innerHeight-8;
+ changePop.style.transform=`translate(${x}px,${below?r.bottom+8:Math.max(8,r.top-8-h)}px)`;}
+function closePop(){changePop.hidden=true;popMark=null;popPinned=false;}
+document.addEventListener('pointerover',e=>{if(popPinned)return;const m=e.target.closest?.('.change-mark');if(m&&m!==popMark)openPop(m,false);else if(!m&&popMark)closePop();});
+document.addEventListener('click',e=>{const m=e.target.closest('.change-mark');
+ if(m){popPinned&&popMark===m?closePop():openPop(m,true);return;}
+ if(e.target.closest('[data-pop-close]')||popPinned&&!changePop.contains(e.target))closePop();});
+document.addEventListener('keydown',e=>{const m=e.target.closest?.('.change-mark');
+ if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openPop(m,true);}else if(e.key==='Escape'&&popMark)closePop();});
+// Capture also sees a chart scrolling sideways, which moves the star.
+document.addEventListener('scroll',()=>{if(popPinned&&popMark?.isConnected)openPop(popMark,true);else closePop();},{capture:true,passive:true});
 render();applyLink();

@@ -1,7 +1,9 @@
 # Judging a change
 
-1. **Record the day it starts** with `cca mark add`. Without a date there is
-   nothing to compare.
+1. **Record the day it starts** with `cca mark add DATE LABEL --detail TEXT`.
+   Without a date there is nothing to compare. The label is a title of a few
+   words; the detail says what changed and how. Both open from the ⭐ on the
+   report's charts.
 2. **Compare like with like.** `cca summary` puts the same number of days
    before and after side by side. Use the ratios (cost per active hour, cost
    per call); totals follow how much work there was.

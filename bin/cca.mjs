@@ -56,7 +56,10 @@ Commands:
                         --since <date> starts at that day instead of --days.
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
-  mark add <date> <label>     Record the day a change went in (YYYY-MM-DD).
+  mark add <date> <label>     Record the day a change went in (YYYY-MM-DD). It shows
+                              as a star on the charts. The label is its title, 30
+                              characters at most; --detail <text> says what changed.
+                              Both open from the star.
   mark remove <date> <label>  Remove a recorded change.
                               Both rebuild the HTML when it exists.
   mark list                   List recorded changes.
@@ -71,6 +74,7 @@ Options:
   --project <name>      summary/simulate: one project only.
   --json                summary/simulate/mark list/decline list: print JSON.
   --reason <text>       decline add: why the option was declined.
+  --detail <text>       mark add: what the change was, in full.
   --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
   --open                build/link: open it in the default browser.
   --port <n>            serve/link: port (default 7319).
@@ -99,7 +103,7 @@ const fail = message => { console.error(`cca: ${message}\nRun "cca help" for usa
 function options(args) {
   try {
     return parseArgs({args, allowPositionals: true, options: {
-      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'},
+      days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'}, detail: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
       out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'}, until: {type: 'string'},
       'compact-at': {type: 'string'}, 'tool-results': {type: 'string'}, delegate: {type: 'string'},
@@ -138,7 +142,7 @@ const {values, positionals} = options(rest);
 // Only simulate shortens several tools at once; elsewhere --tool names one.
 if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail('--tool takes one tool or group here.');
 // Options another command takes are refused rather than quietly ignored.
-for (const [name, commands] of [['until', ['summary']], ['delegate', ['simulate']], ['compact-at', ['simulate']], ['tool-results', ['simulate']], ['since', ['summary', 'simulate']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
+for (const [name, commands] of [['until', ['summary']], ['delegate', ['simulate']], ['compact-at', ['simulate']], ['tool-results', ['simulate']], ['since', ['summary', 'simulate']], ['detail', ['mark']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
   if (values[name] !== undefined && !commands.includes(command)) fail(`--${name} is for ${commands.join('/')} only.`);
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const root = values.transcripts || transcriptRoot(), home = dataDir();
@@ -285,11 +289,11 @@ else if (command === 'build') {
   try {
     if (action === 'list' || !action) {
       const list = await readChanges(home);
-      console.log(values.json ? JSON.stringify(list, null, 2) : list.map(c => `${c.date}  ${c.label}`).join('\n') || 'No changes recorded.');
+      console.log(values.json ? JSON.stringify(list, null, 2) : list.map(c => `${c.date}  ${c.label}${c.detail ? `\n            ${c.detail}` : ''}`).join('\n') || 'No changes recorded.');
     } else if (action === 'add') {
-      const {added} = await addChange(home, date, label);
-      console.log(added ? `Recorded: ${date} ${label.trim()}` : `Already recorded: ${date} ${label.trim()}`);
-      if (added) await rebuildIfBuilt();
+      const {added, updated} = await addChange(home, date, label, values.detail);
+      console.log(`${added ? 'Recorded' : updated ? 'Updated the detail' : 'Already recorded'}: ${date} ${label.trim()}`);
+      if (added || updated) await rebuildIfBuilt();
     } else if (action === 'remove') {
       const {removed} = await removeChange(home, date, label);
       if (!removed) fail(`no change "${label.trim()}" on ${date}.`);

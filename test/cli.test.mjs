@@ -21,6 +21,10 @@ test('changes are recorded once, sorted and removable', async () => {
   assert.deepEqual((await readChanges(dir)).map(c => c.date), ['2026-10-12', '2026-10-16']);
   await assert.rejects(addChange(dir, '2026-1-1', 'x'), /YYYY-MM-DD/);
   await assert.rejects(addChange(dir, '2026-10-16', ' '), /label/);
+  await assert.rejects(addChange(dir, '2026-10-16', 'x'.repeat(31)), /--detail/);
+  assert.equal((await addChange(dir, '2026-10-16', 'Fewer calls', ' Batch chill waits ')).updated, true);
+  assert.equal((await addChange(dir, '2026-10-16', 'Fewer calls', 'Batch chill waits')).updated, false);
+  assert.deepEqual((await readChanges(dir)).find(c => c.date === '2026-10-16'), {date: '2026-10-16', label: 'Fewer calls', detail: 'Batch chill waits'});
   assert.equal((await removeChange(dir, '2026-10-12', 'Subagents')).removed, true);
   assert.equal((await removeChange(dir, '2026-10-12', 'Subagents')).removed, false);
   await fs.writeFile(path.join(dir, 'changes.json'), '{broken');
@@ -33,11 +37,14 @@ test('cli: mark, summary, collect and errors', async () => {
   await writeTranscript(root, 'p/s.jsonl', [assistant({id: 'm', at: now.toISOString(), output: 10, cwd: '/w/demo'})]);
   assert.match((await cca(['help'])).stdout, /Usage: cca/);
   const today = now.toLocaleDateString('sv-SE');
-  assert.match((await cca(['mark', 'add', today, 'First', 'change'], env)).stdout, /Recorded/);
-  assert.deepEqual(JSON.parse((await cca(['mark', 'list', '--json'], env)).stdout), [{date: today, label: 'First change'}]);
+  assert.match((await cca(['mark', 'add', today, 'First', 'change', '--detail', 'Hand runs of reads to a subagent'], env)).stdout, /Recorded/);
+  assert.deepEqual(JSON.parse((await cca(['mark', 'list', '--json'], env)).stdout), [{date: today, label: 'First change', detail: 'Hand runs of reads to a subagent'}]);
+  await assert.rejects(cca(['summary', '--detail', 'x'], env), /--detail is for mark only/);
   const summary = JSON.parse((await cca(['summary', '--json', '--transcripts', root], env)).stdout);
   assert.equal(summary.current.calls, 1);
   assert.equal(summary.changes[0].label, 'First change');
+  assert.equal(summary.changes[0].detail, 'Hand runs of reads to a subagent');
+  assert.match((await cca(['summary', '--transcripts', root], env)).stdout, /First change \(Hand runs of reads to a subagent\)/);
   const out = path.join(home, 'data.json');
   await cca(['collect', '--transcripts', root, '--out', out], env);
   assert.equal(JSON.parse(await fs.readFile(out, 'utf8')).daily[0].project, 'demo');
