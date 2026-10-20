@@ -1,6 +1,6 @@
 {
   "name": "cost-adviser-for-claude",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Measure what Claude Code conversations cost, and whether a change made them cheaper.",
   "type": "module",
   "bin": {

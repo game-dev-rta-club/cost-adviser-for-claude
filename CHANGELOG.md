@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.7 — 2026-10-20
 
 - A recorded change is a ⭐ above its day on the charts, with a count when one period has several. Hovering or clicking the star opens its title and detail, so the charts stay clear however many changes there are.
 - A change has a short label, its title (30 characters at most), and a detail: `cca mark add DATE LABEL --detail TEXT`. Adding the same label on the same day again replaces its detail.
