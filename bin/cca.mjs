@@ -7,7 +7,7 @@ import path from 'node:path';
 import {parseArgs} from 'node:util';
 import {checkAdvice, clearAdvice, readAdvice, saveAdvice} from '../lib/advice.mjs';
 import {addChange, readChanges, removeChange} from '../lib/changes.mjs';
-import {dataDir, transcriptRoot} from '../lib/paths.mjs';
+import {dataDir, transcriptSources} from '../lib/paths.mjs';
 import {buildReport, collectCached, readTranscriptsCached, reportFile} from '../lib/report.mjs';
 import {addDeclined, readDeclined, removeDeclined} from '../lib/declined.mjs';
 import {formatSummary, summarize} from '../lib/summary.mjs';
@@ -78,7 +78,9 @@ Options:
   --out <file>          build: write the HTML here. collect: write JSON here instead of standard output.
   --open                build/link: open it in the default browser.
   --port <n>            serve/link: port (default 7319).
-  --transcripts <dir>   Read transcripts here (default: $CLAUDE_CONFIG_DIR/projects or ~/.claude/projects).
+  --transcripts <dir>   Read transcripts here (default: $CLAUDE_CONFIG_DIR/projects or ~/.claude/projects,
+                        and the folders listed in $CCA_HOME/sources.json). Give it more than once
+                        to read several folders.
 
 Recorded changes, the HTML and a cache of read transcripts are kept in
 $CCA_HOME (default ~/.cost-adviser-for-claude). Only changed transcripts are read again.
@@ -105,7 +107,7 @@ function options(args) {
     return parseArgs({args, allowPositionals: true, options: {
       days: {type: 'string'}, project: {type: 'string'}, json: {type: 'boolean'}, open: {type: 'boolean'}, port: {type: 'string'}, clear: {type: 'boolean'}, reason: {type: 'string'}, detail: {type: 'string'},
       period: {type: 'string'}, date: {type: 'string'}, metrics: {type: 'string'}, tool: {type: 'string', multiple: true}, session: {type: 'string'}, focus: {type: 'string'}, item: {type: 'string'},
-      out: {type: 'string'}, transcripts: {type: 'string'}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'}, until: {type: 'string'},
+      out: {type: 'string'}, transcripts: {type: 'string', multiple: true}, help: {type: 'boolean', short: 'h'}, 'full-days': {type: 'boolean'}, since: {type: 'string'}, until: {type: 'string'},
       'compact-at': {type: 'string'}, 'tool-results': {type: 'string'}, delegate: {type: 'string'},
     }});
   } catch (error) { fail(error.message); }
@@ -145,7 +147,9 @@ if (values.tool?.length > 1 && !['simulate', 'summary'].includes(command)) fail(
 for (const [name, commands] of [['until', ['summary']], ['delegate', ['simulate']], ['compact-at', ['simulate']], ['tool-results', ['simulate']], ['since', ['summary', 'simulate']], ['detail', ['mark']], ['session', ['link']], ['focus', ['link']], ['metrics', ['link']], ['item', ['link']], ['period', ['link']], ['date', ['link']]])
   if (values[name] !== undefined && !commands.includes(command)) fail(`--${name} is for ${commands.join('/')} only.`);
 if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
-const root = values.transcripts || transcriptRoot(), home = dataDir();
+const home = dataDir();
+let root;
+try { root = values.transcripts?.length ? values.transcripts : await transcriptSources(home); } catch (error) { fail(error.message); }
 
 if (!command || command === 'help' || command === '--help' || command === '-h') console.log(HELP);
 else if (values.help) console.log(commandHelp(command));

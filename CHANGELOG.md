@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `cca` can read transcripts copied from your other machines along with this one's. List their folders in `~/.cost-adviser-for-claude/sources.json`; the summary then shows the cost by machine, and the top sessions say where each ran. `--transcripts` can be given more than once.
+
 ## 0.1.7 — 2026-10-20
 
 - A recorded change is a ⭐ above its day on the charts, with a count when one period has several. Hovering or clicking the star opens its title and detail, so the charts stay clear however many changes there are.

@@ -17,7 +17,12 @@ Every `cca` command, and how the numbers are counted. Each command also prints i
 | `cca mark list` / `cca mark remove DATE "LABEL"` | List or remove recorded changes. |
 | `cca collect [--days 30] [--out data.json]` | The collected data as JSON, for the same days as the summary (counted back from today at midnight). |
 
-`--transcripts DIR` reads another transcript folder. Recorded changes, the
+By default `cca` reads this machine's transcripts and the folders listed in
+`~/.cost-adviser-for-claude/sources.json`, such as copies of another machine's `~/.claude/projects`:
+`{"machine": "MacBookPro", "transcripts": [{"machine": "MacMini", "dir": "~/remote-logs/MacMini/.claude/projects"}]}`.
+Each session then carries its machine, and the summary adds the cost by machine.
+`--transcripts DIR` reads only the folders it names (give it more than once for
+several). Recorded changes, the
 report and a cache of read transcripts are kept in `~/.cost-adviser-for-claude`
 (set `CCA_HOME` to move it). Deleting `cache.json` only costs one full read.
 

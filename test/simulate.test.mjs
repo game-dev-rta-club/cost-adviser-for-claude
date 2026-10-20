@@ -135,3 +135,20 @@ test('replay: --delegate hands runs of tool calls in a long conversation to a fr
   assert.equal(r.delegated.runs, 0);
   assert.equal(r.cut, 0);
 });
+
+test('cli: sources.json adds another machine\'s transcripts and names each machine', async () => {
+  const fs = await import('node:fs/promises'), path = await import('node:path');
+  const home = await tempDir(), config = await tempDir(), copy = await tempDir(), now = Date.now();
+  const at = i => new Date(now - (10 - i) * 60000).toISOString();
+  await writeTranscript(path.join(config, 'projects'), 'p/a.jsonl', [assistant({id: 'here', at: at(1), output: 10})]);
+  await writeTranscript(copy, 'p/b.jsonl', [assistant({id: 'there', at: at(2), output: 10}), assistant({id: 'there2', at: at(3), output: 10})]);
+  await fs.writeFile(path.join(home, 'sources.json'), JSON.stringify({machine: 'Laptop', transcripts: [{machine: 'Mini', dir: copy}]}));
+  const env = {...process.env, CCA_HOME: home, CLAUDE_CONFIG_DIR: config};
+  const summary = JSON.parse((await run(process.execPath, [cli, 'summary', '--json'], {env})).stdout);
+  assert.equal(summary.current.calls, 3);
+  assert.deepEqual(summary.machines.map(m => [m.machine, m.calls]), [['Mini', 2], ['Laptop', 1]]);
+  assert.match((await run(process.execPath, [cli, 'summary'], {env})).stdout, /Cost by machine[\s\S]*Mini/);
+  // --transcripts reads only the folders it names.
+  const only = JSON.parse((await run(process.execPath, [cli, 'summary', '--json', '--transcripts', copy], {env})).stdout);
+  assert.equal(only.current.calls, 2);
+});

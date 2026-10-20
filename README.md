@@ -81,6 +81,12 @@ cca summary         # the same as text: this week against the last
 
 **Requires:** Claude Code and Node.js 20 or later. No other dependencies. `cca` reads `~/.claude/projects` and writes only to `~/.cost-adviser-for-claude`. Costs are estimates at list prices per model; on a subscription, they show what the same use would cost through the API.
 
+**Several machines:** copy the other machines' `~/.claude/projects` here (for example with `rsync` over SSH) and list the copies in `~/.cost-adviser-for-claude/sources.json`. Every command then counts them too, and the summary shows the cost by machine:
+
+```json
+{"machine": "MacBookPro", "transcripts": [{"machine": "MacMini", "dir": "~/remote-logs/MacMini/.claude/projects"}]}
+```
+
 Every command and how each number is counted: [Reference](docs/reference.md).
 
 ## Update
