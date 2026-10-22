@@ -1,12 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.1.8 — 2026-10-22
 
 - The skill moves a proposal you have carried out off the list and into a mark on the day it took effect, with the saving it expected and how to measure it. The list keeps only what is still to do; the change gets its verdict from the mark once there are enough days.
-
-## Unreleased
-
-- `cca` can read transcripts copied from your other machines along with this one's. List their folders in `~/.cost-adviser-for-claude/sources.json`; the summary then shows the cost by machine, and the top sessions say where each ran. `--transcripts` can be given more than once.
+- `cca` can read transcripts copied from your other machines along with this one's. List their folders in `~/.cost-adviser-for-claude/sources.json`; the summary then shows the cost by machine, and the top sessions say where each ran. `--transcripts` can be given more than once, and a listed folder that is missing is named rather than skipped in silence. The skill notes that sessions on another machine ran with that machine's settings.
 
 ## 0.1.7 — 2026-10-20
 
