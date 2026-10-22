@@ -14,7 +14,8 @@ it changes only where the numbers or the facts did, so that a change means
 something.
 
 The only writes are the proposals (`cca advise`) and, when the user agrees,
-`cca mark add` and `cca decline add`.
+`cca mark add` and `cca decline add`. The user saying they carried a proposal
+out is that agreement for its mark.
 
 ## Steps
 
@@ -46,7 +47,8 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
 4. **Judge past changes** with [measuring.md](references/measuring.md): the
    recorded ones, and those the summary spots (Context jumps, Mix shifts). The
    summary says when a verdict is due. Offer `cca mark add` for one that is not
-   recorded.
+   recorded. A change that did not help, or only partly, goes back on the list
+   as a proposal for the next step.
 5. **Update the list** and save it with `cca advise FILE` (below). It prints
    each proposal's link. Start `cca serve` in the background if it says
    nothing is serving the report.
@@ -97,12 +99,16 @@ The only writes are the proposals (`cca advise`) and, when the user agrees,
   exactly as written, `news` included, while its numbers move less than about
   a tenth (about a point for shares under 10%) and its facts and reasoning
   hold. Otherwise change only what moved, and say what in `news`.
-- When a change is about what a proposal targets and there are fewer than 2
-  full days since, wait: keep the rating and say in `news` until when. If the
-  problem is already under 1% since the change, drop it; the change dealt
-  with it.
-- When the user has carried a fix out, drop it if the problem is gone, or turn
-  it into the next step. Never keep "keep doing this".
+- **A proposal the user has carried out leaves the list and becomes a mark.**
+  Record it with `cca mark add DATE LABEL --detail TEXT`, the day it took
+  effect (ask if unclear), and put in the detail what was done, the saving
+  the proposal expected with the command that measures it, and how to tell
+  it worked. Then drop the proposal from the list. Its verdict comes later
+  from the mark, once measuring.md says there are enough days; the list holds
+  only what is still to do. Never keep "keep doing this".
+- When another change touches what a proposal targets, measure the proposal
+  again on full days since that change; if the problem is under 1% there,
+  drop it.
 - When the summary says cca's prices or counting changed, measure again and
   correct the numbers that moved: a correction, not news.
 - Write in the language the proposals are in, unless the user asks otherwise.
