@@ -26,7 +26,10 @@ out is that agreement for its mark.
    and each project's `.claude/settings.json` and `.claude/settings.local.json`.
    Launch flags win over them; count those of the running sessions with
    `ps -axo command | grep -oE -- 'claude-code/[0-9.]+|--(model|effort|autocompact)[= ][^ ]+' | sort | uniq -c`
-   (with the Claude Code version that is running).
+   (with the Claude Code version that is running). Sessions from another
+   machine (the summary's Cost by machine) ran with that machine's settings
+   and flags, which are not here: ask the user, or say which you could not
+   check.
    This review is in the data too, as a subagent of the session running it.
 2. **See what happened.** The numbers are clues: they show where the money
    goes, not why. For the ones that stand out, open the conversations behind

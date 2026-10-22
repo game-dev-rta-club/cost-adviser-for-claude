@@ -151,4 +151,7 @@ test('cli: sources.json adds another machine\'s transcripts and names each machi
   // --transcripts reads only the folders it names.
   const only = JSON.parse((await run(process.execPath, [cli, 'summary', '--json', '--transcripts', copy], {env})).stdout);
   assert.equal(only.current.calls, 2);
+  // A listed folder that is missing is named, not silently left out.
+  await fs.writeFile(path.join(home, 'sources.json'), JSON.stringify({machine: 'Laptop', transcripts: [{machine: 'Gone', dir: path.join(copy, 'nope')}]}));
+  assert.match((await run(process.execPath, [cli, 'summary'], {env})).stderr, /no transcripts at .*nope \(Gone\)/);
 });

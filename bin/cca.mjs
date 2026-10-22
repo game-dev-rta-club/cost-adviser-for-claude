@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Cost Adviser For Claude: measure what Claude Code conversations cost.
 import {execFile} from 'node:child_process';
+import {existsSync} from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -150,6 +151,8 @@ if (!['simulate', 'summary'].includes(command)) values.tool = values.tool?.[0];
 const home = dataDir();
 let root;
 try { root = values.transcripts?.length ? values.transcripts : await transcriptSources(home); } catch (error) { fail(error.message); }
+// A folder that is not there would leave its machine out without a word.
+for (const r of [].concat(root)) if (!existsSync(r.dir ?? r)) console.error(`cca: no transcripts at ${r.dir ?? r}${r.machine ? ` (${r.machine})` : ''}; check sources.json or --transcripts.`);
 
 if (!command || command === 'help' || command === '--help' || command === '-h') console.log(HELP);
 else if (values.help) console.log(commandHelp(command));
