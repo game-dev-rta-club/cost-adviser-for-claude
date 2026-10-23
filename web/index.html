@@ -6,9 +6,9 @@
 <title>Cost Adviser For Claude</title>
 <style>
 :root{--bg:#f6f7f5;--panel:#fff;--ink:#1f2a27;--muted:#62706b;--line:#e2e7e4;--accent:#0f6e64;--accent-soft:#e3f1ee;
- --c-read:#7fb3d5;--c-write:#2e86c1;--c-input:#e59866;--c-output:#58a55c;--warn:#b8621b;--warn-soft:#fbefe4;--sel:#fff6dc}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420}}
-:root[data-theme="dark"]{--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420}
+ --c-read:#7fb3d5;--c-write:#2e86c1;--c-input:#e59866;--c-output:#58a55c;--warn:#b8621b;--warn-soft:#fbefe4;--sel:#fff6dc;--change:#e8492a;--change-soft:#fde6df}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420;--change:#ff6a45;--change-soft:#3f2219}}
+:root[data-theme="dark"]{--bg:#141917;--panel:#1d2421;--ink:#e6ece9;--muted:#9aa8a2;--line:#2e3834;--accent:#5cc2b4;--accent-soft:#1f3631;--warn:#f0a35e;--warn-soft:#3a2b1d;--sel:#3a3420;--change:#ff6a45;--change-soft:#3f2219}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 system-ui,-apple-system,"Hiragino Sans",sans-serif}
 header{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -94,8 +94,8 @@ tr.detail td{background:var(--bg);padding:10px 12px}
 .focus-glow{outline:2px solid #ea5f2c;outline-offset:3px;border-radius:6px;animation:focus-glow 1.2s ease-out 3}
 @keyframes focus-glow{0%{box-shadow:0 0 0 0 rgba(234,95,44,.55)}100%{box-shadow:0 0 0 10px rgba(234,95,44,0)}}
 .chart .band.focus-glow{fill:rgba(234,95,44,.12);outline:none;animation:none}
-.chart .change-mark{cursor:pointer;outline:none}.chart .change-mark rect{fill:var(--panel);stroke:var(--accent);stroke-width:1.5}.chart .change-mark:hover rect,.chart .change-mark:focus-visible rect{fill:var(--accent-soft);stroke-width:2}.chart .change-mark polygon{fill:var(--accent)}.chart .change-mark text{font-size:11px;fill:var(--ink);font-weight:700}
-.change-pop{position:fixed;left:0;top:0;z-index:25;display:grid;gap:10px;width:min(320px,calc(100vw - 16px));max-height:min(60vh,420px);overflow:auto;padding:12px 14px;border:1.5px solid var(--accent);border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.16);font-size:13px;line-height:1.55}.change-pop[hidden]{display:none}
+.chart .change-mark{cursor:pointer;outline:none}.chart .change-mark rect{fill:var(--panel);stroke:var(--change);stroke-width:1.5}.chart .change-mark:hover rect,.chart .change-mark:focus-visible rect{fill:var(--change-soft);stroke-width:2}.chart .change-mark polygon{fill:var(--change)}.chart .change-mark text{font-size:11px;fill:var(--ink);font-weight:700}
+.change-pop{position:fixed;left:0;top:0;z-index:25;display:grid;gap:10px;width:min(320px,calc(100vw - 16px));max-height:min(60vh,420px);overflow:auto;padding:12px 14px;border:1.5px solid var(--change);border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.16);font-size:13px;line-height:1.55}.change-pop[hidden]{display:none}
 .change-pop article{display:grid;gap:2px}.change-pop article+article{padding-top:10px;border-top:1px solid var(--line)}.change-pop small{color:var(--muted);font-size:11.5px}.change-pop strong{font-size:13.5px;word-break:break-word}.change-pop p{margin:2px 0 0;white-space:pre-line;word-break:break-word}
 .change-pop .close{position:sticky;top:0;z-index:1;justify-self:end;width:22px;height:22px;margin:-4px -6px -32px 0;padding:0;border:0;border-radius:50%;background:var(--panel);color:var(--muted);cursor:pointer;font-size:13px;line-height:1}.change-pop.pinned article:first-of-type{padding-right:18px}.chart text.sparse{fill:var(--muted)}.chart .group.is-sel text{fill:var(--ink);font-weight:650}
 .metrics{justify-content:center;margin:10px 0 0}.metrics button{display:inline-flex;gap:6px;align-items:center;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- A recorded change is drawn as an up arrow, so it is not mistaken for the stars that rate the proposals.
+- A recorded change is drawn as an orange-red up arrow, so it is not mistaken for the stars that rate the proposals.
 - The Stats chart can show calls per active hour, next to cost per call: together they make cost per active hour.
 
 ## 0.1.8 — 2026-10-22
