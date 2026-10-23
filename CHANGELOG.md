@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The Stats chart can show calls per active hour, next to cost per call: together they make cost per active hour.
+
 ## 0.1.8 — 2026-10-22
 
 - The skill moves a proposal you have carried out off the list and into a mark on the day it took effect, with the saving it expected and how to measure it. The list keeps only what is still to do; the change gets its verdict from the mark once there are enough days.
