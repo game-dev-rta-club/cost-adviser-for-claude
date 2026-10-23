@@ -137,6 +137,12 @@ for(const wrap of document.querySelectorAll('.chart-wrap'))wrap.addEventListener
 const modelLabel=name=>{const [model,effort]=name.split(' · ');return [model.replace(/^(\w)(\w*)-(\d+)-(\d+)$/,(m,a,b,x,y)=>`${a.toUpperCase()}${b} ${x}.${y}`),effort].filter(Boolean).join('\n');};
 function fitLabels(){for(const span of document.querySelectorAll('.stack span')){const box=span.parentElement;span.classList.toggle('is-hidden',span.scrollWidth>box.clientWidth-16||span.scrollHeight>box.clientHeight);}}
 addEventListener('resize',()=>fitLabels());
+// Models by their total cost, most first; within a model, effort from low to max.
+const EFFORT_ORDER=Object.keys(EFFORT);
+function byModel(entries){const model=e=>e.name.split(' · ')[0],effort=e=>e.name.split(' · ')[1],total={};
+ for(const e of entries)total[model(e)]=(total[model(e)]||0)+e.cost;
+ const rank=e=>{const i=EFFORT_ORDER.indexOf((effort(e)||'').trim());return i<0?EFFORT_ORDER.length:i;};
+ return [...entries].sort((a,b)=>total[model(b)]-total[model(a)]||model(a).localeCompare(model(b))||rank(a)-rank(b));}
 function breakdown(title,entries,{calls=true,sorted=true,rows=null}={}){const total=entries.reduce((s,e)=>s+e.cost,0);if(!total)return '';
  entries=entries.filter(e=>e.cost>0);if(sorted)entries.sort((a,b)=>b.cost-a.cost);
  return `<div class="breakdown" data-breakdown="${esc(title)}"><h3>${title}</h3><div class="stack">${entries.map((e,i)=>`<div data-tip="${esc(title)}|${esc(e.name)}|${usd(e.cost)}" data-color="${e.color||PALETTE[i%PALETTE.length]}" style="flex:${e.cost};background:${e.color||PALETTE[i%PALETTE.length]}"><span>${esc(e.label||e.name)}</span></div>`).join('')}</div>
@@ -156,7 +162,7 @@ function renderProfile(){const a=sumDaily(D.daily.filter(r=>inProject(r)&&inPeri
  const compacts=[{name:'Summary (est.)',label:'Compacting\n(summary)',color:'#18a874',cost:a.compactSummary,kind:'sub',note:'estimated'},{name:'Cache rebuild',label:'Compacting\n(rebuild)',color:'#5fc49c',cost:a.compactRebuild,kind:'sub',note:''}];
  const compact={name:'Compacting',kind:'group',cost:compactCost(a),note:`${num(a.compactions)} compactions`};
  $('#breakdowns').innerHTML=breakdown('Cost by type',[...parts,...compacts],{calls:false,sorted:false,rows:[input,...inputs,{name:'Output',kind:'group',cost:parts[3].cost,tokens:parts[3].tokens},{...parts[3],kind:'sub'},...(a.compactions?[compact,...compacts]:[])]})
-  +breakdown('Cost by model',Object.entries(a.byModelEffort).map(([name,v])=>({name,label:modelLabel(name),...v,color:modelColor(name)})));
+  +breakdown('Cost by model',byModel(Object.entries(a.byModelEffort).map(([name,v])=>({name,label:modelLabel(name),...v,color:modelColor(name)}))),{sorted:false});
  fitLabels();}
 // A project or session picked in Sessions narrows Calls by action to it.
 const inScope=r=>!state.scope||(state.scope.kind==='project'?r.project===state.scope.id:r.session===state.scope.id);
