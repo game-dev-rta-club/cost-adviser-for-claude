@@ -58,9 +58,9 @@ Commands:
   collect               Write the collected data as JSON: rows by day, project,
                         tool and session, for the same days as the summary.
   mark add <date> <label>     Record the day a change went in (YYYY-MM-DD). It shows
-                              as a star on the charts. The label is its title, 30
+                              as an up arrow on the charts. The label is its title, 30
                               characters at most; --detail <text> says what changed.
-                              Both open from the star.
+                              Both open from the arrow.
   mark remove <date> <label>  Remove a recorded change.
                               Both rebuild the HTML when it exists.
   mark list                   List recorded changes.
