@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Cost per active hour shows, in a darker part of its bar, the cache reload cost per active hour: what was spent writing the cache again after it expired, over a break or in a resumed conversation.
+- The Stats chart can show the cache reload cost per active hour: what was spent writing the cache again after it expired, over a break or in a resumed conversation. It is off until you turn it on, and sits as a darker part inside the cost per active hour bar when that shows.
 - A recorded change is drawn as an orange up arrow, so it is not mistaken for the stars that rate the proposals.
 - The Stats chart can show calls per active hour, next to cost per call: together they make cost per active hour.
 

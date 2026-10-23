@@ -35,9 +35,10 @@ const CHANGES=Array.isArray(D.changes)?D.changes:[];
 const compactCost=a=>a.compactSummary+a.compactRebuild;
 const CHARTS={
  totals:{cost:{name:'Cost',color:'#ea5f2c',wide:true,v:a=>a.cost,f:usd,af:usdAxis},activeMs:{name:'Active time',color:'#2f7fe0',v:a=>a.activeMs,f:hrs,af:v=>`${+(v/3600000).toFixed(1)}h`,unit:3600000},calls:{name:'Calls',color:'#18a874',v:a=>a.calls,f:v=>`${num(v)} calls`,af:short},tokens:{name:'Tokens',color:'#9b4de0',v:a=>Object.values(a.tokens).reduce((s,x)=>s+x,0),f:tok,af:short}},
- stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis,
-  // The part of it spent writing the cache again after it expired (a break or a resumed conversation), drawn inside the bar.
-  part:{name:'Cache reload cost / active hour',color:'#a83a14',v:a=>a.activeMs?a.cacheExpired/(a.activeMs/3600000):0}},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},callsPerHour:{name:'Calls / active hour',color:'#2f7fe0',v:a=>a.activeMs?a.calls/(a.activeMs/3600000):0,f:v=>`${num(v)} calls/h`,af:short},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactPerHour:{name:'Compacting / active hour',color:'#18a874',v:a=>a.activeMs?compactCost(a)/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis}}};
+ stats:{perHour:{name:'Cost / active hour',color:'#ea5f2c',wide:true,v:a=>a.activeMs?a.cost/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},
+  // What was spent writing the cache again after it expired (a break or a resumed conversation).
+  // Off unless chosen; drawn inside the cost per hour bar when that shows, as its own bar otherwise.
+  reload:{name:'Cache reload cost / active hour',color:'#a83a14',inside:'perHour',v:a=>a.activeMs?a.cacheExpired/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis},ctx:{name:'Avg context',color:'#0aa5c2',v:a=>a.calls?a.ctx/a.calls:0,f:tok},perCall:{name:'Cost / call',color:'#e8b100',v:a=>a.calls?a.cost/a.calls:0,f:usd,af:usdAxis},callsPerHour:{name:'Calls / active hour',color:'#2f7fe0',v:a=>a.activeMs?a.calls/(a.activeMs/3600000):0,f:v=>`${num(v)} calls/h`,af:short},cacheHit:{name:'Cache hit rate',color:'#d63384',v:a=>{const t=a.tokens.cacheRead+a.tokens.cacheWrite+a.tokens.input;return t?a.tokens.cacheRead/t*100:0;},f:pct},subShare:{name:'Subagent calls',color:'#9b4de0',v:a=>a.calls?a.subCalls/a.calls*100:0,f:pct},compactPerHour:{name:'Compacting / active hour',color:'#18a874',v:a=>a.activeMs?compactCost(a)/(a.activeMs/3600000):0,f:v=>`${usd(v)}/h`,af:usdAxis}}};
 // Stats are ratios: hide them when the period has too little use.
 const sparse=name=>name==='stats';
 // Profile: Claude's orange is the base (Opus, Input); effort only changes the shade.
@@ -78,7 +79,10 @@ function changeMarks(ps,width){const by=new Map();
  CHANGES.forEach((c,n)=>{const i=ps.findIndex(p=>p.key===periodKey(c.date,state.period));if(i>=0)by.set(i,[...(by.get(i)||[]),n]);});
  return [...by].map(([i,ns])=>{const cx=(i+.5)*width,many=ns.length>1,w=many?36:22;
   return `<g class="change-mark" data-changes="${ns.join(',')}" tabindex="0" role="button" aria-label="${esc(`Changes: ${ns.map(n=>CHANGES[n].label).join(', ')}`)}" transform="translate(${cx} 14)"><rect x="${-w/2}" y="-10" width="${w}" height="20" rx="10"/><polygon points="${ARROW}" transform="translate(${many?-7:0} 0)"/>${many?`<text x="6" y="4">${ns.length}</text>`:''}</g>`;}).join('');}
-function drawChart(name,metrics,shown,ps,slots){const id=`#chart-${name}`,ms=Object.keys(metrics).filter(k=>shown.has(k)),gw=72,aw=46,plot=Math.max(ps.length*gw,420),scale=plot/(ps.length*gw||1);
+// The shown metrics that get a bar and an axis of their own: one drawn inside
+// another shown metric's bar does not.
+const ownBars=(metrics,shown)=>Object.keys(metrics).filter(k=>shown.has(k)&&!(metrics[k].inside&&shown.has(metrics[k].inside)));
+function drawChart(name,metrics,shown,ps,slots){const id=`#chart-${name}`,ms=ownBars(metrics,shown),inner=Object.keys(metrics).filter(k=>shown.has(k)&&!ms.includes(k)),gw=72,aw=46,plot=Math.max(ps.length*gw,420),scale=plot/(ps.length*gw||1);
  const ok=p=>!sparse(name)||enough(p);
  const step=Object.fromEntries(ms.map(k=>{const u=metrics[k].unit||1;return [k,nice(Math.max(...ps.filter(ok).map(metrics[k].v),1e-9)/u/4)*u];})),max=Object.fromEntries(ms.map(k=>[k,step[k]*4]));
  const widths=ms.map(k=>metrics[k].wide?18:7),gap=3,groupW=widths.reduce((s,w)=>s+w,0)+gap*(ms.length-1);
@@ -89,13 +93,13 @@ function drawChart(name,metrics,shown,ps,slots){const id=`#chart-${name}`,ms=Obj
  axis.innerHTML=ms.map((k,j)=>{const m=metrics[k],x=j*aw;return `<g class="axis" data-axis="${k}" transform="translate(${x} 0)"><rect class="axis-hit" x="0" y="0" width="${aw}" height="${base}"/><line x1="1.5" x2="1.5" y1="${top}" y2="${base}" stroke="${m.color}" stroke-width="3"/>${[0,1,2,3,4].map(i=>`<line x1="0" x2="6" y1="${y(i/4)}" y2="${y(i/4)}" stroke="${m.color}" stroke-width="2"/><text x="9" y="${y(i/4)+4}" text-anchor="start" fill="${m.color}">${i?(m.af||m.f)(step[k]*i):0}</text>`).join('')}</g>`;}).join('');
  svg.innerHTML=`<line x1="0" x2="${plot}" y1="${base+.5}" y2="${base+.5}" stroke="var(--line)"/>`+ms.map(k=>`<g class="grid-set" data-axis="${k}">${[1,2,3,4].map(i=>`<line class="grid" x1="0" x2="${plot}" y1="${y(i/4)+.5}" y2="${y(i/4)+.5}" stroke="${metrics[k].color}"/>`).join('')}</g>`).join('')+ps.map((p,i)=>{const x0=i*gw*scale,cx=x0+gw*scale/2;let x=cx-groupW/2;
   const bars=ok(p)?ms.map((k,j)=>{const m=metrics[k],v=m.v(p),bh=Math.max(1,v/max[k]*(base-top)),bx=x;x+=widths[j]+gap;
-   return `<rect x="${bx}" y="${base-bh}" width="${widths[j]}" height="${bh}" rx="${widths[j]>10?3:1.5}" fill="${m.color}" data-tip="${periodLabel(p.key,state.period)}|${m.name}|${m.f(v)}" data-color="${m.color}"></rect>${partBar(m,p,v,bx,widths[j],bh,base)}`;}).join('')
+   return `<rect x="${bx}" y="${base-bh}" width="${widths[j]}" height="${bh}" rx="${widths[j]>10?3:1.5}" fill="${m.color}" data-tip="${periodLabel(p.key,state.period)}|${m.name}|${m.f(v)}" data-color="${m.color}"></rect>${inner.filter(i=>metrics[i].inside===k).map(i=>partBar(metrics[i],p,v,bx,widths[j],bh,base)).join('')}`;}).join('')
    :'';
   return `<g class="group ${p.key===state.key?'is-sel':''}" data-key="${p.key}"><rect class="band" x="${x0+2}" y="0" width="${gw*scale-4}" height="${h}" rx="6"/>${bars}<text x="${cx}" y="${h-7}" text-anchor="middle">${periodLabel(p.key,state.period)}</text></g>`;}).join('')+changeMarks(ps,gw*scale);}
-// A metric's part (cache reload inside cost per hour) is drawn over the
-// bottom of its bar, on the same scale.
-function partBar(m,p,v,x,w,bh,base){const pv=m.part?.v(p);if(!pv)return '';const ph=Math.min(bh,pv/v*bh);
- return `<rect x="${x}" y="${base-ph}" width="${w}" height="${ph}" rx="${w>10?3:1.5}" fill="${m.part.color}" data-tip="${periodLabel(p.key,state.period)}|${m.part.name}|${m.f(pv)} (${pct(pv/v*100)} of it)" data-color="${m.part.color}"></rect>`;}
+// A metric that is part of another (cache reload inside cost per hour) is
+// drawn over the bottom of that bar, on its scale.
+function partBar(m,p,v,x,w,bh,base){const pv=m.v(p);if(!pv)return '';const ph=Math.min(bh,pv/v*bh);
+ return `<rect x="${x}" y="${base-ph}" width="${w}" height="${ph}" rx="${w>10?3:1.5}" fill="${m.color}" data-tip="${periodLabel(p.key,state.period)}|${m.name}|${m.f(pv)} (${pct(pv/v*100)} of it)" data-color="${m.color}"></rect>`;}
 // A tooltip that shows at once (the browser's own waits about a second):
 // "where|what|value", with the item's color as a swatch.
 const tip=document.createElement('div');tip.className='tip';tip.hidden=true;document.body.append(tip);
@@ -118,9 +122,9 @@ document.addEventListener('pointerout',e=>{const el=hovered(e.target);if(!el||el
 function renderChart(){const ps=periods();if(!ps.some(p=>p.key===state.key))state.key=ps.at(-1)?.key||null;
  // Both axis columns take the width of the wider one, so the charts scroll
  // the same distance and their periods line up.
- const slots=Math.max(...Object.values(state.shown).map(s=>s.size));
+ const slots=Math.max(...Object.entries(CHARTS).map(([n,m])=>ownBars(m,state.shown[n]).length));
  for(const [name,metrics] of Object.entries(CHARTS)){drawChart(name,metrics,state.shown[name],ps,slots);
-  document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}${m.part?` <i style="background:${m.part.color}"></i>${m.part.name.replace(/ \/ active hour$/,'')}`:''}</button>`).join('');}
+  document.querySelector(`.metrics[data-chart="${name}"]`).innerHTML=Object.entries(metrics).map(([id,m])=>`<button type="button" data-metric="${id}" data-chart="${name}" aria-pressed="${state.shown[name].has(id)}"><i style="background:${m.color};${m.wide?'width:16px':''}"></i>${m.name}</button>`).join('');}
  revealKey();}
 // Wide charts scroll sideways. The chosen period (the latest unless one was
 // clicked) is kept in view, so the page opens on today, not the oldest day.
