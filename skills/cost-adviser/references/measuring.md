@@ -4,7 +4,7 @@
    Without a date there is nothing to compare. The label is a title of a few
    words; the detail says what changed and how, and, for a carried-out
    proposal, the saving it expected and the command that measures it. Both
-   open from the up arrow on the report's charts.
+   open from the 🔧 on the report's charts.
 2. **Compare like with like.** `cca summary` puts the same number of days
    before and after side by side. Use the ratios (cost per active hour, cost
    per call); totals follow how much work there was.
@@ -19,7 +19,7 @@
    - a different mix of work or project (filter by project);
    - a different model or effort mix (Cost by model);
    - another change in the same period (the other changes the summary lists,
-     shown as up arrows on the report). When two changes start on the same
+     shown as 🔧 on the report). When two changes start on the same
      day, judge each by the number it targets (for example uses per active
      hour of the combined command, or average context for a compaction
      setting), and say that the totals mix both.

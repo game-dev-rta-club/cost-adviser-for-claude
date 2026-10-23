@@ -69,16 +69,15 @@ function renderProjects(){const total={};for(const r of D.daily)total[r.project]
 // A time series per chart: each period is a group of bars, one per shown metric,
 // each on its own scale. The right axis shows one metric's scale at a time.
 const nice=v=>{const e=10**Math.floor(Math.log10(v)),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;};
-// A recorded change is an up arrow in a row along the top of the chart, over the
+// A recorded change is a 🔧 in a row along the top of the chart, over the
 // period it falls in, with a count when the period has several. Its title and
 // detail open in a popup on hover or click (changePop below), so the chart
 // stays clear however many there are.
 // Not a star: stars rate the improvement proposals.
-const ARROW='0,-7 6,-1 2,-1 2,7 -2,7 -2,-1 -6,-1';
 function changeMarks(ps,width){const by=new Map();
  CHANGES.forEach((c,n)=>{const i=ps.findIndex(p=>p.key===periodKey(c.date,state.period));if(i>=0)by.set(i,[...(by.get(i)||[]),n]);});
  return [...by].map(([i,ns])=>{const cx=(i+.5)*width,many=ns.length>1,w=many?36:22;
-  return `<g class="change-mark" data-changes="${ns.join(',')}" tabindex="0" role="button" aria-label="${esc(`Changes: ${ns.map(n=>CHANGES[n].label).join(', ')}`)}" transform="translate(${cx} 14)"><rect x="${-w/2}" y="-10" width="${w}" height="20" rx="10"/><polygon points="${ARROW}" transform="translate(${many?-7:0} 0)"/>${many?`<text x="6" y="4">${ns.length}</text>`:''}</g>`;}).join('');}
+  return `<g class="change-mark" data-changes="${ns.join(',')}" tabindex="0" role="button" aria-label="${esc(`Changes: ${ns.map(n=>CHANGES[n].label).join(', ')}`)}" transform="translate(${cx} 14)"><rect x="${-w/2}" y="-10" width="${w}" height="20" rx="10"/><text class="icon" x="${many?-7:0}" y="4">🔧</text>${many?`<text x="6" y="4">${ns.length}</text>`:''}</g>`;}).join('');}
 // The shown metrics that get a bar and an axis of their own: one drawn inside
 // another shown metric's bar does not.
 const ownBars=(metrics,shown)=>Object.keys(metrics).filter(k=>shown.has(k)&&!(metrics[k].inside&&shown.has(metrics[k].inside)));
@@ -360,14 +359,14 @@ $('#reload').addEventListener('click',()=>showReload('confirm'));
 reloadDialog.addEventListener('click',e=>{const b=e.target.closest('[data-reload]');if(b?.dataset.reload==='close')reloadDialog.close();else if(b?.dataset.reload==='run')runReload();});
 // Escape must not hide a rebuild that is still running.
 reloadDialog.addEventListener('cancel',e=>{if(reloadDialog.querySelector('.spin'))e.preventDefault();});
-// The changes behind an arrow: hovering opens them, clicking keeps them open
-// until a click elsewhere, Escape or ✕. The popup sits below the arrow, or
+// The changes behind a 🔧: hovering opens them, clicking keeps them open
+// until a click elsewhere, Escape or ✕. The popup sits below the 🔧, or
 // above it near the bottom of the window.
 const changePop=document.createElement('div');changePop.className='change-pop';changePop.hidden=true;changePop.setAttribute('role','dialog');document.body.append(changePop);
 let popMark=null,popPinned=false;
 function openPop(mark,pin){popMark=mark;popPinned=pin;
  const list=mark.dataset.changes.split(',').map(n=>CHANGES[+n]);
- changePop.innerHTML=`${pin?'<button type="button" class="close" data-pop-close aria-label="Close">✕</button>':''}${list.map(c=>`<article><small>↑ ${esc(c.date)}</small><strong>${esc(c.label)}</strong>${c.detail?`<p>${esc(c.detail)}</p>`:''}</article>`).join('')}`;
+ changePop.innerHTML=`${pin?'<button type="button" class="close" data-pop-close aria-label="Close">✕</button>':''}${list.map(c=>`<article><small>🔧 ${esc(c.date)}</small><strong>${esc(c.label)}</strong>${c.detail?`<p>${esc(c.detail)}</p>`:''}</article>`).join('')}`;
  changePop.classList.toggle('pinned',pin);changePop.hidden=false;
  const r=mark.getBoundingClientRect(),w=changePop.offsetWidth,h=changePop.offsetHeight;
  const x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8),below=r.bottom+8+h<=innerHeight-8;
@@ -379,6 +378,6 @@ document.addEventListener('click',e=>{const m=e.target.closest('.change-mark');
  if(e.target.closest('[data-pop-close]')||popPinned&&!changePop.contains(e.target))closePop();});
 document.addEventListener('keydown',e=>{const m=e.target.closest?.('.change-mark');
  if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openPop(m,true);}else if(e.key==='Escape'&&popMark)closePop();});
-// Capture also sees a chart scrolling sideways, which moves the arrow.
+// Capture also sees a chart scrolling sideways, which moves the 🔧.
 document.addEventListener('scroll',()=>{if(popPinned&&popMark?.isConnected)openPop(popMark,true);else closePop();},{capture:true,passive:true});
 render();applyLink();
