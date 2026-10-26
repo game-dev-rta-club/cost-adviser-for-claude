@@ -13,6 +13,10 @@ test('tool keys group similar uses', () => {
   assert.equal(bash('cd /x && FOO=1 git status'), 'bash git status');
   assert.equal(bash('npm run check 2>&1 | tail'), 'bash npm run check');
   assert.equal(bash('node scripts/build.mjs --fast'), 'bash node build.mjs');
+  // Commands copied from Windows: backslash paths, node.exe and spaces in quotes.
+  assert.equal(bash("'C:\\Users\\me\\.chill-agent\\p\\runtime\\chill' connection wait"), 'bash chill connection wait');
+  assert.equal(bash("C='C:\\Users\\me\\.chill-agent\\p\\runtime\\chill'; \"$C\" goal show --id 1"), 'bash chill goal show');
+  assert.equal(bash("X='C:\\data' 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\me\\bin\\chill-settings.mjs' notice --id 1"), 'bash node chill-settings.mjs notice');
   // Inline Python is named by what it does.
   assert.equal(bash("python3 - <<'EOF'\np='a';s=open(p).read()\nopen(p,'w').write(s.replace('x','y'))\nEOF"), 'bash python3 (edit files)');
   assert.equal(bash("python3 - <<'EOF'\np='docs/a.md';s=open(p).read()\nopen(p,'w').write(s.replace('x','y'))\nEOF"), 'bash python3 (edit .md)');

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Calls by action groups commands from Windows like the same commands on macOS: `'C:\Program Files\nodejs\node.exe' …\chill-settings.mjs notice` is `bash node chill-settings.mjs notice`, and a chill run by its Windows path is `bash chill …`, not a group of its own per path.
 - Transcripts copied from Windows get their project names like the others: the folder's name, with a worktree counted as its main checkout. Session titles show the home folder as ~.
 - Cost by model lists the models by their total cost, and each model's efforts from low to max.
 - The Stats chart can show the cache reload cost per active hour: what was spent writing the cache again after it expired, over a break or in a resumed conversation. It is off until you turn it on, and sits as a darker part inside the cost per active hour bar when that shows.
