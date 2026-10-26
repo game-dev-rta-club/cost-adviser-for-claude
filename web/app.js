@@ -191,6 +191,9 @@ const isOpen=n=>state.filter?true:state.toggled.has(n.id)?state.toggled.get(n.id
 // Show a node: open its parents and widen any list it is hidden in.
 function revealTool(id){for(const tk of tokens(id).slice(0,-1)){state.toggled.set(tk.id,true);state.moreTree.add(tk.id);}
  const top=tokens(id)[0]?.text,i=kids(toolTree()).findIndex(n=>n.text===top);if(i>=state.toolLimit)state.toolLimit=Math.ceil((i+1)/10)*10;}
+// A title often quotes a path; the home folder shrinks to ~, on any machine.
+const tidyPath=t=>String(t||'').replace(/(?:[A-Za-z]:\\Users\\[^\\\s]+|\/Users\/[^\/\s]+|\/home\/[^\/\s]+)(?=[\\/]|\s|$)/g,'~');
+for(const s of D.sessions)s.title=tidyPath(s.title);
 const titles=Object.fromEntries(D.sessions.map(s=>[s.session,s.title]));
 const when=ts=>new Date(ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 function moreButtons(id,shown,total,step){$(id).innerHTML=`${shown<total?`<button class="link" data-more="${id}" data-step="${step}">Show ${Math.min(step,total-shown)} more (${total-shown} left)</button>`:''}${shown>step?`<button class="link" data-less="${id}" data-step="${step}">Back to top ${step}</button>`:''}`;}

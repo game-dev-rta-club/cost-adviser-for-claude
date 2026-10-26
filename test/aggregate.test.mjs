@@ -55,6 +55,10 @@ test('projects: worktrees join their checkout and temporary folders share a name
   assert.equal(projectOf('/Users/me/dev/app/.claude/worktrees/x'), 'app');
   assert.equal(projectOf('/private/tmp/scratch'), '(temp)');
   assert.equal(projectOf(null), '(unknown)');
+  // Copied from a Windows machine.
+  assert.equal(projectOf('C:\\Users\\me\\dev\\game\\.claude\\worktrees\\w01-cca2fe'), 'game');
+  assert.equal(projectOf('C:\\Users\\me\\dev\\game'), 'game');
+  assert.equal(projectOf('C:\\Users\\me\\AppData\\Local\\Temp\\x'), '(temp)');
 });
 
 test('collect counts each call once and splits its cost', async () => {
