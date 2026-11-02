@@ -21,6 +21,7 @@ much work there was.
 | Top sessions | One long-running session dominates cost and active time | One conversation does many tasks. P2 | `--session ID` |
 | Subagent calls | Moves after a delegation change | Whether delegation happens at all; judge cost with P5 | `--metrics stats.subShare` |
 | Compacting / active hour, and Cost by type: Compacting | Grows after a change that shortens or splits conversations, or one session compacts again and again | The cost of summarizing, paid instead of carrying the long context. Weigh it against the input it saved. P1, P2 | `--metrics stats.compactPerHour` or `--focus cost-type --item Compacting` |
+| What fills the context (summary) | One tool's or command's results are a large share of context growth | A part that could be made smaller, with the compaction length lowered to match: catalog sample 6b. P1 | `--metrics stats.ctx` |
 | Cost by model | The mix shifts | A mix change can explain a cost change by itself; rule it out first | `--focus cost-model` |
 
 Add `--project NAME` when the signal belongs to one project. The report shows

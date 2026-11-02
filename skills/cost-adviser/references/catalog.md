@@ -1,9 +1,11 @@
 # Sample proposals
 
-These proposals often fit. Upkeep and quality are fixed for each one; savings
-depends on the user's numbers, and the savings given here come from one real
-week, except where they are marked as estimates. Rate them by
-[ratings.md](ratings.md). Do not propose anything the user has declined; the
+These proposals often fit. Rate them by [ratings.md](ratings.md). Upkeep is
+fixed for each one, and so is quality, except that the share of conversations
+a proposal touches decides between 3 and 2 stars. Savings depends on the
+user's numbers; the savings and shares of conversations given here come
+from one real week, except where
+they are marked as estimates. Do not propose anything the user has declined; the
 summary lists declined proposals. Check the name and value of every setting
 against its current documentation before proposing it.
 
@@ -86,9 +88,12 @@ the context window of the model in use, read from the model's documentation.
 For a model with a one-million-token window, that is 500,000.
 
 **Ratings:** upkeep 5 stars, though it should be checked again when the model
-changes; quality 4 stars; savings 5 stars in the example week, where
+changes; quality 3 or 2 stars by the share of conversations that reach half
+of the window, which the replay below prints, because a summary drops detail;
+savings 5 stars in the example week, where
 `cca simulate --compact-at 500000` (from one million) cut about 12%, even after
-counting the extra compactions. **Overall: 4.6.**
+counting the extra compactions. **Overall: 4.2 with quality 3 stars, 3.7 with
+2.**
 
 ### 6. Below half of the context window, lower the compaction length by one step
 
@@ -101,14 +106,47 @@ the step from the window of the model in use, read from its documentation.
 Propose one step at a time, never a large cut at once. Nobody knows where the
 work starts to suffer, and the adviser cannot see whether quality dropped. So
 say plainly, when proposing it, that a lower compaction length may lower the
-quality of the work. The risk adds up with every step, so the quality rating
-stays at 3 stars however many steps have gone well.
+quality of the work. When a part of what fills the context can be made
+smaller, propose sample 6b instead: it keeps what a conversation holds before
+it compacts.
 
 Do not propose it when a declined proposal's reason sets a lower limit at or
 above the current length (for example "about 500,000 is fine").
 
-**Ratings:** upkeep 5 stars; quality 3 stars; savings 3 stars in the example
-week, where one step from 500,000 to 450,000 cut about 4.1%. **Overall: 3.6.**
+**Ratings:** upkeep 5 stars; quality 2 stars, because a summary drops detail:
+in the example week 14% of conversations reached the new length;
+savings 3 stars in the example week, where one step from 500,000 to 450,000
+cut about 4.1%.
+**Overall: 3.1.**
+
+### 6b. Make a part of the context smaller, and lower the compaction length by the same share
+
+**Propose it when** a part of what fills the context can be made smaller
+without losing what the work uses: most often one tool's or command's results,
+which the summary's "What fills the context" shows (sample 3), but also text a
+hook or skill adds (sample 4). Making the part smaller on its own only delays the next
+compaction (see "Making the context smaller saves little" in ratings.md).
+Lowering the compaction length by the share of context growth that goes away
+keeps what a conversation holds before it compacts, while every call reads
+less.
+
+Take off no more than the part's share of context growth × how much of it goes
+away, over the conversations where it will shrink
+(`cca summary --project NAME`): a part that is 8% of the growth, made 30%
+shorter, takes 2.4% away, so 450,000 can become 440,000. Set the length where
+only those conversations get it (the project's own `.claude/settings.json` or
+`.claude/settings.local.json`) and measure both changes together with
+`cca simulate --project NAME --tool-results 0.7 --tool read --compact-at 440000`.
+Make both changes together and record them as one change (`cca mark add`), so
+later numbers split into before and after at one date. Afterwards, check that
+the part's share fell as planned; if it fell less, raise the length to match.
+
+**Ratings:** upkeep 3 stars, because the part to make smaller differs between
+projects; quality 4 stars, because a conversation holds about as much before
+it compacts; if the part shrinks less than planned, it compacts slightly
+sooner until the length is raised, too little to notice; savings by the
+replay. **Overall: 2.3 with savings 1 star, 2.9 with 2, 3.3
+with 3.**
 
 **Move tool use to an agent with little context**
 
@@ -130,10 +168,11 @@ so the main conversation does not read the work again. Or an open-source
 multi-agent setup that fits, found by searching (SKILL.md, "One action").
 
 **Ratings:** upkeep 3 stars, because what to hand over depends on the kind of
-task; quality 3 stars, because a brief can miss what only the main
-conversation knows; savings on half of the replayed cut, since not every run
+task; quality 2 stars, because a brief can miss what only the main
+conversation knows: in the example week 74% of conversations had runs to hand
+over; savings on half of the replayed cut, since not every run
 can be handed over: 4 stars in the example week, where the replay cut 9.6%.
-**Overall: 3.3.**
+**Overall: 2.9.**
 
 ### 8. Hand research to a subagent and keep only its result
 
@@ -142,8 +181,8 @@ they return is never used later in the conversation. The subagent uses the
 same model; only its final answer comes back into the main conversation.
 
 **Ratings:** upkeep 4 stars, because it works across projects with almost no
-tuning; quality 4 stars, because some of what was read does not stay in the
-main conversation; savings 2 stars, estimated at about 1.5%, because this makes
+tuning; quality 4 stars, because what was read and not kept can be read
+again; savings 2 stars, estimated at about 1.5%, because this makes
 the context smaller and the subagent's own calls cost money too.
 **Overall: 3.2.**
 
@@ -151,9 +190,11 @@ the context smaller and the subagent's own calls cost money too.
 
 **Propose it when** search and read tools take a large share of the cost.
 
-**Ratings:** upkeep 3 stars; quality 3 stars, because a lighter model may miss
-things; savings 5 stars, estimated at about 10% when those calls take a large
-share, from the lower price per call. **Overall: 3.6.**
+**Ratings:** upkeep 3 stars; quality 2 stars, because a lighter model may miss
+things: in the example week 51% of conversations searched or read;
+savings 5 stars,
+estimated at about 10% when those calls take a large share, from the lower
+price per call. **Overall: 3.1.**
 
 ## C. A lower price
 
@@ -208,7 +249,9 @@ a natural break before stepping away does the same, and so does starting a new
 conversation instead of resuming a long one whose context is no longer needed.
 
 **Ratings:** upkeep 5 stars when it is a setting, 1 star when the user has to
-remember it; quality 4 stars, because the summary drops detail; savings on
+remember it; quality 2 stars, because the summary drops detail: in the
+example week about 45% of conversations were picked up after a break longer
+than the cache lasts (an estimate); savings on
 half of the expired share, since not every break is known in advance: 4 stars
-in the example week, where it was 13% of the cost. **Overall: 4.3 as a
-setting, 2.5 as a habit.**
+in the example week, where it was 13% of the cost. **Overall: 3.4 as a
+setting, 2.0 as a habit.**

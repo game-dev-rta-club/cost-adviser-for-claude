@@ -286,6 +286,7 @@ else if (command === 'build') {
     ...(Math.abs(r.cut) < 0.01 ? ['Under 1% either way is within what the replay can tell apart: read it as no clear effect.']
       : r.cut < 0 && change.toolResults !== undefined && !change.compactAt ? ['Shorter results cannot cost more; this comes from where conversations stood between compactions when they ended. Read it as no clear effect.'] : []),
     `Replayed compactions: ${r.compactions.base} → ${r.compactions.changed} (the replay counts its own; ${r.compactions.recorded} were recorded)`,
+    `Conversations it touches: ${r.touched.conversations} of ${r.touched.of} (${(r.touched.share * 100).toFixed(1)}%; a subagent counts with the conversation that started it${change.compactAt ? '; for the compaction length, those that reach it' : ''})`,
     `The percentage compares the replay without and with the change. The replay is an estimate, so its cost without the change (${usd(r.base)}) differs from the recorded cost of the same calls (${usd(r.recorded)}): it leaves out cache rebuilds, such as a conversation reread after the cache expired, which the change does not affect.`,
     `It compares against the conversations as they ran. If the setting changed during these days, use --since <date> to cover only the days since.`,
     ...(full ? [] : ['These days include today, which is partial; add --full-days to replay full days only.']),

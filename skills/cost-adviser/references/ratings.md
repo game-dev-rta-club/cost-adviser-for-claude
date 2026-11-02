@@ -35,10 +35,23 @@ How well the work keeps its quality and speed.
 - **5 stars:** Nothing is lost. The proposal only removes waste: the same
   model, at the same effort, does the same work with fewer or smaller calls.
 - **4 stars:** It affects the work in theory, but not enough to notice.
-- **3 stars:** Some kinds of work may lose quality.
-- **2 stars:** Some kinds of work lose quality.
+- **3 stars:** Some kinds of work lose quality, and the proposal touches 5% of
+  conversations or fewer.
+- **2 stars:** Some kinds of work lose quality, and the proposal touches more
+  than 5% of conversations.
 - **1 star:** Everyday work loses quality, or the change is large and nobody
   can tell what it will do.
+
+For example, results the model can read again when it needs them are not
+enough to notice: 4 stars. The adviser cannot see whether quality dropped, so
+between 3 and 2 stars, count instead of judging how likely a loss is. A
+proposal touches a conversation when it would change anything in it; count
+main conversations in the period, each subagent with the conversation that
+started it. `cca simulate` prints the share as "Conversations it touches". For
+a change it does not replay, count with a replay that changes the same
+conversations (`--tool NAME` with any `--tool-results` below 1 changes those
+that use that tool), or estimate, and say how you counted so the next rating
+counts the same way.
 
 ## Savings (`savings`)
 

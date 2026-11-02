@@ -36,6 +36,9 @@ test('replay: an earlier compaction length compacts more and reads less', () => 
   assert.equal(base.compactions, 0);
   assert.ok(early.compactions >= 2);
   assert.ok(early.cost < base.cost);
+  // Only conversations that reach the new length are touched; a subagent counts with its parent.
+  const r = simulate([{session: 'a', calls: growing(5, 1000)}, {session: 'b', calls: growing(5, 1000)}, {session: 'a/agent-x', sub: true, calls}], {compactAt: 200000});
+  assert.deepEqual(r.touched, {conversations: 1, of: 2, share: 0.5});
 });
 
 test('replay: a conversation compacts again at the length it compacted at before', () => {

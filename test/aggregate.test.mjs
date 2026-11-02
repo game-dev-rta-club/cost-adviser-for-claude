@@ -153,6 +153,25 @@ test('compaction is split out: the estimated summary and the cache write after i
   assert.ok(Math.abs(data.tools.reduce((s, t) => s + t.cost, 0) - row.cost) < 1e-3);
 });
 
+test('what fills the context: each call\'s growth, from tool results, then output, then the rest, in conversations that compact', async () => {
+  const root = await tempDir();
+  const lines = [
+    assistant({id: 'm1', at: at(0), cacheRead: 300000, output: 100, tools: [{id: 't1', name: 'Read', input: {file_path: '/a'}}]}),
+    result('t1', 'x'.repeat(2750)),
+    assistant({id: 'm2', at: at(1), cacheRead: 300000, cacheWrite: 1500, output: 10}),
+  ];
+  await writeTranscript(root, 'p/s.jsonl', lines);
+  assert.deepEqual((await collect({root, days: 30, now: NOW})).growth, [], 'a conversation that never compacts is left out');
+  await writeTranscript(root, 'p/s.jsonl', [...lines,
+    {type: 'system', subtype: 'compact_boundary', timestamp: at(2), compactMetadata: {trigger: 'auto', preTokens: 301500, postTokens: 15000}},
+    {type: 'user', isCompactSummary: true, message: {role: 'user', content: 'x'.repeat(8000)}},
+    assistant({id: 'm3', at: at(3), cacheRead: 15000, cacheWrite: 20000, output: 50}),
+  ]);
+  const growth = Object.fromEntries((await collect({root, days: 30, now: NOW})).growth.map(g => [g.part, g.tokens]));
+  // 1,500 tokens added: the Read result (2,750 characters, about 1,000 tokens), m1's output, the rest. The call after the compaction adds nothing.
+  assert.deepEqual(growth, {read: 1000, '(model output)': 100, '(other)': 400});
+});
+
 test('a cache write after the cache expired is counted apart; a new conversation\'s start and a compaction are not', async () => {
   const root = await tempDir();
   await writeTranscript(root, 'p/s.jsonl', [
