@@ -106,9 +106,7 @@ the step from the window of the model in use, read from its documentation.
 Propose one step at a time, never a large cut at once. Nobody knows where the
 work starts to suffer, and the adviser cannot see whether quality dropped. So
 say plainly, when proposing it, that a lower compaction length may lower the
-quality of the work. When a part of what fills the context can be made
-smaller, propose sample 6b instead: it keeps what a conversation holds before
-it compacts.
+quality of the work.
 
 Do not propose it when a declined proposal's reason sets a lower limit at or
 above the current length (for example "about 500,000 is fine").
@@ -142,11 +140,9 @@ later numbers split into before and after at one date. Afterwards, check that
 the part's share fell as planned; if it fell less, raise the length to match.
 
 **Ratings:** upkeep 3 stars, because the part to make smaller differs between
-projects; quality 4 stars, because a conversation holds about as much before
-it compacts; if the part shrinks less than planned, it compacts slightly
-sooner until the length is raised, too little to notice; savings by the
-replay. **Overall: 2.3 with savings 1 star, 2.9 with 2, 3.3
-with 3.**
+projects; quality 5 stars, because a conversation holds as much of what the
+work uses before it compacts, and only what it does not use is cut; savings by
+the replay. **Overall: 2.5 with savings 1 star, 3.1 with 2, 3.6 with 3.**
 
 **Move tool use to an agent with little context**
 

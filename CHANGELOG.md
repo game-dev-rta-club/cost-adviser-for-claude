@@ -3,7 +3,7 @@
 ## Unreleased
 
 - The skill rates quality by how many conversations a loss reaches: 3 stars when some kinds of work lose quality in 5% of conversations or fewer, 2 stars when in more. Lowering the compaction length, compacting before a break, and handing work or research to an agent are rated again by it.
-- A new sample proposal: make a part of the context smaller and lower the compaction length by the same share, so a conversation holds as much before it compacts.
+- A new sample proposal: make a part of the context smaller and lower the compaction length by the same share, so a conversation holds as much before it compacts. It keeps quality at 5 stars, since only what the work does not use is cut.
 - `cca summary` shows what fills the context in conversations that compact: each tool's results, the model's output and the rest. `cca simulate` says how many conversations the change touches.
 - Calls by action groups commands from Windows like the same commands on macOS: `'C:\Program Files\nodejs\node.exe' …\chill-settings.mjs notice` is `bash node chill-settings.mjs notice`, and a chill run by its Windows path is `bash chill …`, not a group of its own per path.
 - Transcripts copied from Windows get their project names like the others: the folder's name, with a worktree counted as its main checkout. Session titles show the home folder as ~.
